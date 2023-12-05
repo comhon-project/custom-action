@@ -2,14 +2,13 @@
 
 namespace Comhon\CustomAction\Tests;
 
-use Illuminate\Database\Eloquent\Factories\Factory;
-use Orchestra\Testbench\TestCase as Orchestra;
 use Comhon\CustomAction\CustomActionServiceProvider;
+use Comhon\TemplateRenderer\TemplateRendererServiceProvider;
 use Illuminate\Contracts\Config\Repository;
+use Illuminate\Database\Eloquent\Factories\Factory;
 use Illuminate\Support\Facades\Gate;
 use Illuminate\Support\Facades\Lang;
-use Illuminate\Support\Facades\Route;
-use Comhon\TemplateRenderer\TemplateRendererServiceProvider;
+use Orchestra\Testbench\TestCase as Orchestra;
 
 class TestCase extends Orchestra
 {
@@ -34,21 +33,21 @@ class TestCase extends Orchestra
     {
         $cacheDirectory = $app->useStoragePath(__DIR__.'/../storage')->storagePath('custom-action');
 
-        tap($app['config'], function (Repository $config) use ($cacheDirectory) {
+        tap($app['config'], function (Repository $config) {
             $config->set('custom-action.user_model', \Comhon\CustomAction\Tests\Support\Models\User::class);
             $config->set('custom-action.middleware', ['api', 'can:manage-custom-action']);
             $config->set('custom-action.target_bindings', [
                 'first_name',
                 'name',
-                'last_login_at' => 'datetime', 'verified_at' => 'date'
+                'last_login_at' => 'datetime', 'verified_at' => 'date',
             ]);
             $config->set('database.default', 'testing');
             $config->set('database.connections.testing', [
-                'driver'   => 'sqlite',
+                'driver' => 'sqlite',
                 'database' => ':memory:',
-                'prefix'   => '',
+                'prefix' => '',
             ]);
-            
+
             // Setup queue database connections.
             // $config([
             //     'queue.batching.database' => 'testing',
@@ -69,7 +68,7 @@ class TestCase extends Orchestra
         Lang::addLines([
             'messages.actions.send-email' => 'send email',
             'messages.actions.send-company-email' => 'send company email',
-            'messages.events.company-registered' => 'company registered'
+            'messages.events.company-registered' => 'company registered',
         ], 'en', 'custom-action');
     }
 }

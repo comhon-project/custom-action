@@ -11,12 +11,13 @@ use Comhon\ModelResolverContract\ModelResolverInterface;
  * @method bool isAllowed(string $uniqueName, string $scope)
  * @method array getUniqueNames(string $scope)
  * @method array getClasses(string $scope)
- * 
  */
 class ModelResolverContainer
 {
     const GENERIC_ACTION_SCOPE = 'custom-generic-action';
+
     const UNIQUE_ACTION_SCOPE = 'custom-unique-action';
+
     const EVENT_SCOPE = 'custom-event';
 
     public function __construct(private ModelResolverInterface $resolver)

@@ -23,13 +23,14 @@ class CustomActionController extends Controller
             'unique' => [],
         ];
         foreach ($resolver->getUniqueNames(ModelResolverContainer::GENERIC_ACTION_SCOPE) as $uniqueName) {
-            $translation = trans('custom-action::messages.actions.' . $uniqueName);
+            $translation = trans('custom-action::messages.actions.'.$uniqueName);
             $actions['generic'][] = ['type' => $uniqueName, 'name' => $translation];
         }
         foreach ($resolver->getUniqueNames(ModelResolverContainer::UNIQUE_ACTION_SCOPE) as $uniqueName) {
-            $translation = trans('custom-action::messages.actions.' . $uniqueName);
+            $translation = trans('custom-action::messages.actions.'.$uniqueName);
             $actions['unique'][] = ['type' => $uniqueName, 'name' => $translation];
         }
+
         return new JsonResource($actions);
     }
 
@@ -40,7 +41,7 @@ class CustomActionController extends Controller
      */
     public function showActionSchema(ModelResolverContainer $resolver, $actionUniqueName)
     {
-        if (!$resolver->isAllowedAction($actionUniqueName)) {
+        if (! $resolver->isAllowedAction($actionUniqueName)) {
             throw new NotFoundHttpException('not found');
         }
         $action = app($resolver->getClass($actionUniqueName));
@@ -56,6 +57,7 @@ class CustomActionController extends Controller
             $actionSchema['localized_settings_schema'] = $action->getLocalizedSettingsSchema();
             $actionSchema['binding_schema'] = $action->getBindingSchema();
         }
+
         return new JsonResource($actionSchema);
     }
 }

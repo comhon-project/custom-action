@@ -2,12 +2,10 @@
 
 namespace Comhon\CustomAction;
 
-use Comhon\CustomAction\Models\CustomEventListener;
 use Comhon\CustomAction\Contracts\CustomEventInterface;
 use Comhon\CustomAction\Contracts\TriggerableFromEventInterface;
+use Comhon\CustomAction\Models\CustomEventListener;
 use Comhon\CustomAction\Resolver\ModelResolverContainer;
-use Illuminate\Contracts\Queue\ShouldQueue;
-use Illuminate\Queue\InteractsWithQueue;
 
 class CustomEventHandler
 {
@@ -20,7 +18,6 @@ class CustomEventHandler
     /**
      * Handle the event.
      *
-     * @param \Comhon\CustomAction\Contracts\CustomEventInterface $event
      * @return void
      */
     public function handle(CustomEventInterface $event)
@@ -31,11 +28,11 @@ class CustomEventHandler
         $bindings = $event->getBindingValues();
 
         foreach ($listeners as $listener) {
-            if (!$listener->scope || $this->matchScope($listener->scope, $bindings)) {
+            if (! $listener->scope || $this->matchScope($listener->scope, $bindings)) {
                 foreach ($listener->actions as $action) {
                     $handler = app($this->resolver->getClass($action->type));
-                    if (!($handler instanceof TriggerableFromEventInterface)) {
-                        throw new \Exception('invalid type ' . $action->type);
+                    if (! ($handler instanceof TriggerableFromEventInterface)) {
+                        throw new \Exception('invalid type '.$action->type);
                     }
                     $handler->handleFromEvent($event, $action, $bindings);
                 }
@@ -54,6 +51,7 @@ class CustomEventHandler
                 }
             }
         }
+
         return $match;
     }
 }

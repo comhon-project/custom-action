@@ -41,7 +41,8 @@ class CustomActionTest extends TestCase
         return app(SendTemplatedMail::class);
     }
 
-    private function getSendMailUniqueAction() : SendCompanyRegistrationMail {
+    private function getSendMailUniqueAction(): SendCompanyRegistrationMail
+    {
         return app(SendCompanyRegistrationMail::class);
     }
 
@@ -64,10 +65,11 @@ class CustomActionTest extends TestCase
         $mails = [];
         Mail::assertSent(Custom::class, function (Custom $mail) use (&$mails) {
             $mails[] = $mail;
+
             return true;
         });
 
-        $mails[0]->assertHasSubject("test lundi 12 décembre 2022 à 13:12:12 heure normale d’Europe centrale test");
+        $mails[0]->assertHasSubject('test lundi 12 décembre 2022 à 13:12:12 heure normale d’Europe centrale test');
     }
 
     public function testHandleWithoutReceiver()

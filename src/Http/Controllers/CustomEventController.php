@@ -2,8 +2,8 @@
 
 namespace Comhon\CustomAction\Http\Controllers;
 
-use Comhon\CustomAction\Models\CustomEventListener;
 use Comhon\CustomAction\Contracts\CustomEventInterface;
+use Comhon\CustomAction\Models\CustomEventListener;
 use Comhon\CustomAction\Resolver\ModelResolverContainer;
 use Illuminate\Http\Resources\Json\JsonResource;
 use Illuminate\Routing\Controller;
@@ -22,9 +22,10 @@ class CustomEventController extends Controller
         $events = collect($events)->map(function ($eventUniqueName) {
             return [
                 'key' => $eventUniqueName,
-                'name' => trans('custom-action::messages.events.' . $eventUniqueName)
+                'name' => trans('custom-action::messages.events.'.$eventUniqueName),
             ];
         })->values();
+
         return new JsonResource($events);
     }
 
@@ -35,7 +36,7 @@ class CustomEventController extends Controller
      */
     public function showEventSchema(ModelResolverContainer $resolver, $eventUniqueName)
     {
-        if (!$resolver->isAllowedEvent($eventUniqueName)) {
+        if (! $resolver->isAllowedEvent($eventUniqueName)) {
             throw new NotFoundHttpException('not found');
         }
         $eventClass = $resolver->getClass($eventUniqueName);
@@ -49,6 +50,7 @@ class CustomEventController extends Controller
                 }
             }
         }
+
         return new JsonResource($schema);
     }
 
@@ -59,9 +61,10 @@ class CustomEventController extends Controller
      */
     public function listEventListeners(ModelResolverContainer $resolver, $eventUniqueName)
     {
-        if (!$resolver->isAllowedEvent($eventUniqueName)) {
+        if (! $resolver->isAllowedEvent($eventUniqueName)) {
             throw new NotFoundHttpException('not found');
         }
+
         return JsonResource::collection(CustomEventListener::where('event', $eventUniqueName)->get());
     }
 }

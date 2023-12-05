@@ -13,8 +13,9 @@ class ModelResolver implements ModelResolverInterface
     private $map = [
         'send-email' => SendTemplatedMail::class,
     ];
+
     private $scopes = [
-        ModelResolverContainer::GENERIC_ACTION_SCOPE => ['send-email']
+        ModelResolverContainer::GENERIC_ACTION_SCOPE => ['send-email'],
     ];
 
     /**
@@ -63,13 +64,14 @@ class ModelResolver implements ModelResolverInterface
      */
     public function getClasses(string $scope): array
     {
-        if (!isset($this->scopes[$scope])) {
+        if (! isset($this->scopes[$scope])) {
             return [];
         }
         $classes = [];
         foreach ($this->scopes[$scope] as $uniqueName) {
             $classes[] = $this->getClass($uniqueName);
         }
+
         return $classes;
     }
 }

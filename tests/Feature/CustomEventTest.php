@@ -5,8 +5,8 @@ namespace Tests\Feature;
 use Comhon\CustomAction\Actions\SendTemplatedMail;
 use Comhon\CustomAction\Resolver\ModelResolverContainer;
 use Comhon\CustomAction\Tests\Support\CompanyRegistered;
-use Comhon\CustomAction\Tests\Support\SendCompanyRegistrationMail;
 use Comhon\CustomAction\Tests\Support\Models\User;
+use Comhon\CustomAction\Tests\Support\SendCompanyRegistrationMail;
 use Comhon\CustomAction\Tests\TestCase;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 
@@ -43,8 +43,8 @@ class CustomEventTest extends TestCase
                 [
                     'key' => 'company-registered',
                     'name' => 'company registered',
-                ]
-            ]
+                ],
+            ],
         ]);
     }
 
@@ -60,10 +60,10 @@ class CustomEventTest extends TestCase
                     'logo' => 'file',
                 ],
                 'allowed_actions' => [
-                    "send-email",
-                    "send-company-email",
+                    'send-email',
+                    'send-company-email',
                 ],
-            ]
+            ],
         ]);
     }
 

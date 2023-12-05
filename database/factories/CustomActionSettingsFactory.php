@@ -5,9 +5,7 @@ namespace Comhon\CustomAction\Database\Factories;
 use Comhon\CustomAction\Models\ActionLocalizedSettings;
 use Comhon\CustomAction\Models\ActionScopedSettings;
 use Comhon\CustomAction\Models\CustomActionSettings;
-use Comhon\CustomAction\Actions\SendTemplatedMail;
 use Illuminate\Database\Eloquent\Factories\Factory;
-use Comhon\CustomAction\Tests\Support\SendCompanyRegistrationMail;
 
 /**
  * @extends \Illuminate\Database\Eloquent\Factories\Factory<\Comhon\CustomAction\Models\CustomActionSettings>

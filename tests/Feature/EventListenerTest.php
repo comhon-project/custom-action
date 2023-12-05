@@ -2,17 +2,17 @@
 
 namespace Tests\Feature;
 
-use Comhon\CustomAction\Models\ActionLocalizedSettings;
-use Comhon\CustomAction\Models\CustomActionSettings;
-use Comhon\CustomAction\Models\CustomEventListener;
 use Comhon\CustomAction\Actions\SendTemplatedMail;
 use Comhon\CustomAction\CustomActionRegistrar;
 use Comhon\CustomAction\Mail\Custom;
+use Comhon\CustomAction\Models\ActionLocalizedSettings;
+use Comhon\CustomAction\Models\CustomActionSettings;
+use Comhon\CustomAction\Models\CustomEventListener;
 use Comhon\CustomAction\Resolver\ModelResolverContainer;
-use Comhon\CustomAction\Tests\Support\Models\Company;
 use Comhon\CustomAction\Tests\Support\CompanyRegistered;
-use Comhon\CustomAction\Tests\Support\SendCompanyRegistrationMail;
+use Comhon\CustomAction\Tests\Support\Models\Company;
 use Comhon\CustomAction\Tests\Support\Models\User;
+use Comhon\CustomAction\Tests\Support\SendCompanyRegistrationMail;
 use Comhon\CustomAction\Tests\TestCase;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Mail\Mailables\Attachment;
@@ -45,8 +45,8 @@ class EventListenerTest extends TestCase
     }
 
     /**
-     *
      * @dataProvider providerEventListener
+     *
      * @return void
      */
     public function testEventListener($addCompanyScope)
@@ -78,10 +78,11 @@ class EventListenerTest extends TestCase
         Mail::assertSent(Custom::class, 3);
         Mail::assertSent(Custom::class, function (Custom $mail) use (&$mails) {
             $mails[] = $mail;
+
             return true;
         });
         $sep = DIRECTORY_SEPARATOR;
-        $firstActionAttachementPath = dirname(__DIR__) . "{$sep}Support{$sep}..{$sep}Data{$sep}jc.jpeg";
+        $firstActionAttachementPath = dirname(__DIR__)."{$sep}Support{$sep}..{$sep}Data{$sep}jc.jpeg";
 
         $mails[0]->assertHasTo($targetUser->email);
         $mails[0]->assertHasSubject("Dear $targetUser->first_name, company $company->name (last login: December 12, 2022 at 12:00 AM (UTC) December 12, 2022 at 12:00 AM (UTC))");
@@ -151,6 +152,7 @@ class EventListenerTest extends TestCase
         Mail::assertSent(Custom::class, 1);
         Mail::assertSent(Custom::class, function (Custom $customMail) use (&$mail) {
             $mail = $customMail;
+
             return true;
         });
 
@@ -202,20 +204,20 @@ class EventListenerTest extends TestCase
         $response->assertJson([
             'data' => [
                 [
-                    "id" => $eventListener->id,
-                    "event" => "company-registered",
-                    "scope" => null,
+                    'id' => $eventListener->id,
+                    'event' => 'company-registered',
+                    'scope' => null,
                 ],
                 [
-                    "id" => $eventListener2->id,
-                    "event" => "company-registered",
-                    "scope" => [
+                    'id' => $eventListener2->id,
+                    'event' => 'company-registered',
+                    'scope' => [
                         'company' => [
-                            'name' => 'my company'
-                        ]
+                            'name' => 'my company',
+                        ],
                     ],
-                ]
-            ]
+                ],
+            ],
         ]);
     }
 
@@ -230,15 +232,15 @@ class EventListenerTest extends TestCase
     public function testStoreEventListeners()
     {
         $scope = [
-            "company" => [
-                "address" => "nowhere"
-            ]
+            'company' => [
+                'address' => 'nowhere',
+            ],
         ];
         $this->assertEquals(0, CustomEventListener::count());
 
         $user = User::factory()->hasConsumerAbility()->create();
         $response = $this->actingAs($user)->postJson('custom/events/company-registered/listeners', [
-            'scope' => $scope
+            'scope' => $scope,
         ]);
         $response->assertCreated();
         $this->assertEquals(1, CustomEventListener::count());
@@ -246,10 +248,10 @@ class EventListenerTest extends TestCase
 
         $response->assertJson([
             'data' => [
-                "event" => "company-registered",
-                "scope" => $scope,
-                "id" => $eventListener->id
-            ]
+                'event' => 'company-registered',
+                'scope' => $scope,
+                'id' => $eventListener->id,
+            ],
         ]);
         $this->assertEquals('company-registered', $eventListener->event);
         $this->assertEquals($scope, $eventListener->scope);
@@ -271,21 +273,21 @@ class EventListenerTest extends TestCase
         $this->assertEquals(null, $eventListener->scope);
 
         $scope = [
-            "company" => [
-                "address" => "nowhere"
-            ]
+            'company' => [
+                'address' => 'nowhere',
+            ],
         ];
         $user = User::factory()->hasConsumerAbility()->create();
         $response = $this->actingAs($user)->putJson("custom/event-listeners/$eventListener->id", [
-            'scope' => $scope
+            'scope' => $scope,
         ]);
         $response->assertOk();
         $response->assertJson([
             'data' => [
-                "id" => $eventListener->id,
-                "event" => "company-registered",
-                "scope" => $scope,
-            ]
+                'id' => $eventListener->id,
+                'event' => 'company-registered',
+                'scope' => $scope,
+            ],
         ]);
         $storedEventListener = CustomEventListener::findOrFail($eventListener->id);
         $this->assertEquals($scope, $storedEventListener->scope);
@@ -328,14 +330,14 @@ class EventListenerTest extends TestCase
         $response->assertJson([
             'data' => [
                 [
-                    "id" => $customActionSettingss[0]->id,
-                    "type" => "send-email"
+                    'id' => $customActionSettingss[0]->id,
+                    'type' => 'send-email',
                 ],
                 [
-                    "id" => $customActionSettingss[1]->id,
-                    "type" => "send-email"
-                ]
-            ]
+                    'id' => $customActionSettingss[1]->id,
+                    'type' => 'send-email',
+                ],
+            ],
         ]);
     }
 
@@ -351,7 +353,7 @@ class EventListenerTest extends TestCase
             'settings' => [
                 'to' => [12],
                 'attachments' => ['logo'],
-            ]
+            ],
         ];
         $response = $this->actingAs($user)->postJson("custom/event-listeners/$eventListener->id/actions", $actionValues);
         $response->assertOk();
@@ -361,7 +363,7 @@ class EventListenerTest extends TestCase
         $actionValues['id'] = $customActionSettings->id;
 
         $response->assertJson([
-            'data' => $actionValues
+            'data' => $actionValues,
         ]);
         $this->assertEquals('send-email', $customActionSettings->type);
         $this->assertEquals($actionValues['settings'], $customActionSettings->settings);
@@ -386,7 +388,6 @@ class EventListenerTest extends TestCase
         $this->assertEquals(1, $eventListener->actions()->count());
         $this->assertEquals(1, CustomActionSettings::count());
         $this->assertNull(CustomActionSettings::find($actionMustBeDeleted->id));
-
 
         $response = $this->actingAs($user)->postJson(
             "custom/event-listeners/$eventListener->id/actions/$actionMustNotBeDeleted->id/remove"

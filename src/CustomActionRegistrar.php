@@ -32,12 +32,12 @@ class CustomActionRegistrar
      */
     public function getTargetBindings()
     {
-        if (!$this->targetBindings) {
+        if (! $this->targetBindings) {
             $bindings = config('custom-action.target_bindings', []);
             if ($bindings instanceof \Closure) {
                 $bindings = $bindings();
             }
-            if (!is_array($bindings)) {
+            if (! is_array($bindings)) {
                 throw new \Exception('invalid config target_bindings, must be an array or a closure that return an array');
             }
             $this->targetBindings = [];
@@ -46,7 +46,7 @@ class CustomActionRegistrar
                     $key = $value;
                     $value = 'string';
                 }
-                $this->targetBindings['to.' . $key] = $value;
+                $this->targetBindings['to.'.$key] = $value;
             }
         }
 

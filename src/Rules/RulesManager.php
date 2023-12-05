@@ -35,6 +35,7 @@ class RulesManager
         if ($schemaType == 'template') {
             return [new Template()];
         }
+
         return $schemaType;
     }
 }

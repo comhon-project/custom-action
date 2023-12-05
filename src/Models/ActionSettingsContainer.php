@@ -6,7 +6,6 @@ use Illuminate\Database\Eloquent\Model;
 
 abstract class ActionSettingsContainer extends Model
 {
-
     /**
      * @return \Illuminate\Database\Eloquent\Relations\MorphMany
      */
@@ -17,20 +16,21 @@ abstract class ActionSettingsContainer extends Model
 
     /**
      * get settings + localized settings according given locale
-     * 
-     * @param string $locale
+     *
+     * @param  string  $locale
      * @return array
      */
     public function getMergedSettings($locale = null)
     {
         $localizedSettings = $this->getLocalizedSettings($locale);
+
         return $localizedSettings ? array_merge($this->settings, $localizedSettings) : $this->settings;
     }
 
     /**
      * get localized settings according given locale
-     * 
-     * @param string $locale
+     *
+     * @param  string  $locale
      * @return array
      */
     public function getLocalizedSettings($locale = null)
@@ -43,12 +43,12 @@ abstract class ActionSettingsContainer extends Model
             $usedLocale = $locale;
         }
         $appLocale = config('app.locale');
-        if (!$localizedSettings && $appLocale !== $locale) {
+        if (! $localizedSettings && $appLocale !== $locale) {
             $localizedSettings = $this->localizedSettings()->where('locale', $appLocale)->first();
             $usedLocale = $appLocale;
         }
         $fallbackLocale = config('app.fallback_locale');
-        if (!$localizedSettings && $fallbackLocale !== $locale && $fallbackLocale !== $appLocale) {
+        if (! $localizedSettings && $fallbackLocale !== $locale && $fallbackLocale !== $appLocale) {
             $localizedSettings = $this->localizedSettings()->where('locale', $fallbackLocale)->first();
             $usedLocale = $fallbackLocale;
         }

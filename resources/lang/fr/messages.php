@@ -2,6 +2,6 @@
 
 return [
     'actions' => [
-        "send-email" => "envoyer un email"
-    ]
+        'send-email' => 'envoyer un email',
+    ],
 ];

@@ -2,10 +2,10 @@
 
 namespace Comhon\CustomAction\Http\Controllers;
 
-use Comhon\CustomAction\Models\ActionSettingsContainer;
+use Comhon\CustomAction\Contracts\CustomActionInterface;
 use Comhon\CustomAction\Models\ActionLocalizedSettings;
 use Comhon\CustomAction\Models\ActionScopedSettings;
-use Comhon\CustomAction\Contracts\CustomActionInterface;
+use Comhon\CustomAction\Models\ActionSettingsContainer;
 use Comhon\CustomAction\Resolver\ModelResolverContainer;
 use Comhon\CustomAction\Resources\ActionLocalizedSettingsResource;
 use Comhon\CustomAction\Rules\RulesManager;

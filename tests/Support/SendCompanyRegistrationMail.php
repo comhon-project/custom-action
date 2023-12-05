@@ -15,7 +15,7 @@ class SendCompanyRegistrationMail extends SendTemplatedMail implements CustomUni
             'logo' => 'file',
         ];
     }
-    
+
     public function getSettingsSchema(): array
     {
         return [

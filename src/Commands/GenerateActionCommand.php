@@ -27,7 +27,6 @@ class GenerateActionCommand extends Command
                 break;
             default:
                 throw new \Exception("invalid extends parameter '{$extendsArg}'");
-                
         }
         $explode = explode('\\', $useExtends);
         $extends = $explode[count($explode) - 1];
@@ -57,7 +56,7 @@ class $name extends $extends implements $implements
 
 EOT;
 
-        if (!file_exists($directory)) {
+        if (! file_exists($directory)) {
             mkdir($directory, 0775, true);
         }
         file_put_contents("$directory/$name.php", $fileContent);

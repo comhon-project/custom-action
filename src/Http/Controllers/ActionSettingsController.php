@@ -2,9 +2,9 @@
 
 namespace Comhon\CustomAction\Http\Controllers;
 
-use Comhon\CustomAction\Models\CustomActionSettings;
 use Comhon\CustomAction\Contracts\CustomActionInterface;
 use Comhon\CustomAction\Contracts\CustomUniqueActionInterface;
+use Comhon\CustomAction\Models\CustomActionSettings;
 use Comhon\CustomAction\Resolver\ModelResolverContainer;
 use Comhon\CustomAction\Rules\RulesManager;
 use Illuminate\Http\Request;
@@ -25,17 +25,17 @@ class ActionSettingsController extends Controller
     public function show(ModelResolverContainer $resolver, $actionKeyOrId)
     {
         $customActionSettings = null;
-        if (is_integer($actionKeyOrId) || is_numeric($actionKeyOrId)) {
+        if (is_int($actionKeyOrId) || is_numeric($actionKeyOrId)) {
             $customActionSettings = CustomActionSettings::findOrFail($actionKeyOrId);
         } else {
             $actionUniqueName = $actionKeyOrId;
-            if (!$resolver->isAllowedAction($actionUniqueName)) {
+            if (! $resolver->isAllowedAction($actionUniqueName)) {
                 throw new NotFoundHttpException('not found');
             }
 
             $actionClass = $resolver->getClass($actionUniqueName);
-            if (!is_subclass_of($actionClass, CustomUniqueActionInterface::class)) {
-                throw new UnprocessableEntityHttpException("action must be a unique action");
+            if (! is_subclass_of($actionClass, CustomUniqueActionInterface::class)) {
+                throw new UnprocessableEntityHttpException('action must be a unique action');
             }
             $customActionSettingss = CustomActionSettings::where('type', $actionUniqueName)->get();
             if ($customActionSettingss->count() == 0) {
@@ -106,6 +106,7 @@ class ActionSettingsController extends Controller
     public function listActionLocalizedSettings(CustomActionSettings $customActionSettings)
     {
         $paginator = $customActionSettings->localizedSettings()->select('id', 'locale')->paginate();
+
         return JsonResource::collection($paginator);
     }
 }

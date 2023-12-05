@@ -31,7 +31,6 @@ class CustomEventListenerFactory extends Factory
         ];
     }
 
-
     /**
      * company registration listener.
      */

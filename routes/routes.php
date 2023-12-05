@@ -11,7 +11,7 @@ use Illuminate\Support\Facades\Route;
 $attributes = [
     'domain' => config('custom-action.domain'),
     'prefix' => config('custom-action.prefix'),
-    'middleware' => config('custom-action.middleware')
+    'middleware' => config('custom-action.middleware'),
 ];
 Route::group($attributes, function () {
     Route::get('actions', [CustomActionController::class, 'listActions']);

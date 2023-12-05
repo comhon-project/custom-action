@@ -5,8 +5,8 @@ namespace Tests\Unit;
 use Comhon\CustomAction\Resolver\ModelResolverContainer;
 use Comhon\CustomAction\Tests\Support\Models\Company;
 use Comhon\CustomAction\Tests\Support\Models\User;
-use Comhon\ModelResolverContract\ModelResolverInterface;
 use Comhon\CustomAction\Tests\TestCase;
+use Comhon\ModelResolverContract\ModelResolverInterface;
 
 class ModelResolverTest extends TestCase
 {
@@ -24,10 +24,10 @@ class ModelResolverTest extends TestCase
             ],
             [
                 'custom-unique-action' => [
-                    'send-company-email', 'my-unique-action'
+                    'send-company-email', 'my-unique-action',
                 ],
                 'custom-generic-action' => [
-                    'send-email'
+                    'send-email',
                 ],
             ]
         );

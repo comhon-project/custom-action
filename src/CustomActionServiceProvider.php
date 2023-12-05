@@ -2,11 +2,11 @@
 
 namespace Comhon\CustomAction;
 
-use Spatie\LaravelPackageTools\Package;
-use Spatie\LaravelPackageTools\PackageServiceProvider;
 use Comhon\CustomAction\Commands\GenerateActionCommand;
 use Comhon\CustomAction\Resolver\ModelResolverContainer;
 use Illuminate\Contracts\Foundation\Application;
+use Spatie\LaravelPackageTools\Package;
+use Spatie\LaravelPackageTools\PackageServiceProvider;
 
 class CustomActionServiceProvider extends PackageServiceProvider
 {
@@ -31,6 +31,7 @@ class CustomActionServiceProvider extends PackageServiceProvider
     {
         $this->app->singleton(ModelResolverContainer::class, function (Application $app) {
             $resolverClass = $app['config']['custom-action.model_resolver'];
+
             return new ModelResolverContainer($app->make($resolverClass));
         });
     }

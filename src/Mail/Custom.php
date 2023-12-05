@@ -4,7 +4,6 @@ namespace Comhon\CustomAction\Mail;
 
 use Comhon\TemplateRenderer\Facades\Template;
 use Illuminate\Bus\Queueable;
-use Illuminate\Contracts\Queue\ShouldQueue;
 use Illuminate\Mail\Mailable;
 use Illuminate\Mail\Mailables\Attachment;
 use Illuminate\Mail\Mailables\Content;
@@ -18,11 +17,11 @@ class Custom extends Mailable
     /**
      * Create a new message instance.
      *
-     * @param array $mail mail informations like subject, body...
-     * @param array $replacements list of values that may be replaced in mail content
-     * @param string $defaultLocale the default locale that should be used
-     * @param string $defaultTimezone the default timezone that should be used
-     * @param string $preferredTimezone the timezone to use when needed based on reader preferences.
+     * @param  array  $mail mail informations like subject, body...
+     * @param  array  $replacements list of values that may be replaced in mail content
+     * @param  string  $defaultLocale the default locale that should be used
+     * @param  string  $defaultTimezone the default timezone that should be used
+     * @param  string  $preferredTimezone the timezone to use when needed based on reader preferences.
      */
     public function __construct(
         private array $mail,
@@ -32,7 +31,7 @@ class Custom extends Mailable
         private ?string $preferredTimezone = null
     ) {
         foreach (['subject', 'body'] as $property) {
-            if (!isset($this->mail[$property])) {
+            if (! isset($this->mail[$property])) {
                 throw new \Exception("missing required mail $property");
             }
         }
@@ -87,6 +86,7 @@ class Custom extends Mailable
                 $attachments[] = Attachment::fromPath($path);
             }
         }
+
         return $attachments;
     }
 }

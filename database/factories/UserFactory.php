@@ -31,7 +31,7 @@ class UserFactory extends Factory
             'preferred_locale' => 'en',
             'preferred_timezone' => 'UTC',
             'last_login_at' => '2022-12-12T00:00:00Z',
-            'verified_at' => '2022-11-11'
+            'verified_at' => '2022-11-11',
         ];
     }
 

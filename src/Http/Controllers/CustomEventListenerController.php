@@ -2,9 +2,9 @@
 
 namespace Comhon\CustomAction\Http\Controllers;
 
+use Comhon\CustomAction\Contracts\CustomUniqueActionInterface;
 use Comhon\CustomAction\Models\CustomActionSettings;
 use Comhon\CustomAction\Models\CustomEventListener;
-use Comhon\CustomAction\Contracts\CustomUniqueActionInterface;
 use Comhon\CustomAction\Resolver\ModelResolverContainer;
 use Comhon\CustomAction\Rules\RulesManager;
 use Illuminate\Http\Request;
@@ -22,11 +22,11 @@ class CustomEventListenerController extends Controller
      */
     public function store(Request $request, ModelResolverContainer $resolver, $eventUniqueName)
     {
-        if (!$resolver->isAllowedEvent($eventUniqueName)) {
+        if (! $resolver->isAllowedEvent($eventUniqueName)) {
             throw new NotFoundHttpException('not found');
         }
         $request->validate([
-            'scope' => 'array|nullable'
+            'scope' => 'array|nullable',
         ]);
 
         $eventListener = new CustomEventListener();
@@ -45,10 +45,11 @@ class CustomEventListenerController extends Controller
     public function update(Request $request, CustomEventListener $eventListener)
     {
         $validated = $request->validate([
-            'scope' => 'array|nullable'
+            'scope' => 'array|nullable',
         ]);
         $eventListener->scope = $validated['scope'] ?? null;
         $eventListener->save();
+
         return new JsonResource($eventListener);
     }
 
@@ -62,6 +63,7 @@ class CustomEventListenerController extends Controller
         DB::transaction(function () use ($eventListener) {
             $eventListener->delete();
         });
+
         return response('', 204);
     }
 
@@ -91,7 +93,7 @@ class CustomEventListenerController extends Controller
             ->filter(fn ($key) => $key !== null);
 
         $validated = $request->validate([
-            'type' => 'required|string|in:' . $allowedTypes->implode(','),
+            'type' => 'required|string|in:'.$allowedTypes->implode(','),
         ]);
         $type = $validated['type'];
         $actionClass = $resolver->getClass($type);
@@ -107,6 +109,7 @@ class CustomEventListenerController extends Controller
 
         $customActionSettings = $customActionSettings->toArray();
         $customActionSettings['type'] = $type;
+
         return new JsonResource($customActionSettings);
     }
 
@@ -123,10 +126,11 @@ class CustomEventListenerController extends Controller
         DB::transaction(function () use ($eventListener, $customActionSettings, $resolver) {
             $eventListener->actions()->detach($customActionSettings);
             $class = $resolver->getClass($customActionSettings->type);
-            if (!is_subclass_of($class, CustomUniqueActionInterface::class)) {
+            if (! is_subclass_of($class, CustomUniqueActionInterface::class)) {
                 $customActionSettings->delete();
             }
         });
+
         return response('', 204);
     }
 }

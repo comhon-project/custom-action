@@ -48,9 +48,6 @@ class CustomActionSettings extends ActionSettingsContainer
 
     /**
      * get settings container according scope and given values
-     * 
-     * @param array $values
-     * @return ActionSettingsContainer
      */
     public function getSettingsContainer(array $values): ActionSettingsContainer
     {
@@ -71,6 +68,7 @@ class CustomActionSettings extends ActionSettingsContainer
                 break;
             }
         }
+
         return $model;
     }
 }

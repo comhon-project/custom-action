@@ -9,10 +9,10 @@ use Illuminate\Mail\Mailables\Attachment;
 
 class CustomMailTest extends TestCase
 {
-    private static $asset = __DIR__ 
-        . DIRECTORY_SEPARATOR . '..' 
-        . DIRECTORY_SEPARATOR . 'Data' 
-        . DIRECTORY_SEPARATOR . 'jc.jpeg';
+    private static $asset = __DIR__
+        .DIRECTORY_SEPARATOR.'..'
+        .DIRECTORY_SEPARATOR.'Data'
+        .DIRECTORY_SEPARATOR.'jc.jpeg';
 
     public function testCustomMail()
     {

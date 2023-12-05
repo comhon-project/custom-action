@@ -12,7 +12,6 @@ use Illuminate\Routing\Controller;
 
 class ActionLocalizedSettingsController extends Controller
 {
-    
     /**
      * Display localized settings.
      *
@@ -56,6 +55,7 @@ class ActionLocalizedSettingsController extends Controller
     {
         $localizedSettings = $localizedSetting;
         $localizedSettings->delete();
+
         return response('', 204);
     }
 }

@@ -2,9 +2,9 @@
 
 namespace Comhon\CustomAction\Http\Controllers;
 
-use Comhon\CustomAction\Models\CustomActionSettings;
-use Comhon\CustomAction\Models\ActionScopedSettings;
 use Comhon\CustomAction\Contracts\CustomActionInterface;
+use Comhon\CustomAction\Models\ActionScopedSettings;
+use Comhon\CustomAction\Models\CustomActionSettings;
 use Comhon\CustomAction\Resolver\ModelResolverContainer;
 use Comhon\CustomAction\Rules\RulesManager;
 use Illuminate\Http\Request;
@@ -81,6 +81,7 @@ class ActionScopedSettingsController extends Controller
         DB::transaction(function () use ($scopedSettings) {
             $scopedSettings->delete();
         });
+
         return response('', 204);
     }
 
@@ -105,6 +106,7 @@ class ActionScopedSettingsController extends Controller
     public function listScopedSettingsLocalizedSettings(ActionScopedSettings $scopedSettings)
     {
         $paginator = $scopedSettings->localizedSettings()->select('id', 'locale')->paginate();
+
         return JsonResource::collection($paginator);
     }
 }

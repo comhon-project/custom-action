@@ -2,22 +2,22 @@
 
 namespace Comhon\CustomAction\Actions;
 
-use Comhon\CustomAction\Contracts\TargetableEventInterface;
-use Comhon\CustomAction\Mail\Custom;
-use Comhon\CustomAction\Models\CustomActionSettings;
-use Illuminate\Foundation\Auth\User;
-use Comhon\CustomAction\CustomActionRegistrar;
 use Comhon\CustomAction\Contracts\CustomActionInterface;
 use Comhon\CustomAction\Contracts\CustomEventInterface;
 use Comhon\CustomAction\Contracts\CustomUniqueActionInterface;
+use Comhon\CustomAction\Contracts\TargetableEventInterface;
 use Comhon\CustomAction\Contracts\TriggerableFromEventInterface;
+use Comhon\CustomAction\CustomActionRegistrar;
+use Comhon\CustomAction\Mail\Custom;
+use Comhon\CustomAction\Models\CustomActionSettings;
 use Comhon\CustomAction\Resolver\ModelResolverContainer;
 use Illuminate\Contracts\Translation\HasLocalePreference;
+use Illuminate\Foundation\Auth\User;
 use Illuminate\Support\Arr;
 use Illuminate\Support\Collection;
 use Illuminate\Support\Facades\Mail;
 
-class SendTemplatedMail implements TriggerableFromEventInterface, CustomActionInterface
+class SendTemplatedMail implements CustomActionInterface, TriggerableFromEventInterface
 {
     public function __construct(private CustomActionRegistrar $registrar, private ModelResolverContainer $resolver)
     {
@@ -25,8 +25,6 @@ class SendTemplatedMail implements TriggerableFromEventInterface, CustomActionIn
 
     /**
      * vefify if action concern a targeted user
-     *
-     * @return bool
      */
     public function hasTargetUser(): bool
     {
@@ -35,8 +33,6 @@ class SendTemplatedMail implements TriggerableFromEventInterface, CustomActionIn
 
     /**
      * Get action settings schema
-     *
-     * @return array
      */
     public function getSettingsSchema(): array
     {
@@ -44,11 +40,9 @@ class SendTemplatedMail implements TriggerableFromEventInterface, CustomActionIn
             'attachments' => 'array:file',
         ];
     }
-    
+
     /**
      * Get action localized settings schema
-     *
-     * @return array
      */
     public function getLocalizedSettingsSchema(): array
     {
@@ -60,8 +54,6 @@ class SendTemplatedMail implements TriggerableFromEventInterface, CustomActionIn
 
     /**
      * Get action binding schema
-     *
-     * @return array
      */
     public function getBindingSchema(): array
     {
@@ -70,9 +62,10 @@ class SendTemplatedMail implements TriggerableFromEventInterface, CustomActionIn
 
     public function getAttachments($bindings, $settings)
     {
-        if (!isset($settings['attachments'])) {
+        if (! isset($settings['attachments'])) {
             return [];
         }
+
         return collect($settings['attachments'])
             ->map(fn ($property) => Arr::get($bindings, $property))
             ->filter(fn ($path) => $path != null);
@@ -81,7 +74,7 @@ class SendTemplatedMail implements TriggerableFromEventInterface, CustomActionIn
     public function handleFromEvent(
         CustomEventInterface $event,
         CustomActionSettings $customActionSettings,
-        array $bindings = null
+        ?array $bindings = null
     ) {
         $to = $event instanceof TargetableEventInterface ? $event->target() : null;
         $allowedEventBindings = $event->getBindingSchema();
@@ -89,14 +82,14 @@ class SendTemplatedMail implements TriggerableFromEventInterface, CustomActionIn
     }
 
     /**
-     * @param array $bindings used to define scope, replacement and attachments
-     * @param \Illuminate\Foundation\Auth\User $to used only if 'to' is not defined in action settings
-     * @param bool $shouldQueue override should_queue action setting
+     * @param  array  $bindings used to define scope, replacement and attachments
+     * @param  \Illuminate\Foundation\Auth\User  $to used only if 'to' is not defined in action settings
+     * @param  bool  $shouldQueue override should_queue action setting
      */
-    public function handle(array $bindings, User $to = null, bool $shouldQueue = null)
+    public function handle(array $bindings, ?User $to = null, ?bool $shouldQueue = null)
     {
-        if (!($this instanceof CustomUniqueActionInterface)) {
-            throw new \Exception('must be called from an instance of ' . CustomUniqueActionInterface::class);
+        if (! ($this instanceof CustomUniqueActionInterface)) {
+            throw new \Exception('must be called from an instance of '.CustomUniqueActionInterface::class);
         }
         $class = get_class($this);
         $type = $this->resolver->getUniqueName($class);
@@ -112,17 +105,17 @@ class SendTemplatedMail implements TriggerableFromEventInterface, CustomActionIn
 
     /**
      * @param \Comhon\CustomAction\Models\CustomActionSettings action settings
-     * @param array $bindings used to define scope, replacements and attachments
-     * @param \Illuminate\Foundation\Auth\User $to used only if 'to' is not defined in action settings
-     * @param bool $shouldQueue override should_queue action setting
-     * @param array $additionalAllowedBindings allowed additional bindings
+     * @param  array  $bindings used to define scope, replacements and attachments
+     * @param  \Illuminate\Foundation\Auth\User  $to used only if 'to' is not defined in action settings
+     * @param  bool  $shouldQueue override should_queue action setting
+     * @param  array  $additionalAllowedBindings allowed additional bindings
      */
     private function handleFromAction(
         CustomActionSettings $customActionSettings,
-        array $bindings = null,
-        User $to = null,
-        bool $shouldQueue = null,
-        array $additionalAllowedBindings = null
+        ?array $bindings = null,
+        ?User $to = null,
+        ?bool $shouldQueue = null,
+        ?array $additionalAllowedBindings = null
     ) {
         $shouldQueue ??= $customActionSettings->pivot ? $customActionSettings->pivot->should_queue : false;
         $settingsContainer = $customActionSettings->getSettingsContainer($bindings);
@@ -155,9 +148,8 @@ class SendTemplatedMail implements TriggerableFromEventInterface, CustomActionIn
             $locale = $mailTo instanceof HasLocalePreference ? $mailTo->preferredLocale() : null;
             $localeKey = $locale ?? 'undefined';
             $localizedMails[$localeKey] ??= $settingsContainer->getMergedSettings($locale);
-            if (!isset($localizedMails[$localeKey]['__locale__'])) {
-                throw new \Exception("localized mail values not found");
-                
+            if (! isset($localizedMails[$localeKey]['__locale__'])) {
+                throw new \Exception('localized mail values not found');
             }
             $localeUsed = $localizedMails[$localeKey]['__locale__'];
 
@@ -172,9 +164,9 @@ class SendTemplatedMail implements TriggerableFromEventInterface, CustomActionIn
     }
 
     /**
-     * @param array $allowedToBindings
-     * @param array $originalBindings
-     * @param array $bindings
+     * @param  array  $allowedToBindings
+     * @param  array  $originalBindings
+     * @param  array  $bindings
      */
     private function addBindings($allowedToBindings, $originalBindings, &$bindings)
     {
@@ -193,11 +185,10 @@ class SendTemplatedMail implements TriggerableFromEventInterface, CustomActionIn
     }
 
     /**
-     * @param array $mail mail informations like subject, body...
-     * @param \Illuminate\Foundation\Auth\User $to the mail receiver
-     * @param array $replacements
-     * @param bool $shouldQueue override should_queue action setting
-     * @param string $locale locale to use for replacements
+     * @param  array  $mail mail informations like subject, body...
+     * @param  \Illuminate\Foundation\Auth\User  $to the mail receiver
+     * @param  bool  $shouldQueue override should_queue action setting
+     * @param  string  $locale locale to use for replacements
      *                       if not specified, locale will be taken
      *                       - from user preferred locale (if user instance of HasLocalePreference)
      *                       - or from default config fallback locale
@@ -207,11 +198,11 @@ class SendTemplatedMail implements TriggerableFromEventInterface, CustomActionIn
         User $to,
         array $replacements,
         bool $shouldQueue = false,
-        string $defaultLocale = null,
-        string $defaultTimezone = null
+        ?string $defaultLocale = null,
+        ?string $defaultTimezone = null
     ) {
         $sendMethod = $shouldQueue ? 'queue' : 'send';
-        $defaultLocale ??= $to instanceof HasLocalePreference && $to->preferredLocale() 
+        $defaultLocale ??= $to instanceof HasLocalePreference && $to->preferredLocale()
             ? $to->preferredLocale() : $defaultLocale;
         $preferredTimezone = method_exists($to, 'preferredTimezone') ? $to->preferredTimezone() : null;
         Mail::to($to)->$sendMethod(

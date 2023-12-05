@@ -29,7 +29,7 @@ class CustomEventListener extends Model
             foreach ($actions as $action) {
                 /** @var ModelResolverContainer $resolver */
                 $resolver = app(ModelResolverContainer::class);
-                if (!is_subclass_of($resolver->getClass($action->type), CustomUniqueActionInterface::class)) {
+                if (! is_subclass_of($resolver->getClass($action->type), CustomUniqueActionInterface::class)) {
                     $action->delete();
                 }
             }
