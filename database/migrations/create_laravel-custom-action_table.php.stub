@@ -41,7 +41,7 @@ return new class extends Migration
             $table->json('settings');
             $table->timestamps();
 
-            $table->unique(['locale', 'localizable_id', 'localizable_type']);
+            $table->unique(['locale', 'localizable_id', 'localizable_type'], 'action_localized_settings_uk');
         });
         Schema::create('custom_action_settings_custom_event_listener', function (Blueprint $table) {
             $table->id();

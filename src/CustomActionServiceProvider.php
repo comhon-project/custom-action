@@ -20,7 +20,6 @@ class CustomActionServiceProvider extends PackageServiceProvider
         $package
             ->name('laravel-custom-action')
             ->hasConfigFile()
-            ->hasViews()
             ->hasMigration('create_laravel-custom-action_table')
             ->hasTranslations()
             ->hasRoute('routes')
