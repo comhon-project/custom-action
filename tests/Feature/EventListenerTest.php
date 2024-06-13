@@ -3,7 +3,6 @@
 namespace Tests\Feature;
 
 use Comhon\CustomAction\Actions\SendTemplatedMail;
-use Comhon\CustomAction\CustomActionRegistrar;
 use Comhon\CustomAction\Mail\Custom;
 use Comhon\CustomAction\Models\ActionLocalizedSettings;
 use Comhon\CustomAction\Models\CustomActionSettings;

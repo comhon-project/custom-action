@@ -3,9 +3,7 @@
 namespace Tests\Unit;
 
 use Comhon\CustomAction\CustomActionRegistrar;
-use Comhon\CustomAction\CustomActionServiceProvider;
 use Comhon\CustomAction\Tests\TestCase;
-use Mockery\MockInterface;
 
 class CustomActionRegistrarTest extends TestCase
 {

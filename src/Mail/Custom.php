@@ -17,11 +17,11 @@ class Custom extends Mailable
     /**
      * Create a new message instance.
      *
-     * @param  array  $mail mail informations like subject, body...
-     * @param  array  $replacements list of values that may be replaced in mail content
-     * @param  string  $defaultLocale the default locale that should be used
-     * @param  string  $defaultTimezone the default timezone that should be used
-     * @param  string  $preferredTimezone the timezone to use when needed based on reader preferences.
+     * @param  array  $mail  mail informations like subject, body...
+     * @param  array  $replacements  list of values that may be replaced in mail content
+     * @param  string  $defaultLocale  the default locale that should be used
+     * @param  string  $defaultTimezone  the default timezone that should be used
+     * @param  string  $preferredTimezone  the timezone to use when needed based on reader preferences.
      */
     public function __construct(
         private array $mail,

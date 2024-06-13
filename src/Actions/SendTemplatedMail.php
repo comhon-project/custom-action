@@ -82,9 +82,9 @@ class SendTemplatedMail implements CustomActionInterface, TriggerableFromEventIn
     }
 
     /**
-     * @param  array  $bindings used to define scope, replacement and attachments
-     * @param  \Illuminate\Foundation\Auth\User  $to used only if 'to' is not defined in action settings
-     * @param  bool  $shouldQueue override should_queue action setting
+     * @param  array  $bindings  used to define scope, replacement and attachments
+     * @param  \Illuminate\Foundation\Auth\User  $to  used only if 'to' is not defined in action settings
+     * @param  bool  $shouldQueue  override should_queue action setting
      */
     public function handle(array $bindings, ?User $to = null, ?bool $shouldQueue = null)
     {
@@ -105,10 +105,10 @@ class SendTemplatedMail implements CustomActionInterface, TriggerableFromEventIn
 
     /**
      * @param \Comhon\CustomAction\Models\CustomActionSettings action settings
-     * @param  array  $bindings used to define scope, replacements and attachments
-     * @param  \Illuminate\Foundation\Auth\User  $to used only if 'to' is not defined in action settings
-     * @param  bool  $shouldQueue override should_queue action setting
-     * @param  array  $additionalAllowedBindings allowed additional bindings
+     * @param  array  $bindings  used to define scope, replacements and attachments
+     * @param  \Illuminate\Foundation\Auth\User  $to  used only if 'to' is not defined in action settings
+     * @param  bool  $shouldQueue  override should_queue action setting
+     * @param  array  $additionalAllowedBindings  allowed additional bindings
      */
     private function handleFromAction(
         CustomActionSettings $customActionSettings,
@@ -185,13 +185,13 @@ class SendTemplatedMail implements CustomActionInterface, TriggerableFromEventIn
     }
 
     /**
-     * @param  array  $mail mail informations like subject, body...
-     * @param  \Illuminate\Foundation\Auth\User  $to the mail receiver
-     * @param  bool  $shouldQueue override should_queue action setting
-     * @param  string  $locale locale to use for replacements
-     *                       if not specified, locale will be taken
-     *                       - from user preferred locale (if user instance of HasLocalePreference)
-     *                       - or from default config fallback locale
+     * @param  array  $mail  mail informations like subject, body...
+     * @param  \Illuminate\Foundation\Auth\User  $to  the mail receiver
+     * @param  bool  $shouldQueue  override should_queue action setting
+     * @param  string  $locale  locale to use for replacements
+     *                          if not specified, locale will be taken
+     *                          - from user preferred locale (if user instance of HasLocalePreference)
+     *                          - or from default config fallback locale
      */
     public function send(
         array $mail,
