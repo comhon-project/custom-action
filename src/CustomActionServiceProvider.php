@@ -3,8 +3,10 @@
 namespace Comhon\CustomAction;
 
 use Comhon\CustomAction\Commands\GenerateActionCommand;
+use Comhon\CustomAction\Contracts\CustomEventInterface;
 use Comhon\CustomAction\Resolver\ModelResolverContainer;
 use Illuminate\Contracts\Foundation\Application;
+use Illuminate\Support\Facades\Event;
 use Spatie\LaravelPackageTools\Package;
 use Spatie\LaravelPackageTools\PackageServiceProvider;
 
@@ -37,10 +39,9 @@ class CustomActionServiceProvider extends PackageServiceProvider
 
     public function packageBooted()
     {
-        try {
-            $this->app->get(CustomActionRegistrar::class)->subscribeListeners();
-        } catch (\Illuminate\Database\QueryException $e) {
-            // do nothing, QueryException may happen when migrate database from scratch.
-        }
+        Event::listen(
+            CustomEventInterface::class,
+            [CustomEventHandler::class, 'handle']
+        );
     }
 }

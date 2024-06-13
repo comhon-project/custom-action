@@ -28,14 +28,4 @@ class CustomActionRegistrarTest extends TestCase
         config(['custom-action.target_bindings' => 'value']);
         $this->registrar()->getTargetBindings();
     }
-
-    public function testSubscribeException()
-    {
-        $mock = $this->partialMock(CustomActionRegistrar::class, function (MockInterface $mock) {
-            $mock->shouldReceive('subscribeListeners')->andThrow(
-                new \Illuminate\Database\QueryException('test', 'test', [], new \Exception('test'))
-            )->once();
-        });
-        (new CustomActionServiceProvider(app()))->packageBooted();
-    }
 }

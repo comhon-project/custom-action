@@ -65,9 +65,6 @@ class EventListenerTest extends TestCase
             true
         )->create();
 
-        // for test we must call subscribeListeners after we have created the event listener
-        app(CustomActionRegistrar::class)->subscribeListeners();
-
         Bus::fake();
         Mail::fake();
         CompanyRegistered::dispatch($company, $targetUser);
@@ -119,9 +116,6 @@ class EventListenerTest extends TestCase
             $scopeCompanyName
         )->create();
 
-        // for test we must call subscribeListeners after we have created the event listener
-        app(CustomActionRegistrar::class)->subscribeListeners();
-
         Mail::fake();
         CompanyRegistered::dispatch($company, $targetUser);
 
@@ -140,9 +134,6 @@ class EventListenerTest extends TestCase
 
         // create event listener for CompanyRegistered event
         CustomEventListener::factory()->genericRegistrationCompany()->create();
-
-        // for test we must call subscribeListeners after we have created the event listener
-        app(CustomActionRegistrar::class)->subscribeListeners();
 
         Mail::fake();
         CompanyRegistered::dispatch($company, $user);
@@ -182,9 +173,6 @@ class EventListenerTest extends TestCase
 
         // create event listener for CompanyRegistered event
         CustomEventListener::factory()->genericRegistrationCompany($otherUsers->pluck('id')->all(), null, true)->create();
-
-        // for test we must call subscribeListeners after we have created the event listener
-        app(CustomActionRegistrar::class)->subscribeListeners();
 
         Bus::fake();
         CompanyRegistered::dispatch($company, $targetUser);
