@@ -47,14 +47,13 @@ class CustomEventListenerFactory extends Factory
                 'scope' => $companyNameScope ? ['company' => ['name' => $companyNameScope]] : null,
             ];
         })->afterCreating(function (CustomEventListener $listener) use ($toOtherUserId, $shoudQueue, $withAttachement) {
+            $type = $shoudQueue ? 'queue-email' : 'send-email';
             $listener->actions()->attach(
-                CustomActionSettings::factory()->sendMailRegistrationCompany(null, true, false, $withAttachement)->create(),
-                ['should_queue' => $shoudQueue],
+                CustomActionSettings::factory()->sendMailRegistrationCompany(null, true, $type, $withAttachement)->create()
             );
             if ($toOtherUserId) {
                 $listener->actions()->attach(
-                    CustomActionSettings::factory()->sendMailRegistrationCompany($toOtherUserId)->create(),
-                    ['should_queue' => $shoudQueue]
+                    CustomActionSettings::factory()->sendMailRegistrationCompany($toOtherUserId, false, $type)->create()
                 );
             }
         });

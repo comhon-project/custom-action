@@ -41,6 +41,6 @@ class CustomEventListener extends Model
      */
     public function actions()
     {
-        return $this->belongsToMany(CustomActionSettings::class)->withPivot(['should_queue']);
+        return $this->belongsToMany(CustomActionSettings::class);
     }
 }

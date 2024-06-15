@@ -5,10 +5,12 @@ namespace Comhon\CustomAction\Actions;
 use Comhon\CustomAction\Contracts\CustomActionInterface;
 use Comhon\CustomAction\Contracts\CustomEventInterface;
 use Comhon\CustomAction\Contracts\CustomUniqueActionInterface;
+use Comhon\CustomAction\Contracts\HasTimezonePreferenceInterface;
 use Comhon\CustomAction\Contracts\TargetableEventInterface;
 use Comhon\CustomAction\Contracts\TriggerableFromEventInterface;
 use Comhon\CustomAction\CustomActionRegistrar;
 use Comhon\CustomAction\Mail\Custom;
+use Comhon\CustomAction\Models\ActionSettingsContainer;
 use Comhon\CustomAction\Models\CustomActionSettings;
 use Comhon\CustomAction\Resolver\ModelResolverContainer;
 use Illuminate\Contracts\Translation\HasLocalePreference;
@@ -19,6 +21,13 @@ use Illuminate\Support\Facades\Mail;
 
 class SendTemplatedMail implements CustomActionInterface, TriggerableFromEventInterface
 {
+    /**
+     * Indicates if the mail should be queued.
+     *
+     * @var bool
+     */
+    protected $shouldQueue = false;
+
     public function __construct(private CustomActionRegistrar $registrar, private ModelResolverContainer $resolver)
     {
     }
@@ -71,22 +80,21 @@ class SendTemplatedMail implements CustomActionInterface, TriggerableFromEventIn
             ->filter(fn ($path) => $path != null);
     }
 
-    public function handleFromEvent(
-        CustomEventInterface $event,
-        CustomActionSettings $customActionSettings,
-        ?array $bindings = null
-    ) {
-        $to = $event instanceof TargetableEventInterface ? $event->target() : null;
-        $allowedEventBindings = $event->getBindingSchema();
-        $this->handleFromAction($customActionSettings, $bindings, $to, null, $allowedEventBindings);
+    public function handleFromEvent(CustomEventInterface $event, CustomActionSettings $customActionSettings)
+    {
+        $this->handleFromAction(
+            $customActionSettings,
+            $event instanceof TargetableEventInterface ? $event->target() : null,
+            $event->getBindingValues(),
+            $event->getBindingSchema()
+        );
     }
 
     /**
      * @param  array  $bindings  used to define scope, replacement and attachments
      * @param  \Illuminate\Foundation\Auth\User  $to  used only if 'to' is not defined in action settings
-     * @param  bool  $shouldQueue  override should_queue action setting
      */
-    public function handle(array $bindings, ?User $to = null, ?bool $shouldQueue = null)
+    public function handle(array $bindings, ?User $to = null)
     {
         if (! ($this instanceof CustomUniqueActionInterface)) {
             throw new \Exception('must be called from an instance of '.CustomUniqueActionInterface::class);
@@ -100,67 +108,62 @@ class SendTemplatedMail implements CustomActionInterface, TriggerableFromEventIn
         if ($customActionSettingss->count() > 1) {
             throw new \Exception("several '$type' actions found");
         }
-        $this->handleFromAction($customActionSettingss->first(), $bindings, $to, $shouldQueue);
+        $this->handleFromAction($customActionSettingss->first(), $to, $bindings);
     }
 
     /**
      * @param \Comhon\CustomAction\Models\CustomActionSettings action settings
-     * @param  array  $bindings  used to define scope, replacements and attachments
      * @param  \Illuminate\Foundation\Auth\User  $to  used only if 'to' is not defined in action settings
-     * @param  bool  $shouldQueue  override should_queue action setting
-     * @param  array  $additionalAllowedBindings  allowed additional bindings
+     * @param  array  $bindings  used to define scope, replacements and attachments
+     * @param  array  $allowedBindings  add bindings to allowed bindings defined in current action
      */
     private function handleFromAction(
         CustomActionSettings $customActionSettings,
-        ?array $bindings = null,
         ?User $to = null,
-        ?bool $shouldQueue = null,
-        ?array $additionalAllowedBindings = null
+        ?array $bindings = null,
+        ?array $allowedBindings = null
     ) {
-        $shouldQueue ??= $customActionSettings->pivot ? $customActionSettings->pivot->should_queue : false;
+        $localizedMails = [];
         $settingsContainer = $customActionSettings->getSettingsContainer($bindings);
         $attachments = $this->getAttachments($bindings, $settingsContainer->settings);
-        $localizedMails = [];
+        $bindings = $this->getAuthorizedBindings($bindings, $allowedBindings);
+        $allowedToBindings = $this->getAllowedToBindings();
+        $reveivers = $this->getReceivers($settingsContainer, $to);
 
-        $allowedBindings = $this->getBindingSchema();
-        if ($additionalAllowedBindings) {
-            $allowedBindings = array_merge($additionalAllowedBindings, $allowedBindings);
-        }
-
-        // we restrict binding to avoid to expose some potential sensitive settings
-        $restrictedBindings = [];
-        $this->addBindings($allowedBindings, $bindings, $restrictedBindings);
-
-        // build allowed bindings for receiver
-        $allowedToBindings = [];
-        foreach ($this->getBindingSchema() as $key => $value) {
-            if (strpos($key, 'to.') === 0) {
-                $allowedToBindings[$key] = $value;
-            }
-        }
-        $userClass = config('custom-action.user_model');
-        $mailTo = isset($settingsContainer->settings['to']) ? $userClass::find($settingsContainer->settings['to']) : $to;
-        if (empty($mailTo) || ($mailTo instanceof Collection && $mailTo->isEmpty())) {
-            throw new \Exception('mail receiver is not defined');
-        }
-        $mailTos = is_array($mailTo) || $mailTo instanceof Collection ? $mailTo : [$mailTo];
-        foreach ($mailTos as $mailTo) {
-            $locale = $mailTo instanceof HasLocalePreference ? $mailTo->preferredLocale() : null;
-            $localeKey = $locale ?? 'undefined';
-            $localizedMails[$localeKey] ??= $settingsContainer->getMergedSettings($locale);
-            if (! isset($localizedMails[$localeKey]['__locale__'])) {
-                throw new \Exception('localized mail values not found');
-            }
-            $localeUsed = $localizedMails[$localeKey]['__locale__'];
-
-            // now we add specific binding for receiver
-            $toBindings = ['to' => $mailTo];
-            $this->addBindings($allowedToBindings, $toBindings, $restrictedBindings);
-
-            $mail = $localizedMails[$localeKey];
+        foreach ($reveivers as $to) {
+            $mail = $this->getMailSettings($settingsContainer, $to, $localizedMails);
             $mail['attachments'] = $attachments;
-            $this->send($mail, $mailTo, $restrictedBindings, $shouldQueue, $localeUsed);
+
+            // we add specific bindings for receiver
+            $this->addBindings($allowedToBindings, ['to' => $to], $bindings);
+
+            $sendMethod = $this->shouldQueue ? 'queue' : 'send';
+            $preferredTimezone = $to instanceof HasTimezonePreferenceInterface
+                ? $to->preferredTimezone()
+                : null;
+
+            Mail::to($to)->$sendMethod(
+                new Custom($mail, $bindings, $mail['__locale__'], null, $preferredTimezone)
+            );
         }
+    }
+
+    /**
+     * get authorized bindings to avoid to expose some potential sensitive values
+     *
+     * @param  array  $bindings
+     */
+    private function getAuthorizedBindings($bindings, ?array $allowedBindings = null)
+    {
+        $allowedBindingsFromAction = $this->getBindingSchema();
+        if ($allowedBindings) {
+            $allowedBindingsFromAction = array_merge($allowedBindings, $allowedBindingsFromAction);
+        }
+
+        $authorizedBindings = [];
+        $this->addBindings($allowedBindingsFromAction, $bindings, $authorizedBindings);
+
+        return $authorizedBindings;
     }
 
     /**
@@ -185,28 +188,46 @@ class SendTemplatedMail implements CustomActionInterface, TriggerableFromEventIn
     }
 
     /**
-     * @param  array  $mail  mail informations like subject, body...
-     * @param  \Illuminate\Foundation\Auth\User  $to  the mail receiver
-     * @param  bool  $shouldQueue  override should_queue action setting
-     * @param  string  $locale  locale to use for replacements
-     *                          if not specified, locale will be taken
-     *                          - from user preferred locale (if user instance of HasLocalePreference)
-     *                          - or from default config fallback locale
+     * get allowed bindings for receiver
      */
-    public function send(
-        array $mail,
+    private function getAllowedToBindings()
+    {
+        $allowed = [];
+        foreach ($this->getBindingSchema() as $key => $value) {
+            if (strpos($key, 'to.') === 0) {
+                $allowed[$key] = $value;
+            }
+        }
+
+        return $allowed;
+    }
+
+    private function getReceivers(ActionSettingsContainer $settingsContainer, ?User $to)
+    {
+        $userClass = config('custom-action.user_model');
+        $to = isset($settingsContainer->settings['to'])
+            ? $userClass::find($settingsContainer->settings['to'])
+            : $to;
+
+        if (empty($to) || ($to instanceof Collection && $to->isEmpty())) {
+            throw new \Exception('mail receiver is not defined');
+        }
+
+        return is_array($to) || $to instanceof Collection ? $to : [$to];
+    }
+
+    private function getMailSettings(
+        ActionSettingsContainer $settingsContainer,
         User $to,
-        array $replacements,
-        bool $shouldQueue = false,
-        ?string $defaultLocale = null,
-        ?string $defaultTimezone = null
+        array &$localizedMails
     ) {
-        $sendMethod = $shouldQueue ? 'queue' : 'send';
-        $defaultLocale ??= $to instanceof HasLocalePreference && $to->preferredLocale()
-            ? $to->preferredLocale() : $defaultLocale;
-        $preferredTimezone = method_exists($to, 'preferredTimezone') ? $to->preferredTimezone() : null;
-        Mail::to($to)->$sendMethod(
-            new Custom($mail, $replacements, $defaultLocale, $defaultTimezone, $preferredTimezone)
-        );
+        $locale = $to instanceof HasLocalePreference ? $to->preferredLocale() : null;
+        $localeKey = $locale ?? 'undefined';
+        $localizedMails[$localeKey] ??= $settingsContainer->getMergedSettings($locale);
+        if (! isset($localizedMails[$localeKey]['__locale__'])) {
+            throw new \Exception('localized mail values not found');
+        }
+
+        return $localizedMails[$localeKey];
     }
 }

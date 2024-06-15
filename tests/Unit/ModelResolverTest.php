@@ -2,9 +2,11 @@
 
 namespace Tests\Unit;
 
+use Comhon\CustomAction\Actions\SendTemplatedMail;
 use Comhon\CustomAction\Resolver\ModelResolverContainer;
 use Comhon\CustomAction\Tests\Support\Models\Company;
 use Comhon\CustomAction\Tests\Support\Models\User;
+use Comhon\CustomAction\Tests\Support\SendCompanyRegistrationMail;
 use Comhon\CustomAction\Tests\TestCase;
 use Comhon\ModelResolverContract\ModelResolverInterface;
 

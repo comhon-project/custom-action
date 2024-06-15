@@ -34,7 +34,7 @@ class CustomEventHandler
                     if (! ($handler instanceof TriggerableFromEventInterface)) {
                         throw new \Exception('invalid type '.$action->type);
                     }
-                    $handler->handleFromEvent($event, $action, $bindings);
+                    $handler->handleFromEvent($event, $action);
                 }
             }
         }

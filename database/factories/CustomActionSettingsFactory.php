@@ -35,11 +35,11 @@ class CustomActionSettingsFactory extends Factory
     /**
      * registration company mail.
      */
-    public function sendMailRegistrationCompany($to = null, $withScopedSettings = false, $useUniqueAction = false, $withAttachement = false): Factory
+    public function sendMailRegistrationCompany($to = null, $withScopedSettings = false, $type = 'send-email', $withAttachement = false): Factory
     {
-        return $this->state(function (array $attributes) use ($to, $useUniqueAction, $withAttachement) {
+        return $this->state(function (array $attributes) use ($to, $type, $withAttachement) {
             return [
-                'type' => $useUniqueAction ? 'send-company-email' : 'send-email',
+                'type' => $type,
                 'settings' => [
                     'to' => $to,
                     'attachments' => $withAttachement ? ['logo'] : null,

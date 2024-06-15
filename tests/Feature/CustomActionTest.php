@@ -2,14 +2,13 @@
 
 namespace Tests\Feature;
 
-use Comhon\CustomAction\Actions\SendTemplatedMail;
 use Comhon\CustomAction\Mail\Custom;
 use Comhon\CustomAction\Models\ActionLocalizedSettings;
 use Comhon\CustomAction\Models\ActionScopedSettings;
 use Comhon\CustomAction\Models\ActionSettingsContainer;
 use Comhon\CustomAction\Models\CustomActionSettings;
 use Comhon\CustomAction\Resolver\ModelResolverContainer;
-use Comhon\CustomAction\Tests\Support\CompanyRegistered;
+use Comhon\CustomAction\Tests\SetUpWithModelRegistration;
 use Comhon\CustomAction\Tests\Support\Models\Company;
 use Comhon\CustomAction\Tests\Support\Models\User;
 use Comhon\CustomAction\Tests\Support\SendCompanyRegistrationMail;
@@ -22,31 +21,12 @@ use Illuminate\Support\Facades\Mail;
 class CustomActionTest extends TestCase
 {
     use RefreshDatabase;
+    use SetUpWithModelRegistration;
 
     private static $asset = __DIR__
         .DIRECTORY_SEPARATOR.'..'
         .DIRECTORY_SEPARATOR.'Data'
         .DIRECTORY_SEPARATOR.'jc.jpeg';
-
-    public function setUp(): void
-    {
-        parent::setUp();
-
-        /** @var ModelResolverContainer $resolver */
-        $resolver = app(ModelResolverContainer::class);
-        $resolver->register(
-            [
-                'send-email' => SendTemplatedMail::class,
-                'send-company-email' => SendCompanyRegistrationMail::class,
-                'company-registered' => CompanyRegistered::class,
-            ],
-            [
-                'custom-unique-action' => ['send-company-email'],
-                'custom-generic-action' => ['send-email'],
-                'custom-event' => ['company-registered'],
-            ]
-        );
-    }
 
     private function getActionInstance(): SendCompanyRegistrationMail
     {
@@ -62,7 +42,7 @@ class CustomActionTest extends TestCase
         App::setFallbackLocale($fallbackLocale);
         $user = User::factory(null, ['preferred_locale' => $preferredLocale])->create();
         $company = Company::factory()->create();
-        CustomActionSettings::factory()->sendMailRegistrationCompany(null, false, true, true)->create();
+        CustomActionSettings::factory()->sendMailRegistrationCompany(null, false, 'send-company-email', true)->create();
 
         $bindings = ['company' => $company, 'logo' => self::$asset];
 
@@ -113,8 +93,8 @@ class CustomActionTest extends TestCase
         $company = Company::factory()->create();
 
         // create two unique actions
-        CustomActionSettings::factory()->sendMailRegistrationCompany(null, false, true, true)->create();
-        CustomActionSettings::factory()->sendMailRegistrationCompany(null, false, true, true)->create();
+        CustomActionSettings::factory()->sendMailRegistrationCompany(null, false, 'send-company-email', true)->create();
+        CustomActionSettings::factory()->sendMailRegistrationCompany(null, false, 'send-company-email', true)->create();
 
         $bindings = ['company' => $company, 'logo' => self::$asset];
         $this->expectExceptionMessage("several 'send-company-email' actions found");

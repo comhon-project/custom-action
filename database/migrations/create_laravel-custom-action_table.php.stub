@@ -47,7 +47,6 @@ return new class extends Migration
             $table->id();
             $table->unsignedBigInteger('custom_event_listener_id');
             $table->unsignedBigInteger('custom_action_settings_id');
-            $table->boolean('should_queue')->default(0);
 
             $table->foreign('custom_event_listener_id', 'custom_event_listener_id_fk')->references('id')->on('custom_event_listeners');
             $table->foreign('custom_action_settings_id', 'custom_action_settings_id_fk')->references('id')->on('custom_action_settings');

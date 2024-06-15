@@ -67,6 +67,7 @@ class TestCase extends Orchestra
         // TODO find a better way to test translations
         Lang::addLines([
             'messages.actions.send-email' => 'send email',
+            'messages.actions.queue-email' => 'send email',
             'messages.actions.send-company-email' => 'send company email',
             'messages.events.company-registered' => 'company registered',
         ], 'en', 'custom-action');

@@ -2,6 +2,7 @@
 
 namespace Comhon\CustomAction\Resolver;
 
+use Comhon\CustomAction\Actions\QueueTemplatedMail;
 use Comhon\CustomAction\Actions\SendTemplatedMail;
 use Comhon\ModelResolverContract\ModelResolverInterface;
 
@@ -12,10 +13,11 @@ class ModelResolver implements ModelResolverInterface
 {
     private $map = [
         'send-email' => SendTemplatedMail::class,
+        'queue-email' => QueueTemplatedMail::class,
     ];
 
     private $scopes = [
-        ModelResolverContainer::GENERIC_ACTION_SCOPE => ['send-email'],
+        ModelResolverContainer::GENERIC_ACTION_SCOPE => ['send-email', 'queue-email'],
     ];
 
     /**

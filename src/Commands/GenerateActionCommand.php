@@ -2,6 +2,7 @@
 
 namespace Comhon\CustomAction\Commands;
 
+use Comhon\CustomAction\Actions\QueueTemplatedMail;
 use Comhon\CustomAction\Actions\SendTemplatedMail;
 use Comhon\CustomAction\Contracts\CustomActionInterface;
 use Comhon\CustomAction\Contracts\CustomUniqueActionInterface;
@@ -20,14 +21,11 @@ class GenerateActionCommand extends Command
         $generic = $this->option('generic');
 
         $directory = app()->path('Console/Commands');
-        $useExtends = null;
-        switch ($extendsArg) {
-            case 'send-email':
-                $useExtends = SendTemplatedMail::class;
-                break;
-            default:
-                throw new \Exception("invalid extends parameter '{$extendsArg}'");
-        }
+        $useExtends = match ($extendsArg) {
+            'send-email' => SendTemplatedMail::class,
+            'queue-email' => QueueTemplatedMail::class,
+            default => throw new \Exception("invalid extends parameter '{$extendsArg}'")
+        };
         $explode = explode('\\', $useExtends);
         $extends = $explode[count($explode) - 1];
 

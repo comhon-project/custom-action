@@ -2,16 +2,14 @@
 
 namespace Tests\Feature;
 
-use Comhon\CustomAction\Actions\SendTemplatedMail;
 use Comhon\CustomAction\Mail\Custom;
 use Comhon\CustomAction\Models\ActionLocalizedSettings;
 use Comhon\CustomAction\Models\CustomActionSettings;
 use Comhon\CustomAction\Models\CustomEventListener;
-use Comhon\CustomAction\Resolver\ModelResolverContainer;
+use Comhon\CustomAction\Tests\SetUpWithModelRegistration;
 use Comhon\CustomAction\Tests\Support\CompanyRegistered;
 use Comhon\CustomAction\Tests\Support\Models\Company;
 use Comhon\CustomAction\Tests\Support\Models\User;
-use Comhon\CustomAction\Tests\Support\SendCompanyRegistrationMail;
 use Comhon\CustomAction\Tests\TestCase;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Mail\Mailables\Attachment;
@@ -22,26 +20,7 @@ use Illuminate\Support\Facades\Mail;
 class EventListenerTest extends TestCase
 {
     use RefreshDatabase;
-
-    public function setUp(): void
-    {
-        parent::setUp();
-
-        /** @var ModelResolverContainer $resolver */
-        $resolver = app(ModelResolverContainer::class);
-        $resolver->register(
-            [
-                'send-email' => SendTemplatedMail::class,
-                'send-company-email' => SendCompanyRegistrationMail::class,
-                'company-registered' => CompanyRegistered::class,
-            ],
-            [
-                'custom-unique-action' => ['send-company-email'],
-                'custom-generic-action' => ['send-email'],
-                'custom-event' => ['company-registered'],
-            ]
-        );
-    }
+    use SetUpWithModelRegistration;
 
     /**
      * @dataProvider providerEventListener
@@ -255,7 +234,7 @@ class EventListenerTest extends TestCase
     {
         $eventListener = CustomEventListener::factory()->genericRegistrationCompany()->create();
         $eventListener->actions()->attach(
-            CustomActionSettings::factory()->sendMailRegistrationCompany(null, false, true)->create()
+            CustomActionSettings::factory()->sendMailRegistrationCompany(null, false, 'send-company-email')->create()
         );
         $this->assertEquals(null, $eventListener->scope);
 
@@ -284,7 +263,7 @@ class EventListenerTest extends TestCase
     {
         $eventListener = CustomEventListener::factory()->genericRegistrationCompany()->create();
         $eventListener->actions()->attach(
-            CustomActionSettings::factory()->sendMailRegistrationCompany(null, false, true)->create()
+            CustomActionSettings::factory()->sendMailRegistrationCompany(null, false, 'send-company-email')->create()
         );
         $this->assertEquals(1, CustomEventListener::count());
         $this->assertEquals(2, CustomActionSettings::count());
@@ -361,7 +340,7 @@ class EventListenerTest extends TestCase
         // create event listener for CompanyRegistered event
         $eventListener = CustomEventListener::factory()->genericRegistrationCompany()->create();
         $eventListener->actions()->attach(
-            CustomActionSettings::factory()->sendMailRegistrationCompany(null, false, true)->create()
+            CustomActionSettings::factory()->sendMailRegistrationCompany(null, false, 'send-company-email')->create()
         );
         $this->assertCount(2, $eventListener->actions);
         $actionMustBeDeleted = $eventListener->actions[0];
