@@ -221,7 +221,10 @@ class SendTemplatedMail implements CustomActionInterface, TriggerableFromEventIn
         User $to,
         array &$localizedMails
     ) {
-        $locale = $to instanceof HasLocalePreference ? $to->preferredLocale() : null;
+        $locale = $to instanceof HasLocalePreference
+            ? $to->preferredLocale()
+            : null;
+
         $localeKey = $locale ?? 'undefined';
         $localizedMails[$localeKey] ??= $settingsContainer->getMergedSettings($locale);
         if (! isset($localizedMails[$localeKey]['__locale__'])) {

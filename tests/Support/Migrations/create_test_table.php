@@ -19,8 +19,8 @@ return new class extends Migration
             $table->string('first_name', 255);
             $table->string('email', 255);
             $table->boolean('has_consumer_ability')->default(false);
-            $table->string('preferred_locale', 255);
-            $table->string('preferred_timezone', 255);
+            $table->string('preferred_locale', 255)->nullable();
+            $table->string('preferred_timezone', 255)->nullable();
             $table->timestamp('last_login_at');
             $table->timestamp('verified_at');
             $table->timestamps();

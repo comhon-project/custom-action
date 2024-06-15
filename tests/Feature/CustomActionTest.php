@@ -11,6 +11,7 @@ use Comhon\CustomAction\Resolver\ModelResolverContainer;
 use Comhon\CustomAction\Tests\SetUpWithModelRegistration;
 use Comhon\CustomAction\Tests\Support\Models\Company;
 use Comhon\CustomAction\Tests\Support\Models\User;
+use Comhon\CustomAction\Tests\Support\Models\UserWithoutPreference;
 use Comhon\CustomAction\Tests\Support\SendCompanyRegistrationMail;
 use Comhon\CustomAction\Tests\TestCase;
 use Illuminate\Foundation\Testing\RefreshDatabase;
@@ -34,7 +35,7 @@ class CustomActionTest extends TestCase
     }
 
     /**
-     * @dataProvider prvoiderHandleUniqueActionSuccess
+     * @dataProvider providerHandleUniqueActionSuccess
      */
     public function testHandleUniqueActionSuccess($preferredLocale, $appLocale, $fallbackLocale, $success)
     {
@@ -67,13 +68,56 @@ class CustomActionTest extends TestCase
         $this->assertTrue($mails[0]->hasAttachment(Attachment::fromPath(self::$asset)));
     }
 
-    public static function prvoiderHandleUniqueActionSuccess()
+    public static function providerHandleUniqueActionSuccess()
     {
         return [
             ['en', 'fr', 'fr', true],
             ['es', 'en', 'fr', true],
             ['es', 'es', 'en', true],
             ['es', 'es', 'es', false],
+        ];
+    }
+
+    /**
+     * @dataProvider providerHandleUniqueActionUserWithoutPreferencesSuccess
+     */
+    public function testHandleUniqueActionUserWithoutPreferencesSuccess($appLocale, $fallbackLocale, $success)
+    {
+        App::setLocale($appLocale);
+        App::setFallbackLocale($fallbackLocale);
+        $user = UserWithoutPreference::factory()->create();
+        $company = Company::factory()->create();
+        CustomActionSettings::factory()->sendMailRegistrationCompany(null, false, 'send-company-email', true)->create();
+
+        $bindings = ['company' => $company, 'logo' => self::$asset];
+
+        Mail::fake();
+
+        if (! $success) {
+            $this->expectExceptionMessage('localized mail values not found');
+        }
+        $this->getActionInstance()->handle($bindings, $user);
+
+        $mails = [];
+        Mail::assertSent(Custom::class, 1);
+        Mail::assertSent(Custom::class, function (Custom $mail) use (&$mails) {
+            $mails[] = $mail;
+
+            return true;
+        });
+        $mails[0]->assertHasTo($user->email);
+        $mails[0]->assertHasSubject(
+            "Dear $user->first_name, company $company->name (last login: December 12, 2022 at 12:00 AM (UTC) December 12, 2022 at 12:00 AM (UTC))"
+        );
+        $this->assertTrue($mails[0]->hasAttachment(Attachment::fromPath(self::$asset)));
+    }
+
+    public static function providerHandleUniqueActionUserWithoutPreferencesSuccess()
+    {
+        return [
+            ['en', 'fr', true],
+            ['es', 'en', true],
+            ['es', 'es', false],
         ];
     }
 
