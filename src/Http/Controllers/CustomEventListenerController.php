@@ -148,7 +148,7 @@ class CustomEventListenerController extends Controller
 
         return $customActionSettings;
     }
-    
+
     private function validateType(
         Request $request,
         ModelResolverContainer $resolver,
@@ -168,16 +168,16 @@ class CustomEventListenerController extends Controller
                 function (string $attribute, $type, $fail) use ($resolver, $mustBeUniqueAction) {
                     $actionClass = $resolver->getClass($type);
                     $customAction = $actionClass ? app($actionClass) : null;
-                    if (!$customAction instanceof CustomActionInterface) {
+                    if (! $customAction instanceof CustomActionInterface) {
                         $fail("Action {$type} not found.");
                     }
-                    if (!$customAction instanceof TriggerableFromEventInterface) {
+                    if (! $customAction instanceof TriggerableFromEventInterface) {
                         $fail("The action {$type} is not an action triggerable from event.");
                     }
-                    if (!$mustBeUniqueAction && $customAction instanceof CustomUniqueActionInterface) {
+                    if (! $mustBeUniqueAction && $customAction instanceof CustomUniqueActionInterface) {
                         $fail("The action {$type} must not be a unique action.");
                     }
-                    if ($mustBeUniqueAction && !$customAction instanceof CustomUniqueActionInterface) {
+                    if ($mustBeUniqueAction && ! $customAction instanceof CustomUniqueActionInterface) {
                         $fail("The action {$type} must be a unique action.");
                     }
                     if ($mustBeUniqueAction) {
@@ -192,7 +192,7 @@ class CustomEventListenerController extends Controller
             ],
         ]);
     }
-    
+
     private function validateSettings(
         Request $request,
         ModelResolverContainer $resolver,
@@ -201,6 +201,7 @@ class CustomEventListenerController extends Controller
         $actionClass = $resolver->getClass($type);
         $customAction = app($actionClass);
         $rules = RulesManager::getSettingsRules($customAction->getSettingsSchema(), $customAction->hasTargetUser());
+
         return $request->validate($rules);
     }
 
