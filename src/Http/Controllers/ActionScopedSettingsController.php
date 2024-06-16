@@ -40,7 +40,7 @@ class ActionScopedSettingsController extends Controller
         $validated = $request->validate($rules);
 
         $scopedSettings = new ActionScopedSettings();
-        $scopedSettings->settings = $validated['settings'] ?? [];
+        $scopedSettings->settings = $validated['settings'];
         $scopedSettings->scope = $validated['scope'];
         $scopedSettings->custom_action_settings_id = $customActionSettings->id;
         $scopedSettings->save();
@@ -61,7 +61,7 @@ class ActionScopedSettingsController extends Controller
         $rules['scope'] = 'array|required';
         $validated = $request->validate($rules);
 
-        $scopedSettings->settings = $validated['settings'] ?? [];
+        $scopedSettings->settings = $validated['settings'];
         if (isset($validated['scope'])) {
             $scopedSettings->scope = $validated['scope'];
         }

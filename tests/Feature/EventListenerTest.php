@@ -335,6 +335,31 @@ class EventListenerTest extends TestCase
         $this->assertEquals($actionValues['settings'], $customActionSettings->settings);
     }
 
+    public function testSyncEventListenerAction()
+    {
+        // create event listener for CompanyRegistered event
+        $eventListener = CustomEventListener::factory()->create();
+        $customActionSettings = CustomActionSettings::factory()
+            ->sendMailRegistrationCompany(null, false, 'send-company-email')
+            ->create();
+
+        $this->assertEquals(0, $eventListener->actions()->count());
+
+        $user = User::factory()->hasConsumerAbility()->create();
+        $actionValues = [
+            'type' => 'send-company-email',
+        ];
+        $response = $this->actingAs($user)->postJson("custom/event-listeners/$eventListener->id/actions/sync", $actionValues);
+        $response->assertOk();
+        $this->assertEquals(1, CustomActionSettings::count());
+        $this->assertEquals(1, $eventListener->actions()->count());
+
+        $response->assertJson([
+            'data' => ['id' => $customActionSettings->id],
+        ]);
+        $this->assertEquals('send-company-email', $customActionSettings->type);
+    }
+
     public function testRemoveEventListenerAction()
     {
         // create event listener for CompanyRegistered event

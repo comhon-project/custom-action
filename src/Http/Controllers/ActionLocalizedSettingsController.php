@@ -37,7 +37,7 @@ class ActionLocalizedSettingsController extends Controller
         $rules['locale'] = 'string';
         $validated = $request->validate($rules);
 
-        $localizedSettings->settings = $validated['settings'] ?? [];
+        $localizedSettings->settings = $validated['settings'];
         if (isset($validated['locale'])) {
             $localizedSettings->locale = $validated['locale'];
         }

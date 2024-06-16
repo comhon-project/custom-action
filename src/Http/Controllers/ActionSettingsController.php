@@ -67,7 +67,7 @@ class ActionSettingsController extends Controller
         $rules = RulesManager::getSettingsRules($customAction->getSettingsSchema(), $customAction->hasTargetUser());
 
         $validated = $request->validate($rules);
-        $customActionSettings->settings = $validated['settings'] ?? [];
+        $customActionSettings->settings = $validated['settings'];
         $customActionSettings->save();
 
         return new JsonResource($customActionSettings);

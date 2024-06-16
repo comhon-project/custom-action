@@ -28,7 +28,7 @@ trait ActionSettingsContainerTrait
         $validated = $request->validate($rules);
 
         $localizedSettings = new ActionLocalizedSettings();
-        $localizedSettings->settings = $validated['settings'] ?? [];
+        $localizedSettings->settings = $validated['settings'];
         $localizedSettings->locale = $validated['locale'];
         $localizedSettings->localizable()->associate($container);
         $localizedSettings->save();
