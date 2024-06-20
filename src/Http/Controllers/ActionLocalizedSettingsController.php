@@ -8,7 +8,6 @@ use Comhon\CustomAction\Resolver\ModelResolverContainer;
 use Comhon\CustomAction\Resources\ActionLocalizedSettingsResource;
 use Comhon\CustomAction\Rules\RulesManager;
 use Illuminate\Http\Request;
-use Illuminate\Routing\Controller;
 
 class ActionLocalizedSettingsController extends Controller
 {
@@ -19,6 +18,8 @@ class ActionLocalizedSettingsController extends Controller
      */
     public function show(ActionLocalizedSettings $localizedSetting)
     {
+        $this->authorize('view', $localizedSetting);
+
         return new ActionLocalizedSettingsResource($localizedSetting);
     }
 
@@ -29,6 +30,8 @@ class ActionLocalizedSettingsController extends Controller
      */
     public function update(Request $request, ModelResolverContainer $resolver, ActionLocalizedSettings $localizedSetting)
     {
+        $this->authorize('update', $localizedSetting);
+
         $localizedSettings = $localizedSetting;
         $container = $localizedSettings->localizable;
         $customActionSettings = $container instanceof ActionScopedSettings ? $container->customActionSettings : $container;
@@ -53,6 +56,8 @@ class ActionLocalizedSettingsController extends Controller
      */
     public function destroy(ActionLocalizedSettings $localizedSetting)
     {
+        $this->authorize('delete', $localizedSetting);
+
         $localizedSettings = $localizedSetting;
         $localizedSettings->delete();
 

@@ -1,6 +1,6 @@
 <?php
 
-namespace Comhon\CustomAction\Database\Factories;
+namespace Database\Factories;
 
 use Comhon\CustomAction\Models\ActionLocalizedSettings;
 use Comhon\CustomAction\Models\ActionScopedSettings;

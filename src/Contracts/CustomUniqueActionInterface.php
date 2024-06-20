@@ -2,6 +2,4 @@
 
 namespace Comhon\CustomAction\Contracts;
 
-interface CustomUniqueActionInterface extends CustomActionInterface
-{
-}
+interface CustomUniqueActionInterface extends CustomActionInterface {}

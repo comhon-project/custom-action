@@ -20,6 +20,8 @@ trait ActionSettingsContainerTrait
      */
     protected function storeLocalizedSettings(Request $request, ModelResolverContainer $resolver, ActionSettingsContainer $container)
     {
+        $this->authorize('create', [ActionLocalizedSettings::class, $container]);
+
         /** @var CustomActionInterface $customAction */
         $customActionSettings = $container instanceof ActionScopedSettings ? $container->customActionSettings : $container;
         $customAction = app($resolver->getClass($customActionSettings->type));

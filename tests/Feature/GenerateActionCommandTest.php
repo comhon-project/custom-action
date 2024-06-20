@@ -2,7 +2,8 @@
 
 namespace Tests\Feature;
 
-use Comhon\CustomAction\Tests\TestCase;
+use Tests\Support\Utils;
+use Tests\TestCase;
 
 use function Orchestra\Testbench\artisan;
 
@@ -13,22 +14,21 @@ class GenerateActionCommandTest extends TestCase
      */
     public function testGenerateActionFileSuccess($generic, $dirShouldExists, $expectContent)
     {
-        $sep = DIRECTORY_SEPARATOR;
-        $dir = __DIR__."{$sep}..{$sep}Console{$sep}Commands";
+        $dir = Utils::joinPaths(Utils::getTestPath('Console'), 'Commands');
         if (file_exists($dir)) {
             rmdir($dir);
         }
         if ($dirShouldExists) {
             mkdir($dir, 0775, true);
         }
-        app()->useAppPath(__DIR__.$sep.'..');
+        app()->useAppPath(Utils::getTestPath());
         artisan($this, 'custom-action:generate', [
             'name' => 'TestGenericSendEmail',
             '--extends' => 'send-email',
             '--generic' => $generic,
         ]);
 
-        $path = __DIR__."{$sep}..{$sep}Console{$sep}Commands{$sep}TestGenericSendEmail.php";
+        $path = Utils::joinPaths(Utils::getTestPath('Console'), 'Commands', 'TestGenericSendEmail.php');
         $this->assertFileExists($path);
         $this->assertEquals($expectContent, file_get_contents($path));
         unlink($path);
@@ -90,7 +90,7 @@ EOT
 
     public function testGenerateActionFileFailure()
     {
-        app()->useAppPath(__DIR__.'/..');
+        app()->useAppPath(Utils::getTestPath());
 
         $this->expectExceptionMessage("invalid extends parameter 'failure'");
         artisan($this, 'custom-action:generate', [

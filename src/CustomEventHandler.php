@@ -11,9 +11,7 @@ class CustomEventHandler
 {
     public $afterCommit = true;
 
-    public function __construct(private ModelResolverContainer $resolver)
-    {
-    }
+    public function __construct(private ModelResolverContainer $resolver) {}
 
     /**
      * Handle the event.

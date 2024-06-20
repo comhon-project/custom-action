@@ -2,17 +2,18 @@
 
 namespace Tests\Unit;
 
+use App\Models\User;
 use Comhon\CustomAction\Mail\Custom;
-use Comhon\CustomAction\Tests\Support\Models\User;
-use Comhon\CustomAction\Tests\TestCase;
 use Illuminate\Mail\Mailables\Attachment;
+use Tests\Support\Utils;
+use Tests\TestCase;
 
 class CustomMailTest extends TestCase
 {
-    private static $asset = __DIR__
-        .DIRECTORY_SEPARATOR.'..'
-        .DIRECTORY_SEPARATOR.'Data'
-        .DIRECTORY_SEPARATOR.'jc.jpeg';
+    private function getAssetPath(): string
+    {
+        return Utils::joinPaths(Utils::getTestPath('Data'), 'jc.jpeg');
+    }
 
     public function testCustomMail()
     {
@@ -20,12 +21,12 @@ class CustomMailTest extends TestCase
         $mailable = new Custom([
             'subject' => 'Welcome {{ user.first_name }}',
             'body' => 'Welcome {{ user.first_name }} {{ user.name }}',
-            'attachments' => [self::$asset],
+            'attachments' => [$this->getAssetPath()],
         ], ['user' => $user]);
 
         $mailable->assertHasSubject("Welcome {$user->first_name}");
         $mailable->assertSeeInHtml("Welcome {$user->first_name} {$user->name}");
-        $mailable->assertHasAttachment(Attachment::fromPath(self::$asset));
+        $mailable->assertHasAttachment(Attachment::fromPath($this->getAssetPath()));
     }
 
     /**
@@ -38,7 +39,7 @@ class CustomMailTest extends TestCase
         $mail = [
             'subject' => 'Welcome {{ user.first_name }}',
             'body' => 'Welcome {{ user.first_name }} {{ user.name }}',
-            'attachments' => [self::$asset],
+            'attachments' => [$this->getAssetPath()],
         ];
         unset($mail[$missingProperty]);
 

@@ -20,9 +20,7 @@ class ModelResolverContainer
 
     const EVENT_SCOPE = 'custom-event';
 
-    public function __construct(private ModelResolverInterface $resolver)
-    {
-    }
+    public function __construct(private ModelResolverInterface $resolver) {}
 
     /**
      * get model resolver instance

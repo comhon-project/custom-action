@@ -9,7 +9,6 @@ use Comhon\CustomAction\Resolver\ModelResolverContainer;
 use Comhon\CustomAction\Rules\RulesManager;
 use Illuminate\Http\Request;
 use Illuminate\Http\Resources\Json\JsonResource;
-use Illuminate\Routing\Controller;
 use Illuminate\Support\Facades\DB;
 
 class ActionScopedSettingsController extends Controller
@@ -23,6 +22,8 @@ class ActionScopedSettingsController extends Controller
      */
     public function show(ActionScopedSettings $scopedSetting)
     {
+        $this->authorize('view', $scopedSetting);
+
         return new JsonResource($scopedSetting);
     }
 
@@ -33,6 +34,8 @@ class ActionScopedSettingsController extends Controller
      */
     public function store(Request $request, ModelResolverContainer $resolver, CustomActionSettings $customActionSettings)
     {
+        $this->authorize('create', [ActionScopedSettings::class, $customActionSettings]);
+
         /** @var CustomActionInterface $customAction */
         $customAction = app($resolver->getClass($customActionSettings->type));
         $rules = RulesManager::getSettingsRules($customAction->getSettingsSchema(), $customAction->hasTargetUser());
@@ -55,6 +58,8 @@ class ActionScopedSettingsController extends Controller
      */
     public function update(Request $request, ModelResolverContainer $resolver, ActionScopedSettings $scopedSetting)
     {
+        $this->authorize('update', $scopedSetting);
+
         $scopedSettings = $scopedSetting;
         $customAction = app($resolver->getClass($scopedSettings->customActionSettings->type));
         $rules = RulesManager::getSettingsRules($customAction->getSettingsSchema(), $customAction->hasTargetUser());
@@ -77,6 +82,8 @@ class ActionScopedSettingsController extends Controller
      */
     public function destroy(ActionScopedSettings $scopedSetting)
     {
+        $this->authorize('delete', $scopedSetting);
+
         $scopedSettings = $scopedSetting;
         DB::transaction(function () use ($scopedSettings) {
             $scopedSettings->delete();
@@ -105,6 +112,8 @@ class ActionScopedSettingsController extends Controller
      */
     public function listScopedSettingsLocalizedSettings(ActionScopedSettings $scopedSettings)
     {
+        $this->authorize('view', $scopedSettings);
+
         $paginator = $scopedSettings->localizedSettings()->select('id', 'locale')->paginate();
 
         return JsonResource::collection($paginator);

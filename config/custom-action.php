@@ -10,7 +10,13 @@ return [
     /*
      | middlewares to apply on all custom action routes
      */
-    'middleware' => ['web', 'auth', 'can:manage-custom-action'],
+    'middleware' => ['web', 'auth'],
+
+    /*
+     | if you want to define user access using policies, set this config to true.
+     | don't forget to publish policies in your project in order to use policies.
+     */
+    'use_policies' => false,
 
     /*
      | your app user model

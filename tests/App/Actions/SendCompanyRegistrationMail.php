@@ -1,6 +1,6 @@
 <?php
 
-namespace Comhon\CustomAction\Tests\Support;
+namespace App\Actions;
 
 use Comhon\CustomAction\Actions\SendTemplatedMail;
 use Comhon\CustomAction\Contracts\CustomUniqueActionInterface;

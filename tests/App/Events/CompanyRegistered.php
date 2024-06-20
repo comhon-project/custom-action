@@ -1,15 +1,17 @@
 <?php
 
-namespace Comhon\CustomAction\Tests\Support;
+namespace App\Events;
 
+use App\Actions\SendCompanyRegistrationMail;
+use App\Models\Company;
+use App\Models\User;
 use Comhon\CustomAction\Actions\SendTemplatedMail;
 use Comhon\CustomAction\Contracts\CustomEventInterface;
 use Comhon\CustomAction\Contracts\TargetableEventInterface;
-use Comhon\CustomAction\Tests\Support\Models\Company;
-use Comhon\CustomAction\Tests\Support\Models\User;
 use Illuminate\Broadcasting\InteractsWithSockets;
 use Illuminate\Foundation\Events\Dispatchable;
 use Illuminate\Queue\SerializesModels;
+use Tests\Support\Utils;
 
 class CompanyRegistered implements CustomEventInterface, TargetableEventInterface
 {
@@ -20,9 +22,7 @@ class CompanyRegistered implements CustomEventInterface, TargetableEventInterfac
      *
      * @return void
      */
-    public function __construct(public Company $company, public User $user)
-    {
-    }
+    public function __construct(public Company $company, public User $user) {}
 
     public function target(): User
     {
@@ -56,11 +56,9 @@ class CompanyRegistered implements CustomEventInterface, TargetableEventInterfac
      */
     public function getBindingValues(): array
     {
-        $sep = DIRECTORY_SEPARATOR;
-
         return [
             'company' => $this->company,
-            'logo' => __DIR__."{$sep}..{$sep}Data{$sep}jc.jpeg",
+            'logo' => Utils::joinPaths(Utils::getTestPath('Data'), 'jc.jpeg'),
         ];
     }
 }

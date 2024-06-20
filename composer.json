@@ -32,13 +32,14 @@
     },
     "autoload": {
         "psr-4": {
-            "Comhon\\CustomAction\\": "src/",
-            "Comhon\\CustomAction\\Database\\Factories\\": "database/factories/"
+            "Comhon\\CustomAction\\": "src/"
         }
     },
     "autoload-dev": {
         "psr-4": {
-            "Comhon\\CustomAction\\Tests\\": "tests/",
+            "Tests\\": "tests/",
+            "Database\\Factories\\": "database/factories/",
+            "App\\": "tests/App/",
             "Workbench\\App\\": "workbench/app/"
         }
     },

@@ -2,20 +2,21 @@
 
 namespace Tests\Feature;
 
+use App\Events\CompanyRegistered;
+use App\Models\Company;
+use App\Models\User;
 use Comhon\CustomAction\Mail\Custom;
 use Comhon\CustomAction\Models\ActionLocalizedSettings;
 use Comhon\CustomAction\Models\CustomActionSettings;
 use Comhon\CustomAction\Models\CustomEventListener;
-use Comhon\CustomAction\Tests\SetUpWithModelRegistration;
-use Comhon\CustomAction\Tests\Support\CompanyRegistered;
-use Comhon\CustomAction\Tests\Support\Models\Company;
-use Comhon\CustomAction\Tests\Support\Models\User;
-use Comhon\CustomAction\Tests\TestCase;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Mail\Mailables\Attachment;
 use Illuminate\Mail\SendQueuedMailable;
 use Illuminate\Support\Facades\Bus;
 use Illuminate\Support\Facades\Mail;
+use Tests\SetUpWithModelRegistration;
+use Tests\Support\Utils;
+use Tests\TestCase;
 
 class EventListenerTest extends TestCase
 {
@@ -56,8 +57,7 @@ class EventListenerTest extends TestCase
 
             return true;
         });
-        $sep = DIRECTORY_SEPARATOR;
-        $firstActionAttachementPath = dirname(__DIR__)."{$sep}Support{$sep}..{$sep}Data{$sep}jc.jpeg";
+        $firstActionAttachementPath = Utils::joinPaths(Utils::getTestPath('Data'), 'jc.jpeg');
 
         $mails[0]->assertHasTo($targetUser->email);
         $mails[0]->assertHasSubject("Dear $targetUser->first_name, company $company->name (last login: December 12, 2022 at 12:00 AM (UTC) December 12, 2022 at 12:00 AM (UTC))");

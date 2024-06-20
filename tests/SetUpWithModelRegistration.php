@@ -1,12 +1,12 @@
 <?php
 
-namespace Comhon\CustomAction\Tests;
+namespace Tests;
 
+use App\Actions\SendCompanyRegistrationMail;
+use App\Events\CompanyRegistered;
 use Comhon\CustomAction\Actions\QueueTemplatedMail;
 use Comhon\CustomAction\Actions\SendTemplatedMail;
 use Comhon\CustomAction\Resolver\ModelResolverContainer;
-use Comhon\CustomAction\Tests\Support\CompanyRegistered;
-use Comhon\CustomAction\Tests\Support\SendCompanyRegistrationMail;
 
 trait SetUpWithModelRegistration
 {

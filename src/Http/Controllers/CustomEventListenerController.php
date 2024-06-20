@@ -11,7 +11,6 @@ use Comhon\CustomAction\Resolver\ModelResolverContainer;
 use Comhon\CustomAction\Rules\RulesManager;
 use Illuminate\Http\Request;
 use Illuminate\Http\Resources\Json\JsonResource;
-use Illuminate\Routing\Controller;
 use Illuminate\Support\Facades\DB;
 use Symfony\Component\HttpKernel\Exception\NotFoundHttpException;
 
@@ -27,6 +26,9 @@ class CustomEventListenerController extends Controller
         if (! $resolver->isAllowedEvent($eventUniqueName)) {
             throw new NotFoundHttpException('not found');
         }
+        $eventClass = $resolver->getClass($eventUniqueName);
+        $this->authorize('create', [CustomEventListener::class, $eventClass]);
+
         $request->validate([
             'scope' => 'array|nullable',
         ]);
@@ -46,6 +48,8 @@ class CustomEventListenerController extends Controller
      */
     public function update(Request $request, CustomEventListener $eventListener)
     {
+        $this->authorize('update', $eventListener);
+
         $validated = $request->validate([
             'scope' => 'array|nullable',
         ]);
@@ -62,6 +66,8 @@ class CustomEventListenerController extends Controller
      */
     public function destroy(CustomEventListener $eventListener)
     {
+        $this->authorize('delete', $eventListener);
+
         DB::transaction(function () use ($eventListener) {
             $eventListener->delete();
         });
@@ -76,6 +82,8 @@ class CustomEventListenerController extends Controller
      */
     public function listEventListenerActions(CustomEventListener $eventListener)
     {
+        $this->authorize('view', $eventListener);
+
         return JsonResource::collection($eventListener->load('actions:id,type')->actions);
     }
 
@@ -89,6 +97,8 @@ class CustomEventListenerController extends Controller
         ModelResolverContainer $resolver,
         CustomEventListener $eventListener
     ) {
+        $this->authorize('create', [CustomActionSettings::class, $eventListener]);
+
         $validated = $this->validateType(
             $request,
             $resolver,
@@ -114,14 +124,17 @@ class CustomEventListenerController extends Controller
         ModelResolverContainer $resolver,
         CustomEventListener $eventListener
     ) {
+
         $validated = $this->validateType(
             $request,
             $resolver,
             $eventListener,
             true
         );
-
         $customActionSettings = CustomActionSettings::where('type', $validated['type'])->first();
+
+        $this->authorize('sync-action', [$eventListener, $customActionSettings]);
+
         $eventListener->actions()->syncWithoutDetaching($customActionSettings);
 
         return new JsonResource($customActionSettings);
@@ -215,6 +228,8 @@ class CustomEventListenerController extends Controller
         CustomEventListener $eventListener,
         CustomActionSettings $customActionSettings
     ) {
+        $this->authorize('remove-action', [$eventListener, $customActionSettings]);
+
         DB::transaction(function () use ($eventListener, $customActionSettings, $resolver) {
             $eventListener->actions()->detach($customActionSettings);
             $class = $resolver->getClass($customActionSettings->type);

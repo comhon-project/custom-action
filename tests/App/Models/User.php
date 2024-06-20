@@ -1,6 +1,6 @@
 <?php
 
-namespace Comhon\CustomAction\Tests\Support\Models;
+namespace App\Models;
 
 use Comhon\CustomAction\Contracts\HasTimezonePreferenceInterface;
 use Illuminate\Contracts\Translation\HasLocalePreference;

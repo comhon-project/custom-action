@@ -2,13 +2,13 @@
 
 namespace Tests\Unit;
 
+use App\Events\CompanyRegistered;
+use App\Models\Company;
+use App\Models\User;
 use Comhon\CustomAction\CustomEventHandler;
 use Comhon\CustomAction\Models\CustomEventListener;
-use Comhon\CustomAction\Tests\SetUpWithModelRegistration;
-use Comhon\CustomAction\Tests\Support\CompanyRegistered;
-use Comhon\CustomAction\Tests\Support\Models\Company;
-use Comhon\CustomAction\Tests\Support\Models\User;
-use Comhon\CustomAction\Tests\TestCase;
+use Tests\SetUpWithModelRegistration;
+use Tests\TestCase;
 
 class CustomEventHandlerTest extends TestCase
 {
@@ -28,7 +28,7 @@ class CustomEventHandlerTest extends TestCase
             $action->save();
         }
 
-        $this->expectExceptionMessage('invalid type Comhon\CustomAction\Tests\Support\Models\Company');
+        $this->expectExceptionMessage('invalid type App\Models\Company');
         $this->handler()->handle($event);
     }
 }

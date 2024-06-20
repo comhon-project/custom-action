@@ -1,12 +1,12 @@
 <?php
 
-namespace Comhon\CustomAction\Database\Factories;
+namespace Database\Factories;
 
-use Comhon\CustomAction\Tests\Support\Models\UserWithoutPreference;
+use App\Models\UserWithoutPreference;
 use Illuminate\Database\Eloquent\Factories\Factory;
 
 /**
- * @extends \Illuminate\Database\Eloquent\Factories\Factory<\Comhon\CustomAction\Tests\Support\Models\UserWithoutPreference>
+ * @extends \Illuminate\Database\Eloquent\Factories\Factory<\App\Models\UserWithoutPreference>
  */
 class UserWithoutPreferenceFactory extends Factory
 {

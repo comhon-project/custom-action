@@ -2,12 +2,12 @@
 
 namespace Tests\Unit;
 
+use App\Actions\SendCompanyRegistrationMail;
 use Comhon\CustomAction\Actions\SendTemplatedMail;
 use Comhon\CustomAction\Contracts\CustomUniqueActionInterface;
 use Comhon\CustomAction\Models\CustomActionSettings;
-use Comhon\CustomAction\Tests\SetUpWithModelRegistration;
-use Comhon\CustomAction\Tests\Support\SendCompanyRegistrationMail;
-use Comhon\CustomAction\Tests\TestCase;
+use Tests\SetUpWithModelRegistration;
+use Tests\TestCase;
 
 class CustomActionTest extends TestCase
 {

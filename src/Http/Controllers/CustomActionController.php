@@ -6,7 +6,6 @@ use Comhon\CustomAction\Contracts\CustomActionInterface;
 use Comhon\CustomAction\Contracts\CustomUniqueActionInterface;
 use Comhon\CustomAction\Resolver\ModelResolverContainer;
 use Illuminate\Http\Resources\Json\JsonResource;
-use Illuminate\Routing\Controller;
 use Symfony\Component\HttpKernel\Exception\NotFoundHttpException;
 
 class CustomActionController extends Controller
@@ -18,6 +17,7 @@ class CustomActionController extends Controller
      */
     public function listActions(ModelResolverContainer $resolver)
     {
+        $this->authorize('view-any', CustomActionInterface::class);
         $actions = [
             'generic' => [],
             'unique' => [],
@@ -45,6 +45,9 @@ class CustomActionController extends Controller
             throw new NotFoundHttpException('not found');
         }
         $action = app($resolver->getClass($actionUniqueName));
+
+        $this->authorize('view', $action);
+
         $actionSchema = [
             'binding_schema' => [],
             'settings_schema' => [],

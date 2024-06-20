@@ -2,11 +2,11 @@
 
 namespace Tests\Feature;
 
+use App\Models\User;
 use Comhon\CustomAction\Resolver\ModelResolverContainer;
-use Comhon\CustomAction\Tests\SetUpWithModelRegistration;
-use Comhon\CustomAction\Tests\Support\Models\User;
-use Comhon\CustomAction\Tests\TestCase;
 use Illuminate\Foundation\Testing\RefreshDatabase;
+use Tests\SetUpWithModelRegistration;
+use Tests\TestCase;
 
 class CustomEventTest extends TestCase
 {
@@ -30,20 +30,20 @@ class CustomEventTest extends TestCase
     public function testEventShemaSuccess()
     {
         $user = User::factory()->hasConsumerAbility()->create();
-        $response = $this->actingAs($user)->getJson('custom/events/company-registered/schema');
-
-        $response->assertJson([
-            'data' => [
-                'binding_schema' => [
-                    'company.name' => 'string',
-                    'logo' => 'file',
+        $this->actingAs($user)->getJson('custom/events/company-registered/schema')
+            ->assertOk()
+            ->assertJson([
+                'data' => [
+                    'binding_schema' => [
+                        'company.name' => 'string',
+                        'logo' => 'file',
+                    ],
+                    'allowed_actions' => [
+                        'send-email',
+                        'send-company-email',
+                    ],
                 ],
-                'allowed_actions' => [
-                    'send-email',
-                    'send-company-email',
-                ],
-            ],
-        ]);
+            ]);
     }
 
     public function testEventShemaNotFound()

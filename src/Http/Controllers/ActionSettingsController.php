@@ -9,7 +9,6 @@ use Comhon\CustomAction\Resolver\ModelResolverContainer;
 use Comhon\CustomAction\Rules\RulesManager;
 use Illuminate\Http\Request;
 use Illuminate\Http\Resources\Json\JsonResource;
-use Illuminate\Routing\Controller;
 use Symfony\Component\HttpKernel\Exception\NotFoundHttpException;
 use Symfony\Component\HttpKernel\Exception\UnprocessableEntityHttpException;
 
@@ -50,6 +49,7 @@ class ActionSettingsController extends Controller
                 $customActionSettings = $customActionSettingss->first();
             }
         }
+        $this->authorize('view', $customActionSettings);
 
         return new JsonResource($customActionSettings);
     }
@@ -62,6 +62,8 @@ class ActionSettingsController extends Controller
     public function update(Request $request, ModelResolverContainer $resolver, CustomActionSettings $actionSetting)
     {
         $customActionSettings = $actionSetting;
+        $this->authorize('update', $customActionSettings);
+
         /** @var CustomActionInterface $customAction */
         $customAction = app($resolver->getClass($customActionSettings->type));
         $rules = RulesManager::getSettingsRules($customAction->getSettingsSchema(), $customAction->hasTargetUser());
@@ -80,6 +82,8 @@ class ActionSettingsController extends Controller
      */
     public function listActionScopedSettings(CustomActionSettings $customActionSettings)
     {
+        $this->authorize('view', $customActionSettings);
+
         return new JsonResource(
             $customActionSettings->scopedSettings()->get(['id'])->pluck('id')
         );
@@ -105,6 +109,8 @@ class ActionSettingsController extends Controller
      */
     public function listActionLocalizedSettings(CustomActionSettings $customActionSettings)
     {
+        $this->authorize('view', $customActionSettings);
+
         $paginator = $customActionSettings->localizedSettings()->select('id', 'locale')->paginate();
 
         return JsonResource::collection($paginator);

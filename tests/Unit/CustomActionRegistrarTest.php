@@ -3,7 +3,7 @@
 namespace Tests\Unit;
 
 use Comhon\CustomAction\CustomActionRegistrar;
-use Comhon\CustomAction\Tests\TestCase;
+use Tests\TestCase;
 
 class CustomActionRegistrarTest extends TestCase
 {

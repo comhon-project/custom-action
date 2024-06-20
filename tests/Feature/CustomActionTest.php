@@ -2,32 +2,33 @@
 
 namespace Tests\Feature;
 
+use App\Actions\SendCompanyRegistrationMail;
+use App\Models\Company;
+use App\Models\User;
+use App\Models\UserWithoutPreference;
 use Comhon\CustomAction\Mail\Custom;
 use Comhon\CustomAction\Models\ActionLocalizedSettings;
 use Comhon\CustomAction\Models\ActionScopedSettings;
 use Comhon\CustomAction\Models\ActionSettingsContainer;
 use Comhon\CustomAction\Models\CustomActionSettings;
 use Comhon\CustomAction\Resolver\ModelResolverContainer;
-use Comhon\CustomAction\Tests\SetUpWithModelRegistration;
-use Comhon\CustomAction\Tests\Support\Models\Company;
-use Comhon\CustomAction\Tests\Support\Models\User;
-use Comhon\CustomAction\Tests\Support\Models\UserWithoutPreference;
-use Comhon\CustomAction\Tests\Support\SendCompanyRegistrationMail;
-use Comhon\CustomAction\Tests\TestCase;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Mail\Mailables\Attachment;
 use Illuminate\Support\Facades\App;
 use Illuminate\Support\Facades\Mail;
+use Tests\SetUpWithModelRegistration;
+use Tests\Support\Utils;
+use Tests\TestCase;
 
 class CustomActionTest extends TestCase
 {
     use RefreshDatabase;
     use SetUpWithModelRegistration;
 
-    private static $asset = __DIR__
-        .DIRECTORY_SEPARATOR.'..'
-        .DIRECTORY_SEPARATOR.'Data'
-        .DIRECTORY_SEPARATOR.'jc.jpeg';
+    private function getAssetPath(): string
+    {
+        return Utils::joinPaths(Utils::getTestPath('Data'), 'jc.jpeg');
+    }
 
     private function getActionInstance(): SendCompanyRegistrationMail
     {
@@ -45,7 +46,7 @@ class CustomActionTest extends TestCase
         $company = Company::factory()->create();
         CustomActionSettings::factory()->sendMailRegistrationCompany(null, false, 'send-company-email', true)->create();
 
-        $bindings = ['company' => $company, 'logo' => self::$asset];
+        $bindings = ['company' => $company, 'logo' => $this->getAssetPath()];
 
         Mail::fake();
 
@@ -65,7 +66,7 @@ class CustomActionTest extends TestCase
         $mails[0]->assertHasSubject(
             "Dear $user->first_name, company $company->name (last login: December 12, 2022 at 12:00 AM (UTC) December 12, 2022 at 12:00 AM (UTC))"
         );
-        $this->assertTrue($mails[0]->hasAttachment(Attachment::fromPath(self::$asset)));
+        $this->assertTrue($mails[0]->hasAttachment(Attachment::fromPath($this->getAssetPath())));
     }
 
     public static function providerHandleUniqueActionSuccess()
@@ -89,7 +90,7 @@ class CustomActionTest extends TestCase
         $company = Company::factory()->create();
         CustomActionSettings::factory()->sendMailRegistrationCompany(null, false, 'send-company-email', true)->create();
 
-        $bindings = ['company' => $company, 'logo' => self::$asset];
+        $bindings = ['company' => $company, 'logo' => $this->getAssetPath()];
 
         Mail::fake();
 
@@ -109,7 +110,7 @@ class CustomActionTest extends TestCase
         $mails[0]->assertHasSubject(
             "Dear $user->first_name, company $company->name (last login: December 12, 2022 at 12:00 AM (UTC) December 12, 2022 at 12:00 AM (UTC))"
         );
-        $this->assertTrue($mails[0]->hasAttachment(Attachment::fromPath(self::$asset)));
+        $this->assertTrue($mails[0]->hasAttachment(Attachment::fromPath($this->getAssetPath())));
     }
 
     public static function providerHandleUniqueActionUserWithoutPreferencesSuccess()
@@ -126,8 +127,8 @@ class CustomActionTest extends TestCase
         $user = User::factory()->create();
         $company = Company::factory()->create();
 
-        $bindings = ['company' => $company, 'logo' => self::$asset];
-        $this->expectExceptionMessage('action settings not set for Comhon\CustomAction\Tests\Support\SendCompanyRegistrationMail');
+        $bindings = ['company' => $company, 'logo' => $this->getAssetPath()];
+        $this->expectExceptionMessage('action settings not set for App\Actions\SendCompanyRegistrationMail');
         $this->getActionInstance()->handle($bindings, $user);
     }
 
@@ -140,7 +141,7 @@ class CustomActionTest extends TestCase
         CustomActionSettings::factory()->sendMailRegistrationCompany(null, false, 'send-company-email', true)->create();
         CustomActionSettings::factory()->sendMailRegistrationCompany(null, false, 'send-company-email', true)->create();
 
-        $bindings = ['company' => $company, 'logo' => self::$asset];
+        $bindings = ['company' => $company, 'logo' => $this->getAssetPath()];
         $this->expectExceptionMessage("several 'send-company-email' actions found");
         $this->getActionInstance()->handle($bindings, $user);
     }
@@ -665,14 +666,6 @@ class CustomActionTest extends TestCase
         $response->assertNoContent();
         $this->assertEquals(0, $customActionSettings->scopedSettings()->count());
         $this->assertEquals(0, ActionScopedSettings::count());
-    }
-
-    public function testCallAppForbidden()
-    {
-        // we create a user WITHOUT the ability Ability::CONF_INI_MANAGE
-        $user = User::factory()->create();
-        $response = $this->actingAs($user)->getJson('custom/actions/send-email/schema');
-        $response->assertForbidden();
     }
 
     /**

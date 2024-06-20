@@ -1,12 +1,12 @@
 <?php
 
-namespace Comhon\CustomAction\Database\Factories;
+namespace Database\Factories;
 
-use Comhon\CustomAction\Tests\Support\Models\Company;
+use App\Models\Company;
 use Illuminate\Database\Eloquent\Factories\Factory;
 
 /**
- * @extends \Illuminate\Database\Eloquent\Factories\Factory<\Comhon\CustomAction\Tests\Support\Models\Company>
+ * @extends \Illuminate\Database\Eloquent\Factories\Factory<\App\Models\Company>
  */
 class CompanyFactory extends Factory
 {

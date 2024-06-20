@@ -28,9 +28,7 @@ class SendTemplatedMail implements CustomActionInterface, TriggerableFromEventIn
      */
     protected $shouldQueue = false;
 
-    public function __construct(private CustomActionRegistrar $registrar, private ModelResolverContainer $resolver)
-    {
-    }
+    public function __construct(private CustomActionRegistrar $registrar, private ModelResolverContainer $resolver) {}
 
     /**
      * vefify if action concern a targeted user
