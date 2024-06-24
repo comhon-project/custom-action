@@ -146,7 +146,7 @@ class CustomActionTest extends TestCase
         $this->getActionInstance()->handle($bindings, $user);
     }
 
-    public function testGetActions()
+    public function testGetActionsSuccess()
     {
         $user = User::factory()->hasConsumerAbility()->create();
         $response = $this->actingAs($user)->getJson('custom/actions');
@@ -166,6 +166,13 @@ class CustomActionTest extends TestCase
                 ],
             ],
         ]);
+    }
+
+    public function testGetActionsForbidden()
+    {
+        $user = User::factory()->create();
+        $this->actingAs($user)->getJson('custom/actions')
+            ->assertForbidden();
     }
 
     public function testActionShemaSuccess()
@@ -223,6 +230,13 @@ class CustomActionTest extends TestCase
 
         $response = $this->actingAs($user)->getJson('custom/actions/send-email/schema');
         $response->assertNotFound();
+    }
+
+    public function testActionShemaForbidden()
+    {
+        $user = User::factory()->create();
+        $this->actingAs($user)->getJson('custom/actions/send-email/schema')
+            ->assertForbidden();
     }
 
     public function testGetUniqueActionNotCreated()
@@ -326,6 +340,13 @@ class CustomActionTest extends TestCase
         ]);
     }
 
+    public function testGetActionSettingsForbidden()
+    {
+        $user = User::factory()->create();
+        $this->actingAs($user)->getJson('custom/action-settings/send-company-email')
+            ->assertForbidden();
+    }
+
     public function testUpdateGenericActionSettings()
     {
         $customActionSettings = CustomActionSettings::factory(null, [
@@ -380,6 +401,18 @@ class CustomActionTest extends TestCase
         ]);
 
         $this->assertEquals($newSettings, CustomActionSettings::findOrFail($customActionSettings->id)->settings);
+    }
+
+    public function testUpdateActionSettingsForbidden()
+    {
+        $customActionSettings = CustomActionSettings::factory(null, [
+            'type' => 'send-email',
+            'settings' => [],
+        ])->create();
+
+        $user = User::factory()->create();
+        $this->actingAs($user)->putJson("custom/action-settings/$customActionSettings->id")
+            ->assertForbidden();
     }
 
     /**
@@ -463,6 +496,25 @@ class CustomActionTest extends TestCase
      *
      * @return void
      */
+    public function testStoreActionLocalizedSettingsForbidden($settingsContainerClass)
+    {
+        $resource = $settingsContainerClass == CustomActionSettings::class ? 'action-settings' : 'scoped-settings';
+
+        /** @var ActionSettingsContainer $settingsContainer */
+        $settingsContainer = $settingsContainerClass::factory(null, [
+            'settings' => [],
+        ])->create();
+
+        $user = User::factory()->create();
+        $this->actingAs($user)->postJson("custom/{$resource}/{$settingsContainer->id}/localized-settings")
+            ->assertForbidden();
+    }
+
+    /**
+     * @dataProvider providerActionLocalizedSettings
+     *
+     * @return void
+     */
     public function testUpdateActionLocalizedSettings($settingsContainerClass)
     {
         /** @var ActionSettingsContainer $settingsContainer */
@@ -502,6 +554,29 @@ class CustomActionTest extends TestCase
      *
      * @return void
      */
+    public function testUpdateActionLocalizedSettingsForbidden($settingsContainerClass)
+    {
+        /** @var ActionSettingsContainer $settingsContainer */
+        $settingsContainer = $settingsContainerClass::factory()->create();
+        $localizedSettings = new ActionLocalizedSettings();
+        $localizedSettings->settings = [
+            'subject' => 'original subject',
+            'body' => 'original body',
+        ];
+        $localizedSettings->locale = 'en';
+        $localizedSettings->localizable()->associate($settingsContainer);
+        $localizedSettings->save();
+
+        $user = User::factory()->create();
+        $this->actingAs($user)->putJson("custom/localized-settings/{$localizedSettings->id}")
+            ->assertForbidden();
+    }
+
+    /**
+     * @dataProvider providerActionLocalizedSettings
+     *
+     * @return void
+     */
     public function testDeleteActionLocalizedSettings($settingsContainerClass)
     {
         /** @var ActionSettingsContainer $settingsContainer */
@@ -520,6 +595,27 @@ class CustomActionTest extends TestCase
         $response->assertNoContent();
         $this->assertEquals(0, $settingsContainer->localizedSettings()->count());
         $this->assertEquals(0, ActionLocalizedSettings::count());
+    }
+
+    /**
+     * @dataProvider providerActionLocalizedSettings
+     *
+     * @return void
+     */
+    public function testDeleteActionLocalizedSettingsForbidden($settingsContainerClass)
+    {
+        /** @var ActionSettingsContainer $settingsContainer */
+        $settingsContainer = $settingsContainerClass::factory()->create();
+        $localizedSettings = new ActionLocalizedSettings();
+        $localizedSettings->settings = [];
+        $localizedSettings->locale = 'en';
+        $localizedSettings->localizable()->associate($settingsContainer);
+        $localizedSettings->save();
+
+
+        $user = User::factory()->create();
+        $this->actingAs($user)->delete("custom/localized-settings/$localizedSettings->id")
+            ->assertForbidden();
     }
 
     public static function providerActionLocalizedSettings()
@@ -608,6 +704,21 @@ class CustomActionTest extends TestCase
         ]);
     }
 
+    /**
+     * @return void
+     */
+    public function testStoreActionScopedSettingsForbidden()
+    {
+        /** @var CustomActionSettings $customActionSettings */
+        $customActionSettings = CustomActionSettings::factory(null, [
+            'settings' => [],
+        ])->create();
+
+        $user = User::factory()->create();
+        $this->actingAs($user)->postJson("custom/action-settings/{$customActionSettings->id}/scoped-settings")
+            ->assertForbidden();
+    }
+
     public function testUpdateActionScopedSettings()
     {
         /** @var CustomActionSettings $customActionSettings */
@@ -648,6 +759,15 @@ class CustomActionTest extends TestCase
         $this->assertEquals(1, ActionScopedSettings::count());
     }
 
+    public function testUpdateActionScopedSettingsForbidden()
+    {
+        $scopedSettings = ActionScopedSettings::factory()->create();
+
+        $user = User::factory()->create();
+        $this->actingAs($user)->putJson("custom/scoped-settings/{$scopedSettings->id}")
+            ->assertForbidden();
+    }
+
     public function testDeleteActionScopedSettings()
     {
         /** @var CustomActionSettings $customActionSettings */
@@ -666,6 +786,16 @@ class CustomActionTest extends TestCase
         $response->assertNoContent();
         $this->assertEquals(0, $customActionSettings->scopedSettings()->count());
         $this->assertEquals(0, ActionScopedSettings::count());
+    }
+
+    public function testDeleteActionScopedSettingsForbidden()
+    {
+        /** @var CustomActionSettings $customActionSettings */
+        $scopedSettings = ActionScopedSettings::factory()->create();
+
+        $user = User::factory()->create();
+        $this->actingAs($user)->delete("custom/scoped-settings/$scopedSettings->id")
+            ->assertForbidden();
     }
 
     /**

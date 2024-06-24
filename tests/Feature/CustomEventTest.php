@@ -13,7 +13,7 @@ class CustomEventTest extends TestCase
     use RefreshDatabase;
     use SetUpWithModelRegistration;
 
-    public function testGetEvents()
+    public function testGetEventsSuccess()
     {
         $user = User::factory()->hasConsumerAbility()->create();
         $response = $this->actingAs($user)->getJson('custom/events');
@@ -25,6 +25,13 @@ class CustomEventTest extends TestCase
                 ],
             ],
         ]);
+    }
+
+    public function testGetEventsForbidden()
+    {
+        $user = User::factory()->create();
+        $this->actingAs($user)->getJson('custom/events')
+            ->assertForbidden();
     }
 
     public function testEventShemaSuccess()
@@ -53,5 +60,12 @@ class CustomEventTest extends TestCase
         $user = User::factory()->hasConsumerAbility()->create();
         $response = $this->actingAs($user)->getJson('custom/events/company-registered/schema');
         $response->assertNotFound();
+    }
+
+    public function testEventShemaForbidden()
+    {
+        $user = User::factory()->create();
+        $this->actingAs($user)->getJson('custom/events/company-registered/schema')
+            ->assertForbidden();
     }
 }

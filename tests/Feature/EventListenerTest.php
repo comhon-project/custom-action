@@ -195,6 +195,13 @@ class EventListenerTest extends TestCase
         $response->assertNotFound();
     }
 
+    public function testGetEventListenersForbidden()
+    {
+        $user = User::factory()->create();
+        $this->actingAs($user)->getJson('custom/events/company-registered/listeners')
+            ->assertForbidden();
+    }
+
     public function testStoreEventListeners()
     {
         $scope = [
@@ -230,6 +237,13 @@ class EventListenerTest extends TestCase
         $response->assertNotFound();
     }
 
+    public function testStoreEventListenersForbidden()
+    {
+        $user = User::factory()->create();
+        $this->actingAs($user)->postJson('custom/events/company-registered/listeners')
+            ->assertForbidden();
+    }
+
     public function testUpdateEventListener()
     {
         $eventListener = CustomEventListener::factory()->genericRegistrationCompany()->create();
@@ -259,6 +273,15 @@ class EventListenerTest extends TestCase
         $this->assertEquals($scope, $storedEventListener->scope);
     }
 
+    public function testUpdateEventListenerForbidden()
+    {
+        $eventListener = CustomEventListener::factory()->genericRegistrationCompany()->create();
+
+        $user = User::factory()->create();
+        $this->actingAs($user)->putJson("custom/event-listeners/$eventListener->id")
+            ->assertForbidden();
+    }
+
     public function testDeleteEventListeners()
     {
         $eventListener = CustomEventListener::factory()->genericRegistrationCompany()->create();
@@ -278,6 +301,22 @@ class EventListenerTest extends TestCase
         // that why there should only be one action left
         $this->assertEquals(1, CustomActionSettings::count());
         $this->assertEquals(2, ActionLocalizedSettings::count());
+    }
+
+    public function testDeleteEventListenersForbidden()
+    {
+        $eventListener = CustomEventListener::factory()->genericRegistrationCompany()->create();
+        $eventListener->actions()->attach(
+            CustomActionSettings::factory()->sendMailRegistrationCompany(null, false, 'send-company-email')->create()
+        );
+
+        $user = User::factory()->create();
+        $this->actingAs($user)->delete("custom/event-listeners/$eventListener->id")
+            ->assertForbidden();
+        
+        $this->assertEquals(1, CustomEventListener::count());
+        $this->assertEquals(2, CustomActionSettings::count());
+        $this->assertEquals(6, ActionLocalizedSettings::count());
     }
 
     public function testGetEventListenerActions()
@@ -305,6 +344,18 @@ class EventListenerTest extends TestCase
                 ],
             ],
         ]);
+    }
+
+    public function testGetEventListenerActionsForbidden()
+    {
+        $toUser = User::factory()->create();
+
+        // create event listener for CompanyRegistered event
+        $eventListener = CustomEventListener::factory()->genericRegistrationCompany([$toUser->id])->create();
+
+        $user = User::factory()->create();
+        $this->actingAs($user)->getJson("custom/event-listeners/$eventListener->id/actions")
+            ->assertForbidden();
     }
 
     public function testStoreEventListenerAction()
@@ -335,6 +386,17 @@ class EventListenerTest extends TestCase
         $this->assertEquals($actionValues['settings'], $customActionSettings->settings);
     }
 
+    public function testStoreEventListenerActionForbidden()
+    {
+        // create event listener for CompanyRegistered event
+        $eventListener = CustomEventListener::factory()->create();
+        $this->assertEquals(0, $eventListener->actions()->count());
+
+        $user = User::factory()->create();
+        $this->actingAs($user)->postJson("custom/event-listeners/$eventListener->id/actions")
+            ->assertForbidden();
+    }
+
     public function testSyncEventListenerAction()
     {
         // create event listener for CompanyRegistered event
@@ -358,6 +420,20 @@ class EventListenerTest extends TestCase
             'data' => ['id' => $customActionSettings->id],
         ]);
         $this->assertEquals('send-company-email', $customActionSettings->type);
+    }
+
+    public function testSyncEventListenerActionForbidden()
+    {
+        // create event listener for CompanyRegistered event
+        $eventListener = CustomEventListener::factory()->create();
+        CustomActionSettings::factory()
+            ->sendMailRegistrationCompany(null, false, 'send-company-email')
+            ->create();
+
+        $user = User::factory()->create();
+        $this->actingAs($user)->postJson("custom/event-listeners/$eventListener->id/actions/sync", [
+            'type' => 'send-company-email',
+        ])->assertForbidden();
     }
 
     public function testRemoveEventListenerAction()
@@ -389,5 +465,22 @@ class EventListenerTest extends TestCase
         // unique action must be preserved (even if it is detached)
         $this->assertEquals(1, CustomActionSettings::count());
         $this->assertNotNull(CustomActionSettings::find($actionMustNotBeDeleted->id));
+    }
+
+    public function testRemoveEventListenerActionForbidden()
+    {
+        // create event listener for CompanyRegistered event
+        $eventListener = CustomEventListener::factory()->genericRegistrationCompany()->create();
+        $eventListener->actions()->attach(
+            CustomActionSettings::factory()->sendMailRegistrationCompany(null, false, 'send-company-email')->create()
+        );
+        $action = $eventListener->actions[0];
+
+        $user = User::factory()->create();
+        $this->actingAs($user)->postJson(
+            "custom/event-listeners/$eventListener->id/actions/$action->id/remove"
+        )->assertForbidden();
+
+        $this->assertCount(2, $eventListener->actions);
     }
 }
