@@ -313,7 +313,7 @@ class EventListenerTest extends TestCase
         $user = User::factory()->create();
         $this->actingAs($user)->delete("custom/event-listeners/$eventListener->id")
             ->assertForbidden();
-        
+
         $this->assertEquals(1, CustomEventListener::count());
         $this->assertEquals(2, CustomActionSettings::count());
         $this->assertEquals(6, ActionLocalizedSettings::count());

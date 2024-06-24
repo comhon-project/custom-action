@@ -51,22 +51,22 @@ class CustomActionServiceProvider extends PackageServiceProvider
         );
         if (config('custom-action.use_policies')) {
             $policies = Gate::policies();
-            if (!isset($policies[ActionLocalizedSettings::class])) {
+            if (! isset($policies[ActionLocalizedSettings::class])) {
                 Gate::policy(ActionLocalizedSettings::class, 'App\Policies\CustomAction\ActionLocalizedSettingsPolicy');
             }
-            if (!isset($policies[ActionScopedSettings::class])) {
+            if (! isset($policies[ActionScopedSettings::class])) {
                 Gate::policy(ActionScopedSettings::class, 'App\Policies\CustomAction\ActionScopedSettingsPolicy');
             }
-            if (!isset($policies[CustomActionInterface::class])) {
+            if (! isset($policies[CustomActionInterface::class])) {
                 Gate::policy(CustomActionInterface::class, 'App\Policies\CustomAction\CustomActionPolicy');
             }
-            if (!isset($policies[CustomActionSettings::class])) {
+            if (! isset($policies[CustomActionSettings::class])) {
                 Gate::policy(CustomActionSettings::class, 'App\Policies\CustomAction\CustomActionSettingsPolicy');
             }
-            if (!isset($policies[CustomEventInterface::class])) {
+            if (! isset($policies[CustomEventInterface::class])) {
                 Gate::policy(CustomEventInterface::class, 'App\Policies\CustomAction\CustomEventPolicy');
             }
-            if (!isset($policies[CustomEventListener::class])) {
+            if (! isset($policies[CustomEventListener::class])) {
                 Gate::policy(CustomEventListener::class, 'App\Policies\CustomAction\CustomEventListenerPolicy');
             }
         }

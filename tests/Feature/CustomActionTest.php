@@ -612,7 +612,6 @@ class CustomActionTest extends TestCase
         $localizedSettings->localizable()->associate($settingsContainer);
         $localizedSettings->save();
 
-
         $user = User::factory()->create();
         $this->actingAs($user)->delete("custom/localized-settings/$localizedSettings->id")
             ->assertForbidden();
