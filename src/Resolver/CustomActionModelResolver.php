@@ -2,24 +2,20 @@
 
 namespace Comhon\CustomAction\Resolver;
 
+use Comhon\CustomAction\Contracts\CustomActionInterface;
+use Comhon\CustomAction\Contracts\CustomEventInterface;
 use Comhon\ModelResolverContract\ModelResolverInterface;
 
 /**
- * @method void register(array $bindings, array $scopes = [])
+ * @method void bind(string $uniqueName, string $class)
  * @method ?string getUniqueName(string $class)
  * @method ?string getClass(string $uniqueName)
- * @method bool isAllowed(string $uniqueName, string $scope)
- * @method array getUniqueNames(string $scope)
- * @method array getClasses(string $scope)
+ * @method \Comhon\ModelResolverContract\ModelResolverInterface getResolver()
+ * @method void isAllowedAction(string $uniqueName)
+ * @method void isAllowedEvent(string $uniqueName)
  */
-class ModelResolverContainer
+class CustomActionModelResolver
 {
-    const GENERIC_ACTION_SCOPE = 'custom-generic-action';
-
-    const UNIQUE_ACTION_SCOPE = 'custom-unique-action';
-
-    const EVENT_SCOPE = 'custom-event';
-
     public function __construct(private ModelResolverInterface $resolver) {}
 
     /**
@@ -35,8 +31,7 @@ class ModelResolverContainer
      */
     public function isAllowedAction(string $uniqueName): bool
     {
-        return $this->resolver->isAllowed($uniqueName, self::GENERIC_ACTION_SCOPE)
-            ?: $this->resolver->isAllowed($uniqueName, self::UNIQUE_ACTION_SCOPE);
+        return is_subclass_of($this->resolver->getClass($uniqueName), CustomActionInterface::class);
     }
 
     /**
@@ -44,7 +39,7 @@ class ModelResolverContainer
      */
     public function isAllowedEvent(string $uniqueName): bool
     {
-        return $this->resolver->isAllowed($uniqueName, self::EVENT_SCOPE);
+        return is_subclass_of($this->resolver->getClass($uniqueName), CustomEventInterface::class);
     }
 
     /**

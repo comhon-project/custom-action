@@ -2,8 +2,9 @@
 
 namespace Tests\Feature;
 
+use App\Events\CompanyRegistered;
 use App\Models\User;
-use Comhon\CustomAction\Resolver\ModelResolverContainer;
+use Comhon\CustomAction\Facades\CustomActionModelResolver;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Tests\SetUpWithModelRegistration;
 use Tests\TestCase;
@@ -15,12 +16,13 @@ class CustomEventTest extends TestCase
 
     public function testGetEventsSuccess()
     {
+        config(['custom-action.events' => [CompanyRegistered::class]]);
         $user = User::factory()->hasConsumerAbility()->create();
         $response = $this->actingAs($user)->getJson('custom/events');
         $response->assertJson([
             'data' => [
                 [
-                    'key' => 'company-registered',
+                    'type' => 'company-registered',
                     'name' => 'company registered',
                 ],
             ],
@@ -43,11 +45,20 @@ class CustomEventTest extends TestCase
                 'data' => [
                     'binding_schema' => [
                         'company.name' => 'string',
-                        'logo' => 'file',
+                        'logo' => 'is:stored-file',
+                        'user' => 'is:email-receiver',
+                        'user.name' => 'string',
+                        'user.email' => 'email',
                     ],
                     'allowed_actions' => [
-                        'send-email',
-                        'send-company-email',
+                        [
+                            'type' => 'send-email',
+                            'name' => 'send email',
+                        ],
+                        [
+                            'type' => 'send-company-email',
+                            'name' => 'send company email',
+                        ],
                     ],
                 ],
             ]);
@@ -55,8 +66,7 @@ class CustomEventTest extends TestCase
 
     public function testEventShemaNotFound()
     {
-        $resolver = app(ModelResolverContainer::class);
-        $resolver->register([]);
+        CustomActionModelResolver::register([], true);
         $user = User::factory()->hasConsumerAbility()->create();
         $response = $this->actingAs($user)->getJson('custom/events/company-registered/schema');
         $response->assertNotFound();

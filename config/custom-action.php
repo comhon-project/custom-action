@@ -5,7 +5,7 @@ return [
     /*
      | prefix to apply on all custom action routes
      */
-    'prefix' => 'custom',
+    'route_prefix' => 'custom',
 
     /*
      | middlewares to apply on all custom action routes
@@ -24,6 +24,15 @@ return [
     'user_model' => App\Models\User::class,
 
     /*
+     | custom action library come up with some built in validation rules.
+     | theses function are registered in the laravel validator as string,
+     | so they may conflict with your rules if you have also set any.
+     | in this case you can define a prefix for all custom action validation
+     | rules to avoid conflicts.
+     */
+    'rule_prefix' => '',
+
+    /*
      | the model resolver.
      | it must be instance of Comhon\ModelResolverContract\ModelResolverInterface.
      | it must be registered as singleton
@@ -31,12 +40,14 @@ return [
     'model_resolver' => Comhon\CustomAction\Resolver\ModelResolver::class,
 
     /*
-     | list of bindings that may be applied when action target a user
-     | * might be a simple array of properties :
-     |     ['first_name', 'last_name', 'address'],
-     | * might be a keyed array, each key is a property name, each value is the property type :
-     |     ['first_name' => 'string', 'birth_date' => 'date'],
-     | * might be a function that return one of previous format.
+     | actions that may be defined as unique actions.
+     | each element must a class that implements CustomUniqueActionInterface.
      */
-    'target_bindings' => [],
+    'unique_actions' => [],
+
+    /*
+     | events that may be linked to actions
+     | each element must be a class that implements CustomEventInterface.
+     */
+    'events' => [],
 ];

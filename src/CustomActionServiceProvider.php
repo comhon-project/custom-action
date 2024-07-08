@@ -3,16 +3,26 @@
 namespace Comhon\CustomAction;
 
 use Comhon\CustomAction\Commands\GenerateActionCommand;
+use Comhon\CustomAction\Contracts\BindingFinderInterface;
 use Comhon\CustomAction\Contracts\CustomActionInterface;
 use Comhon\CustomAction\Contracts\CustomEventInterface;
+use Comhon\CustomAction\Contracts\EmailReceiverInterface;
+use Comhon\CustomAction\Facades\CustomActionModelResolver as FacadesCustomActionModelResolver;
+use Comhon\CustomAction\Files\StoredFile;
 use Comhon\CustomAction\Models\ActionLocalizedSettings;
 use Comhon\CustomAction\Models\ActionScopedSettings;
 use Comhon\CustomAction\Models\CustomActionSettings;
 use Comhon\CustomAction\Models\CustomEventListener;
-use Comhon\CustomAction\Resolver\ModelResolverContainer;
+use Comhon\CustomAction\Resolver\CustomActionModelResolver;
+use Comhon\CustomAction\Rules\HtmlTemplate;
+use Comhon\CustomAction\Rules\IsInstanceOf;
+use Comhon\CustomAction\Rules\ModelReference;
+use Comhon\CustomAction\Rules\RuleHelper;
+use Comhon\CustomAction\Rules\TextTemplate;
 use Illuminate\Contracts\Foundation\Application;
 use Illuminate\Support\Facades\Event;
 use Illuminate\Support\Facades\Gate;
+use Illuminate\Support\Facades\Validator;
 use Spatie\LaravelPackageTools\Package;
 use Spatie\LaravelPackageTools\PackageServiceProvider;
 
@@ -36,10 +46,11 @@ class CustomActionServiceProvider extends PackageServiceProvider
 
     public function packageRegistered()
     {
-        $this->app->singleton(ModelResolverContainer::class, function (Application $app) {
-            $resolverClass = $app['config']['custom-action.model_resolver'];
-
-            return new ModelResolverContainer($app->make($resolverClass));
+        $this->app->singleton(CustomActionModelResolver::class, function (Application $app) {
+            return new CustomActionModelResolver($app->make($app['config']['custom-action.model_resolver']));
+        });
+        $this->app->singletonIf(BindingFinderInterface::class, function (Application $app) {
+            return new BindingFinder();
         });
     }
 
@@ -49,6 +60,13 @@ class CustomActionServiceProvider extends PackageServiceProvider
             CustomEventInterface::class,
             [CustomEventHandler::class, 'handle']
         );
+        $this->registerPolicies();
+        $this->registerRules();
+        $this->bindModels();
+    }
+
+    public function registerPolicies()
+    {
         if (config('custom-action.use_policies')) {
             $policies = Gate::policies();
             if (! isset($policies[ActionLocalizedSettings::class])) {
@@ -70,5 +88,20 @@ class CustomActionServiceProvider extends PackageServiceProvider
                 Gate::policy(CustomEventListener::class, 'App\Policies\CustomAction\CustomEventListenerPolicy');
             }
         }
+    }
+
+    public function registerRules()
+    {
+        Validator::extend(RuleHelper::getRuleName('model_reference'), ModelReference::class);
+        Validator::extend(RuleHelper::getRuleName('is'), IsInstanceOf::class);
+        Validator::extend(RuleHelper::getRuleName('text_template'), TextTemplate::class);
+        Validator::extend(RuleHelper::getRuleName('html_template'), HtmlTemplate::class);
+    }
+
+    public function bindModels()
+    {
+        FacadesCustomActionModelResolver::bind('stored-file', StoredFile::class);
+        FacadesCustomActionModelResolver::bind('email-receiver', EmailReceiverInterface::class);
+        FacadesCustomActionModelResolver::bind('custom-event', CustomEventInterface::class);
     }
 }

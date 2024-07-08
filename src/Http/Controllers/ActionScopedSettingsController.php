@@ -3,10 +3,10 @@
 namespace Comhon\CustomAction\Http\Controllers;
 
 use Comhon\CustomAction\Contracts\CustomActionInterface;
+use Comhon\CustomAction\Facades\CustomActionModelResolver;
 use Comhon\CustomAction\Models\ActionScopedSettings;
 use Comhon\CustomAction\Models\CustomActionSettings;
-use Comhon\CustomAction\Resolver\ModelResolverContainer;
-use Comhon\CustomAction\Rules\RulesManager;
+use Comhon\CustomAction\Rules\RuleHelper;
 use Illuminate\Http\Request;
 use Illuminate\Http\Resources\Json\JsonResource;
 use Illuminate\Support\Facades\DB;
@@ -32,18 +32,22 @@ class ActionScopedSettingsController extends Controller
      *
      * @return \Illuminate\Http\Resources\Json\JsonResource
      */
-    public function store(Request $request, ModelResolverContainer $resolver, CustomActionSettings $customActionSettings)
+    public function store(Request $request, CustomActionSettings $customActionSettings)
     {
         $this->authorize('create', [ActionScopedSettings::class, $customActionSettings]);
+        $eventListener = $customActionSettings->eventListener();
+        $eventContext = $eventListener
+            ? CustomActionModelResolver::getClass($eventListener->event)
+            : null;
 
         /** @var CustomActionInterface $customAction */
-        $customAction = app($resolver->getClass($customActionSettings->type));
-        $rules = RulesManager::getSettingsRules($customAction->getSettingsSchema(), $customAction->hasTargetUser());
+        $customAction = app(CustomActionModelResolver::getClass($customActionSettings->type));
+        $rules = RuleHelper::getSettingsRules($customAction->getSettingsSchema($eventContext));
         $rules['scope'] = 'array|required';
         $validated = $request->validate($rules);
 
         $scopedSettings = new ActionScopedSettings();
-        $scopedSettings->settings = $validated['settings'];
+        $scopedSettings->settings = $validated['settings'] ?? [];
         $scopedSettings->scope = $validated['scope'];
         $scopedSettings->custom_action_settings_id = $customActionSettings->id;
         $scopedSettings->save();
@@ -56,17 +60,22 @@ class ActionScopedSettingsController extends Controller
      *
      * @return \Illuminate\Http\Resources\Json\JsonResource
      */
-    public function update(Request $request, ModelResolverContainer $resolver, ActionScopedSettings $scopedSetting)
+    public function update(Request $request, ActionScopedSettings $scopedSetting)
     {
-        $this->authorize('update', $scopedSetting);
-
         $scopedSettings = $scopedSetting;
-        $customAction = app($resolver->getClass($scopedSettings->customActionSettings->type));
-        $rules = RulesManager::getSettingsRules($customAction->getSettingsSchema(), $customAction->hasTargetUser());
+        $this->authorize('update', $scopedSettings);
+
+        $eventListener = $scopedSettings->customActionSettings->eventListener();
+        $eventContext = $eventListener
+            ? CustomActionModelResolver::getClass($eventListener->event)
+            : null;
+
+        $customAction = app(CustomActionModelResolver::getClass($scopedSettings->customActionSettings->type));
+        $rules = RuleHelper::getSettingsRules($customAction->getSettingsSchema($eventContext));
         $rules['scope'] = 'array|required';
         $validated = $request->validate($rules);
 
-        $scopedSettings->settings = $validated['settings'];
+        $scopedSettings->settings = $validated['settings'] ?? [];
         if (isset($validated['scope'])) {
             $scopedSettings->scope = $validated['scope'];
         }
@@ -82,9 +91,9 @@ class ActionScopedSettingsController extends Controller
      */
     public function destroy(ActionScopedSettings $scopedSetting)
     {
-        $this->authorize('delete', $scopedSetting);
-
         $scopedSettings = $scopedSetting;
+        $this->authorize('delete', $scopedSettings);
+
         DB::transaction(function () use ($scopedSettings) {
             $scopedSettings->delete();
         });
@@ -97,12 +106,9 @@ class ActionScopedSettingsController extends Controller
      *
      * @return \Comhon\CustomAction\Resources\ActionLocalizedSettingsResource
      */
-    public function storeScopedSettingsLocalizedSettings(
-        Request $request,
-        ModelResolverContainer $resolver,
-        ActionScopedSettings $scopedSettings
-    ) {
-        return $this->storeLocalizedSettings($request, $resolver, $scopedSettings);
+    public function storeScopedSettingsLocalizedSettings(Request $request, ActionScopedSettings $scopedSettings)
+    {
+        return $this->storeLocalizedSettings($request, $scopedSettings);
     }
 
     /**

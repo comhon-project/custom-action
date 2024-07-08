@@ -4,9 +4,9 @@ namespace Comhon\CustomAction\Http\Controllers;
 
 use Comhon\CustomAction\Contracts\CustomActionInterface;
 use Comhon\CustomAction\Contracts\CustomUniqueActionInterface;
+use Comhon\CustomAction\Facades\CustomActionModelResolver;
 use Comhon\CustomAction\Models\CustomActionSettings;
-use Comhon\CustomAction\Resolver\ModelResolverContainer;
-use Comhon\CustomAction\Rules\RulesManager;
+use Comhon\CustomAction\Rules\RuleHelper;
 use Illuminate\Http\Request;
 use Illuminate\Http\Resources\Json\JsonResource;
 use Symfony\Component\HttpKernel\Exception\NotFoundHttpException;
@@ -21,18 +21,18 @@ class ActionSettingsController extends Controller
      *
      * @return \Illuminate\Http\Resources\Json\JsonResource
      */
-    public function show(ModelResolverContainer $resolver, $actionKeyOrId)
+    public function show($actionKeyOrId)
     {
         $customActionSettings = null;
         if (is_int($actionKeyOrId) || is_numeric($actionKeyOrId)) {
             $customActionSettings = CustomActionSettings::findOrFail($actionKeyOrId);
         } else {
             $actionUniqueName = $actionKeyOrId;
-            if (! $resolver->isAllowedAction($actionUniqueName)) {
+            if (! CustomActionModelResolver::isAllowedAction($actionUniqueName)) {
                 throw new NotFoundHttpException('not found');
             }
 
-            $actionClass = $resolver->getClass($actionUniqueName);
+            $actionClass = CustomActionModelResolver::getClass($actionUniqueName);
             if (! is_subclass_of($actionClass, CustomUniqueActionInterface::class)) {
                 throw new UnprocessableEntityHttpException('action must be a unique action');
             }
@@ -59,17 +59,22 @@ class ActionSettingsController extends Controller
      *
      * @return \Illuminate\Http\Resources\Json\JsonResource
      */
-    public function update(Request $request, ModelResolverContainer $resolver, CustomActionSettings $actionSetting)
+    public function update(Request $request, CustomActionSettings $actionSetting)
     {
         $customActionSettings = $actionSetting;
         $this->authorize('update', $customActionSettings);
 
+        $eventListener = $customActionSettings->eventListener();
+        $eventContext = $eventListener
+            ? CustomActionModelResolver::getClass($eventListener->event)
+            : null;
+
         /** @var CustomActionInterface $customAction */
-        $customAction = app($resolver->getClass($customActionSettings->type));
-        $rules = RulesManager::getSettingsRules($customAction->getSettingsSchema(), $customAction->hasTargetUser());
+        $customAction = app(CustomActionModelResolver::getClass($customActionSettings->type));
+        $rules = RuleHelper::getSettingsRules($customAction->getSettingsSchema($eventContext));
 
         $validated = $request->validate($rules);
-        $customActionSettings->settings = $validated['settings'];
+        $customActionSettings->settings = $validated['settings'] ?? [];
         $customActionSettings->save();
 
         return new JsonResource($customActionSettings);
@@ -94,12 +99,9 @@ class ActionSettingsController extends Controller
      *
      * @return \Comhon\CustomAction\Resources\ActionLocalizedSettingsResource
      */
-    public function storeActionLocalizedSettings(
-        Request $request,
-        ModelResolverContainer $resolver,
-        CustomActionSettings $customActionSettings
-    ) {
-        return $this->storeLocalizedSettings($request, $resolver, $customActionSettings);
+    public function storeActionLocalizedSettings(Request $request, CustomActionSettings $customActionSettings)
+    {
+        return $this->storeLocalizedSettings($request, $customActionSettings);
     }
 
     /**

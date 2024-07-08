@@ -2,13 +2,14 @@
 
 namespace App\Models;
 
+use Comhon\CustomAction\Contracts\EmailReceiverInterface;
 use Comhon\CustomAction\Contracts\HasTimezonePreferenceInterface;
 use Illuminate\Contracts\Translation\HasLocalePreference;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Foundation\Auth\User as Authenticatable;
 use Illuminate\Notifications\Notifiable;
 
-class User extends Authenticatable implements HasLocalePreference, HasTimezonePreferenceInterface
+class User extends Authenticatable implements EmailReceiverInterface, HasLocalePreference, HasTimezonePreferenceInterface
 {
     use HasFactory, Notifiable;
 

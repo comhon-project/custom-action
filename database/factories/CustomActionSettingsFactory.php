@@ -32,47 +32,45 @@ class CustomActionSettingsFactory extends Factory
         ];
     }
 
+    public function actionType(string $type): Factory
+    {
+        return $this->state(function (array $attributes) use ($type) {
+            return [
+                'type' => $type,
+            ];
+        });
+    }
+
     /**
      * registration company mail.
      */
-    public function sendMailRegistrationCompany($to = null, $withScopedSettings = false, $type = 'send-email', $withAttachement = false): Factory
+    public function sendMailRegistrationCompany(?array $toOtherUserIds = null, $withScopedSettings = false, $type = 'send-email', $withAttachement = false): Factory
     {
-        return $this->state(function (array $attributes) use ($to, $type, $withAttachement) {
+        $keyReceivers = $toOtherUserIds === null ? 'to_bindings_receivers' : 'to_receivers';
+        $valueReceivers = $toOtherUserIds === null
+            ? ['user']
+            : collect($toOtherUserIds)->map(fn ($id) => ['receiver_type' => 'user', 'receiver_id' => $id])->all();
+
+        return $this->state(function (array $attributes) use ($keyReceivers, $valueReceivers, $type, $withAttachement) {
             return [
                 'type' => $type,
                 'settings' => [
-                    'to' => $to,
+                    $keyReceivers => $valueReceivers,
                     'attachments' => $withAttachement ? ['logo'] : null,
                 ],
             ];
-        })->afterCreating(function (CustomActionSettings $action) use ($withScopedSettings) {
-            $localizedSettings = new ActionLocalizedSettings();
-            $localizedSettings->localizable()->associate($action);
-            $localizedSettings->locale = 'en';
-            $localizedSettings->settings = [
-                'subject' => 'Dear {{ to.first_name }}, company {{ company.name }} (last login: '
-                    .'{{ to.last_login_at|format_datetime(\'long\', \'short\') }} ({{default_timezone}}) '
-                    .'{{ to.last_login_at|format_datetime(\'long\', \'short\', timezone=preferred_timezone) }} ({{preferred_timezone}}))',
-                'body' => 'Dear {{ to.name }}, company <strong>{{ company.name }}</strong> has been registered !',
-            ];
-            $localizedSettings->save();
+        })->afterCreating(function (CustomActionSettings $action) use ($withScopedSettings, $keyReceivers, $valueReceivers) {
 
-            $localizedSettings = new ActionLocalizedSettings();
-            $localizedSettings->localizable()->associate($action);
-            $localizedSettings->locale = 'fr';
-            $localizedSettings->settings = [
-                'subject' => 'Cher·ère {{ to.first_name }}, la société {{ company.name }} (dernier login: '
-                .'{{ to.last_login_at|format_datetime(\'long\', \'short\') }} ({{default_timezone}}) '
-                .'{{ to.last_login_at|format_datetime(\'long\', \'short\', timezone=preferred_timezone) }} ({{preferred_timezone}}))',
-                'body' => 'Cher·ère {{ to.name }}, la société <strong>{{ company.name }}</strong> à été inscrite !',
-            ];
-            $localizedSettings->save();
+            ActionLocalizedSettings::factory()->for($action, 'localizable')->emailSettings('en', true)->create();
+            ActionLocalizedSettings::factory()->for($action, 'localizable')->emailSettings('fr', true)->create();
 
             if ($withScopedSettings) {
                 $scopedSettings = new ActionScopedSettings();
                 $scopedSettings->customActionSettings()->associate($action);
                 $scopedSettings->scope = ['company' => ['name' => 'My VIP company']];
-                $scopedSettings->settings = [];
+                $scopedSettings->settings = [
+                    $keyReceivers => $valueReceivers,
+                ];
                 $scopedSettings->save();
 
                 $localizedSettings = new ActionLocalizedSettings();

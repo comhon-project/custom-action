@@ -4,9 +4,10 @@ namespace Tests;
 
 use App\Actions\SendCompanyRegistrationMail;
 use App\Events\CompanyRegistered;
+use App\Models\User;
 use Comhon\CustomAction\Actions\QueueTemplatedMail;
 use Comhon\CustomAction\Actions\SendTemplatedMail;
-use Comhon\CustomAction\Resolver\ModelResolverContainer;
+use Comhon\CustomAction\Facades\CustomActionModelResolver;
 
 trait SetUpWithModelRegistration
 {
@@ -14,20 +15,12 @@ trait SetUpWithModelRegistration
     {
         parent::setUp();
 
-        /** @var ModelResolverContainer $resolver */
-        $resolver = app(ModelResolverContainer::class);
-        $resolver->register(
-            [
-                'send-email' => SendTemplatedMail::class,
-                'queue-email' => QueueTemplatedMail::class,
-                'send-company-email' => SendCompanyRegistrationMail::class,
-                'company-registered' => CompanyRegistered::class,
-            ],
-            [
-                'custom-unique-action' => ['send-company-email'],
-                'custom-generic-action' => ['send-email', 'queue-email'],
-                'custom-event' => ['company-registered'],
-            ]
-        );
+        CustomActionModelResolver::register([
+            'user' => User::class,
+            'send-email' => SendTemplatedMail::class,
+            'queue-email' => QueueTemplatedMail::class,
+            'send-company-email' => SendCompanyRegistrationMail::class,
+            'company-registered' => CompanyRegistered::class,
+        ]);
     }
 }

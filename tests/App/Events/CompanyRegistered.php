@@ -7,13 +7,14 @@ use App\Models\Company;
 use App\Models\User;
 use Comhon\CustomAction\Actions\SendTemplatedMail;
 use Comhon\CustomAction\Contracts\CustomEventInterface;
-use Comhon\CustomAction\Contracts\TargetableEventInterface;
+use Comhon\CustomAction\Files\SystemFile;
+use Comhon\CustomAction\Rules\RuleHelper;
 use Illuminate\Broadcasting\InteractsWithSockets;
 use Illuminate\Foundation\Events\Dispatchable;
 use Illuminate\Queue\SerializesModels;
 use Tests\Support\Utils;
 
-class CompanyRegistered implements CustomEventInterface, TargetableEventInterface
+class CompanyRegistered implements CustomEventInterface
 {
     use Dispatchable, InteractsWithSockets, SerializesModels;
 
@@ -23,11 +24,6 @@ class CompanyRegistered implements CustomEventInterface, TargetableEventInterfac
      * @return void
      */
     public function __construct(public Company $company, public User $user) {}
-
-    public function target(): User
-    {
-        return $this->user;
-    }
 
     /**
      * Get actions that might be attached to event
@@ -47,7 +43,13 @@ class CompanyRegistered implements CustomEventInterface, TargetableEventInterfac
     {
         return [
             'company.name' => 'string',
-            'logo' => 'file',
+            'logo' => RuleHelper::getRuleName('is').':stored-file',
+            'user' => RuleHelper::getRuleName('is').':email-receiver',
+            'user.name' => 'string',
+            'user.email' => 'email',
+            'responsibles' => 'array',
+            'responsibles.*' => 'array',
+            'responsibles.*.email' => 'email',
         ];
     }
 
@@ -58,7 +60,16 @@ class CompanyRegistered implements CustomEventInterface, TargetableEventInterfac
     {
         return [
             'company' => $this->company,
-            'logo' => Utils::joinPaths(Utils::getTestPath('Data'), 'jc.jpeg'),
+            'logo' => new SystemFile(Utils::joinPaths(Utils::getTestPath('Data'), 'jc.jpeg')),
+            'user' => $this->user,
+            'responsibles' => [
+                [
+                    'email' => 'responsible_one@gmail.com',
+                ],
+                [
+                    'email' => 'responsible_two@gmail.com',
+                ],
+            ],
         ];
     }
 }

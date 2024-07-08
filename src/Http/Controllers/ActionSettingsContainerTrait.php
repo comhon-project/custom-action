@@ -3,12 +3,12 @@
 namespace Comhon\CustomAction\Http\Controllers;
 
 use Comhon\CustomAction\Contracts\CustomActionInterface;
+use Comhon\CustomAction\Facades\CustomActionModelResolver;
 use Comhon\CustomAction\Models\ActionLocalizedSettings;
 use Comhon\CustomAction\Models\ActionScopedSettings;
 use Comhon\CustomAction\Models\ActionSettingsContainer;
-use Comhon\CustomAction\Resolver\ModelResolverContainer;
 use Comhon\CustomAction\Resources\ActionLocalizedSettingsResource;
-use Comhon\CustomAction\Rules\RulesManager;
+use Comhon\CustomAction\Rules\RuleHelper;
 use Illuminate\Http\Request;
 
 trait ActionSettingsContainerTrait
@@ -18,19 +18,24 @@ trait ActionSettingsContainerTrait
      *
      * @return \Comhon\CustomAction\Resources\ActionLocalizedSettingsResource
      */
-    protected function storeLocalizedSettings(Request $request, ModelResolverContainer $resolver, ActionSettingsContainer $container)
+    protected function storeLocalizedSettings(Request $request, ActionSettingsContainer $container)
     {
         $this->authorize('create', [ActionLocalizedSettings::class, $container]);
 
-        /** @var CustomActionInterface $customAction */
         $customActionSettings = $container instanceof ActionScopedSettings ? $container->customActionSettings : $container;
-        $customAction = app($resolver->getClass($customActionSettings->type));
-        $rules = RulesManager::getSettingsRules($customAction->getLocalizedSettingsSchema());
+        $eventListener = $customActionSettings->eventListener();
+        $eventContext = $eventListener
+            ? CustomActionModelResolver::getClass($eventListener->event)
+            : null;
+
+        /** @var CustomActionInterface $customAction */
+        $customAction = app(CustomActionModelResolver::getClass($customActionSettings->type));
+        $rules = RuleHelper::getSettingsRules($customAction->getLocalizedSettingsSchema($eventContext));
         $rules['locale'] = 'required|string';
         $validated = $request->validate($rules);
 
         $localizedSettings = new ActionLocalizedSettings();
-        $localizedSettings->settings = $validated['settings'];
+        $localizedSettings->settings = $validated['settings'] ?? [];
         $localizedSettings->locale = $validated['locale'];
         $localizedSettings->localizable()->associate($container);
         $localizedSettings->save();

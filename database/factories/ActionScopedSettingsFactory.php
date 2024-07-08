@@ -31,4 +31,14 @@ class ActionScopedSettingsFactory extends Factory
             'settings' => [],
         ];
     }
+
+    public function actionType(string $type): Factory
+    {
+        return $this->afterMaking(function (ActionScopedSettings $actionScopedSettings) use ($type) {
+            if ($actionScopedSettings->customActionSettings) {
+                $actionScopedSettings->customActionSettings->type = $type;
+                $actionScopedSettings->customActionSettings->save();
+            }
+        });
+    }
 }

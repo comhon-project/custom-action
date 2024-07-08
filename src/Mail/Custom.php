@@ -2,6 +2,7 @@
 
 namespace Comhon\CustomAction\Mail;
 
+use Comhon\CustomAction\Files\StoredFile;
 use Comhon\TemplateRenderer\Facades\Template;
 use Illuminate\Bus\Queueable;
 use Illuminate\Mail\Mailable;
@@ -82,8 +83,10 @@ class Custom extends Mailable
     {
         $attachments = [];
         if (isset($this->mail['attachments'])) {
-            foreach ($this->mail['attachments'] as $path) {
-                $attachments[] = Attachment::fromPath($path);
+            foreach ($this->mail['attachments'] as $file) {
+                $attachments[] = $file instanceof StoredFile
+                    ? $file->getAttachmentInstance()
+                    : Attachment::fromPath($file);
             }
         }
 

@@ -5,19 +5,14 @@ namespace Comhon\CustomAction\Contracts;
 interface CustomActionInterface
 {
     /**
-     * vefify if action concern a targeted user
-     */
-    public function hasTargetUser(): bool;
-
-    /**
      * Get action settings schema
      */
-    public function getSettingsSchema(): array;
+    public function getSettingsSchema(?string $eventClassContext = null): array;
 
     /**
      * Get action localized settings schema
      */
-    public function getLocalizedSettingsSchema(): array;
+    public function getLocalizedSettingsSchema(?string $eventClassContext = null): array;
 
     /**
      * Get action binding schema

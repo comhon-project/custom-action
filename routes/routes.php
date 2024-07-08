@@ -10,11 +10,11 @@ use Illuminate\Support\Facades\Route;
 
 $attributes = [
     'domain' => config('custom-action.domain'),
-    'prefix' => config('custom-action.prefix'),
+    'prefix' => config('custom-action.route_prefix'),
     'middleware' => config('custom-action.middleware'),
 ];
 Route::group($attributes, function () {
-    Route::get('actions', [CustomActionController::class, 'listActions']);
+    Route::get('unique-actions', [CustomActionController::class, 'listUniqueActions']);
     Route::get('actions/{key}/schema', [CustomActionController::class, 'showActionSchema']);
     Route::apiResource('action-settings', ActionSettingsController::class)->only(['show', 'update']);
     Route::prefix('action-settings/{custom_action_settings}')->group(function () {

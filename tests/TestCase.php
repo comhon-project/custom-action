@@ -36,16 +36,11 @@ class TestCase extends Orchestra
         tap($app['config'], function (Repository $config) {
             $config->set('custom-action.use_policies', true);
             $config->set('custom-action.middleware', ['api']);
-            $config->set('custom-action.target_bindings', [
-                'first_name',
-                'name',
-                'last_login_at' => 'datetime', 'verified_at' => 'date',
-            ]);
             $config->set('database.default', 'testing');
             $config->set('database.connections.testing', [
                 'driver' => 'sqlite',
                 'database' => ':memory:',
-                'prefix' => '',
+                'route_prefix' => '',
             ]);
 
             // Setup queue database connections.

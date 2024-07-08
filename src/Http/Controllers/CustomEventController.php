@@ -3,8 +3,8 @@
 namespace Comhon\CustomAction\Http\Controllers;
 
 use Comhon\CustomAction\Contracts\CustomEventInterface;
+use Comhon\CustomAction\Facades\CustomActionModelResolver;
 use Comhon\CustomAction\Models\CustomEventListener;
-use Comhon\CustomAction\Resolver\ModelResolverContainer;
 use Illuminate\Http\Resources\Json\JsonResource;
 use Symfony\Component\HttpKernel\Exception\NotFoundHttpException;
 
@@ -15,15 +15,17 @@ class CustomEventController extends Controller
      *
      * @return \Illuminate\Http\Resources\Json\JsonResource
      */
-    public function listEvents(ModelResolverContainer $resolver)
+    public function listEvents()
     {
         $this->authorize('view-any', CustomEventInterface::class);
 
-        $events = $resolver->getUniqueNames(ModelResolverContainer::EVENT_SCOPE);
-        $events = collect($events)->map(function ($eventUniqueName) {
+        $events = config('custom-action.events') ?? [];
+        $events = collect($events)->map(function ($class) {
+            $uniqueName = CustomActionModelResolver::getUniqueName($class);
+
             return [
-                'key' => $eventUniqueName,
-                'name' => trans('custom-action::messages.events.'.$eventUniqueName),
+                'type' => $uniqueName,
+                'name' => trans('custom-action::messages.events.'.$uniqueName),
             ];
         })->values();
 
@@ -35,26 +37,27 @@ class CustomEventController extends Controller
      *
      * @return \Illuminate\Http\Resources\Json\JsonResource
      */
-    public function showEventSchema(ModelResolverContainer $resolver, $eventUniqueName)
+    public function showEventSchema($eventUniqueName)
     {
-        if (! $resolver->isAllowedEvent($eventUniqueName)) {
+        if (! CustomActionModelResolver::isAllowedEvent($eventUniqueName)) {
             throw new NotFoundHttpException('not found');
         }
-        $eventClass = $resolver->getClass($eventUniqueName);
+        $eventClass = CustomActionModelResolver::getClass($eventUniqueName);
         if (! is_subclass_of($eventClass, CustomEventInterface::class)) {
             throw new \Exception("invalid event '$eventClass', it should implement CustomEventInterface");
         }
 
         $this->authorize('view', [CustomEventInterface::class, $eventClass]);
 
-        $schema = ['binding_schema' => [], 'allowed_actions' => []];
-        $schema['binding_schema'] = $eventClass::getBindingSchema();
-        foreach ($eventClass::getAllowedActions() as $actionClass) {
-            $actionUniqueName = $resolver->getUniqueName($actionClass);
-            if ($actionUniqueName) {
-                $schema['allowed_actions'][] = $actionUniqueName;
-            }
-        }
+        $schema = ['binding_schema' => $eventClass::getBindingSchema()];
+        $schema['allowed_actions'] = collect($eventClass::getAllowedActions())->map(function ($class) {
+            $uniqueName = CustomActionModelResolver::getUniqueName($class);
+
+            return [
+                'type' => $uniqueName,
+                'name' => trans('custom-action::messages.actions.'.$uniqueName),
+            ];
+        })->values();
 
         return new JsonResource($schema);
     }
@@ -64,13 +67,13 @@ class CustomEventController extends Controller
      *
      * @return \Illuminate\Http\Resources\Json\AnonymousResourceCollection
      */
-    public function listEventListeners(ModelResolverContainer $resolver, $eventUniqueName)
+    public function listEventListeners($eventUniqueName)
     {
-        if (! $resolver->isAllowedEvent($eventUniqueName)) {
+        if (! CustomActionModelResolver::isAllowedEvent($eventUniqueName)) {
             throw new NotFoundHttpException('not found');
         }
 
-        $eventClass = $resolver->getClass($eventUniqueName);
+        $eventClass = CustomActionModelResolver::getClass($eventUniqueName);
         $this->authorize('view', [CustomEventInterface::class, $eventClass]);
 
         return JsonResource::collection(CustomEventListener::where('event', $eventUniqueName)->get());

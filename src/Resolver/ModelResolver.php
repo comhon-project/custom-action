@@ -16,21 +16,24 @@ class ModelResolver implements ModelResolverInterface
         'queue-email' => QueueTemplatedMail::class,
     ];
 
-    private $scopes = [
-        ModelResolverContainer::GENERIC_ACTION_SCOPE => ['send-email', 'queue-email'],
-    ];
-
     /**
      * register model bindings and scopes
      */
-    public function register(array $bindings, array $scopes = [])
+    public function register(array $bindings, bool $reset = false)
     {
-        $this->map = $bindings;
-        $this->scopes = $scopes;
+        $this->map = $reset ? $bindings : array_merge($this->map, $bindings);
     }
 
     /**
-     * get model unique name according given class
+     * Bind a unique name to a class.
+     */
+    public function bind(string $uniqueName, string $class)
+    {
+        $this->map[$uniqueName] = $class;
+    }
+
+    /**
+     * Get unique name according given class.
      */
     public function getUniqueName(string $class): ?string
     {
@@ -38,42 +41,10 @@ class ModelResolver implements ModelResolverInterface
     }
 
     /**
-     * get model class according unique name
+     * Get class according given unique name.
      */
     public function getClass(string $uniqueName): ?string
     {
         return $this->map[$uniqueName] ?? null;
-    }
-
-    /**
-     * verify if model is allowed in given scope
-     */
-    public function isAllowed(string $uniqueName, string $scope): bool
-    {
-        return isset($this->scopes[$scope]) && in_array($uniqueName, $this->scopes[$scope]);
-    }
-
-    /**
-     * get all models unique names allowed in given scope
-     */
-    public function getUniqueNames(string $scope): array
-    {
-        return $this->scopes[$scope] ?? [];
-    }
-
-    /**
-     * get all models classes allowed in given scope
-     */
-    public function getClasses(string $scope): array
-    {
-        if (! isset($this->scopes[$scope])) {
-            return [];
-        }
-        $classes = [];
-        foreach ($this->scopes[$scope] as $uniqueName) {
-            $classes[] = $this->getClass($uniqueName);
-        }
-
-        return $classes;
     }
 }

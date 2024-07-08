@@ -13,7 +13,7 @@ class CustomActionTest extends TestCase
 {
     use SetUpWithModelRegistration;
 
-    public function getSendMailAction(): SendTemplatedMail
+    private function getSendMailAction(): SendTemplatedMail
     {
         return app(SendTemplatedMail::class);
     }
@@ -33,7 +33,7 @@ class CustomActionTest extends TestCase
     {
         CustomActionSettings::factory()->sendMailRegistrationCompany([], false, 'send-company-email', false)->create();
 
-        $this->expectExceptionMessage('mail receiver is not defined');
+        $this->expectExceptionMessage('there is no mail receiver defined');
         $this->getSendMailUniqueAction()->handle([]);
     }
 }

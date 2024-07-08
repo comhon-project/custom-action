@@ -46,7 +46,7 @@ return new class extends Migration
         Schema::create('custom_action_settings_custom_event_listener', function (Blueprint $table) {
             $table->id();
             $table->unsignedBigInteger('custom_event_listener_id');
-            $table->unsignedBigInteger('custom_action_settings_id');
+            $table->unsignedBigInteger('custom_action_settings_id')->unique();
 
             $table->foreign('custom_event_listener_id', 'custom_event_listener_id_fk')->references('id')->on('custom_event_listeners');
             $table->foreign('custom_action_settings_id', 'custom_action_settings_id_fk')->references('id')->on('custom_action_settings');

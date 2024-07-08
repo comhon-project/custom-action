@@ -3,7 +3,7 @@
 namespace Comhon\CustomAction\Models;
 
 use Comhon\CustomAction\Contracts\CustomUniqueActionInterface;
-use Comhon\CustomAction\Resolver\ModelResolverContainer;
+use Comhon\CustomAction\Facades\CustomActionModelResolver;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 
@@ -27,9 +27,7 @@ class CustomEventListener extends Model
             $eventListener->actions()->detach();
 
             foreach ($actions as $action) {
-                /** @var ModelResolverContainer $resolver */
-                $resolver = app(ModelResolverContainer::class);
-                if (! is_subclass_of($resolver->getClass($action->type), CustomUniqueActionInterface::class)) {
+                if (! is_subclass_of(CustomActionModelResolver::getClass($action->type), CustomUniqueActionInterface::class)) {
                     $action->delete();
                 }
             }
