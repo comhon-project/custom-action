@@ -3,9 +3,10 @@
 use Comhon\CustomAction\Http\Controllers\ActionLocalizedSettingsController;
 use Comhon\CustomAction\Http\Controllers\ActionScopedSettingsController;
 use Comhon\CustomAction\Http\Controllers\ActionSettingsController;
-use Comhon\CustomAction\Http\Controllers\CustomActionController;
+use Comhon\CustomAction\Http\Controllers\CustomActionTypeController;
 use Comhon\CustomAction\Http\Controllers\CustomEventController;
 use Comhon\CustomAction\Http\Controllers\CustomEventListenerController;
+use Comhon\CustomAction\Http\Controllers\UniqueActionController;
 use Illuminate\Support\Facades\Route;
 
 $attributes = [
@@ -14,8 +15,9 @@ $attributes = [
     'middleware' => config('custom-action.middleware'),
 ];
 Route::group($attributes, function () {
-    Route::get('unique-actions', [CustomActionController::class, 'listUniqueActions']);
-    Route::get('actions/{key}/schema', [CustomActionController::class, 'showActionSchema']);
+    Route::get('action-types/unique', [CustomActionTypeController::class, 'listUniqueActionTypes']);
+    Route::get('action-types/{key}/schema', [CustomActionTypeController::class, 'showActionTypeSchema']);
+    Route::get('unique-actions/{type}', [UniqueActionController::class, 'show']);
     Route::apiResource('action-settings', ActionSettingsController::class)->only(['show', 'update']);
     Route::prefix('action-settings/{custom_action_settings}')->group(function () {
         Route::get('scoped-settings', [ActionSettingsController::class, 'listActionScopedSettings']);
@@ -42,7 +44,6 @@ Route::group($attributes, function () {
     Route::prefix('event-listeners/{event_listener}')->group(function () {
         Route::get('actions', [CustomEventListenerController::class, 'listEventListenerActions']);
         Route::post('actions', [CustomEventListenerController::class, 'storeEventListenerAction']);
-        Route::post('actions/sync', [CustomEventListenerController::class, 'syncEventListenerAction']);
-        Route::post('actions/{custom_action_settings}/remove', [CustomEventListenerController::class, 'removeEventListenerAction']);
     });
+    Route::delete('event-actions/{event_action}', [CustomEventListenerController::class, 'deleteEventListenerAction']);
 });

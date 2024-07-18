@@ -2,10 +2,9 @@
 
 namespace Comhon\CustomAction\Models;
 
-use Comhon\CustomAction\Contracts\CustomUniqueActionInterface;
-use Comhon\CustomAction\Facades\CustomActionModelResolver;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
+use Illuminate\Database\Eloquent\Relations\HasMany;
 
 class CustomEventListener extends Model
 {
@@ -23,22 +22,14 @@ class CustomEventListener extends Model
     protected static function booted()
     {
         static::deleting(function (CustomEventListener $eventListener) {
-            $actions = $eventListener->actions()->get(['custom_action_settings.id', 'custom_action_settings.type']);
-            $eventListener->actions()->detach();
-
-            foreach ($actions as $action) {
-                if (! is_subclass_of(CustomActionModelResolver::getClass($action->type), CustomUniqueActionInterface::class)) {
-                    $action->delete();
-                }
+            foreach ($eventListener->eventActions as $eventAction) {
+                $eventAction->delete();
             }
         });
     }
 
-    /**
-     * @return \Illuminate\Database\Eloquent\Relations\belongsToMany
-     */
-    public function actions()
+    public function eventActions(): HasMany
     {
-        return $this->belongsToMany(CustomActionSettings::class);
+        return $this->hasMany(CustomEventAction::class, 'event_listener_id');
     }
 }

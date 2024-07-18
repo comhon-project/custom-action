@@ -4,6 +4,7 @@ namespace Database\Factories;
 
 use Comhon\CustomAction\Models\ActionScopedSettings;
 use Comhon\CustomAction\Models\CustomActionSettings;
+use Comhon\CustomAction\Models\CustomEventAction;
 use Illuminate\Database\Eloquent\Factories\Factory;
 
 /**
@@ -26,18 +27,28 @@ class ActionScopedSettingsFactory extends Factory
     public function definition()
     {
         return [
-            'custom_action_settings_id' => CustomActionSettings::factory(),
+            'action_settings_id' => CustomActionSettings::factory(),
             'scope' => [],
             'settings' => [],
         ];
     }
 
-    public function actionType(string $type): Factory
+    public function withEventActionType(string $type): Factory
     {
-        return $this->afterMaking(function (ActionScopedSettings $actionScopedSettings) use ($type) {
-            if ($actionScopedSettings->customActionSettings) {
-                $actionScopedSettings->customActionSettings->type = $type;
-                $actionScopedSettings->customActionSettings->save();
+        return $this->afterMaking(function (ActionScopedSettings $actionScopedSettings) {
+            if (! $actionScopedSettings->actionSettings) {
+                $actionScopedSettings->actionSettings()->associate(CustomActionSettings::factory()->create());
+            }
+        })->afterCreating(function (ActionScopedSettings $actionScopedSettings) use ($type) {
+            /** @var CustomActionSettings $customActionSettings */
+            $customActionSettings = $actionScopedSettings->actionSettings;
+            if (! $customActionSettings->eventAction) {
+                CustomEventAction::factory([
+                    'type' => $type,
+                ])->for($customActionSettings, 'actionSettings')->create();
+            } else {
+                $customActionSettings->eventAction->type = $type;
+                $customActionSettings->eventAction->save();
             }
         });
     }

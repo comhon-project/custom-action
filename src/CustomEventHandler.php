@@ -19,16 +19,17 @@ class CustomEventHandler
     public function handle(CustomEventInterface $event)
     {
         $eventUniqueName = CustomActionModelResolver::getUniqueName(get_class($event));
-        $listeners = CustomEventListener::with('actions')
-            ->where('event', $eventUniqueName)->whereHas('actions')->get();
+        $listeners = CustomEventListener::with('eventActions.actionSettings')
+            ->where('event', $eventUniqueName)->whereHas('eventActions')->get();
         $bindings = $event->getBindingValues();
 
         foreach ($listeners as $listener) {
             if (! $listener->scope || $this->matchScope($listener->scope, $bindings)) {
-                foreach ($listener->actions as $customActionSettings) {
-                    $action = app(CustomActionModelResolver::getClass($customActionSettings->type));
+                foreach ($listener->eventActions as $eventAction) {
+                    $customActionSettings = $eventAction->actionSettings;
+                    $action = app(CustomActionModelResolver::getClass($eventAction->type));
                     if (! ($action instanceof TriggerableFromEventInterface)) {
-                        throw new \Exception('invalid type '.$customActionSettings->type);
+                        throw new \Exception('invalid type '.$eventAction->type);
                     }
                     $action->handleFromEvent($event, $customActionSettings);
                 }

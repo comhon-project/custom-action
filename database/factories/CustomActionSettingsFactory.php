@@ -5,6 +5,7 @@ namespace Database\Factories;
 use Comhon\CustomAction\Models\ActionLocalizedSettings;
 use Comhon\CustomAction\Models\ActionScopedSettings;
 use Comhon\CustomAction\Models\CustomActionSettings;
+use Comhon\CustomAction\Models\CustomEventAction;
 use Illuminate\Database\Eloquent\Factories\Factory;
 
 /**
@@ -27,33 +28,36 @@ class CustomActionSettingsFactory extends Factory
     public function definition()
     {
         return [
-            'type' => 'send-email',
             'settings' => [],
         ];
     }
 
-    public function actionType(string $type): Factory
+    public function withEventActionType(string $type): Factory
     {
-        return $this->state(function (array $attributes) use ($type) {
-            return [
-                'type' => $type,
-            ];
+        return $this->afterCreating(function (CustomActionSettings $customActionSettings) use ($type) {
+            if (! $customActionSettings->eventAction) {
+                CustomEventAction::factory([
+                    'type' => $type,
+                ])->for($customActionSettings, 'actionSettings')->create();
+            } else {
+                $customActionSettings->eventAction->type = $type;
+                $customActionSettings->eventAction->save();
+            }
         });
     }
 
     /**
      * registration company mail.
      */
-    public function sendMailRegistrationCompany(?array $toOtherUserIds = null, $withScopedSettings = false, $type = 'send-email', $withAttachement = false): Factory
+    public function sendMailRegistrationCompany(?array $toOtherUserIds = null, $withScopedSettings = false, $withAttachement = false): Factory
     {
         $keyReceivers = $toOtherUserIds === null ? 'to_bindings_receivers' : 'to_receivers';
         $valueReceivers = $toOtherUserIds === null
             ? ['user']
             : collect($toOtherUserIds)->map(fn ($id) => ['receiver_type' => 'user', 'receiver_id' => $id])->all();
 
-        return $this->state(function (array $attributes) use ($keyReceivers, $valueReceivers, $type, $withAttachement) {
+        return $this->state(function (array $attributes) use ($keyReceivers, $valueReceivers, $withAttachement) {
             return [
-                'type' => $type,
                 'settings' => [
                     $keyReceivers => $valueReceivers,
                     'attachments' => $withAttachement ? ['logo'] : null,
@@ -66,7 +70,7 @@ class CustomActionSettingsFactory extends Factory
 
             if ($withScopedSettings) {
                 $scopedSettings = new ActionScopedSettings();
-                $scopedSettings->customActionSettings()->associate($action);
+                $scopedSettings->actionSettings()->associate($action);
                 $scopedSettings->scope = ['company' => ['name' => 'My VIP company']];
                 $scopedSettings->settings = [
                     $keyReceivers => $valueReceivers,

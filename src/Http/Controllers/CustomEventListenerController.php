@@ -3,10 +3,10 @@
 namespace Comhon\CustomAction\Http\Controllers;
 
 use Comhon\CustomAction\Contracts\CustomActionInterface;
-use Comhon\CustomAction\Contracts\CustomUniqueActionInterface;
 use Comhon\CustomAction\Contracts\TriggerableFromEventInterface;
 use Comhon\CustomAction\Facades\CustomActionModelResolver;
 use Comhon\CustomAction\Models\CustomActionSettings;
+use Comhon\CustomAction\Models\CustomEventAction;
 use Comhon\CustomAction\Models\CustomEventListener;
 use Comhon\CustomAction\Rules\RuleHelper;
 use Illuminate\Http\Request;
@@ -84,7 +84,7 @@ class CustomEventListenerController extends Controller
     {
         $this->authorize('view', $eventListener);
 
-        return JsonResource::collection($eventListener->load('actions:id,type')->actions);
+        return JsonResource::collection($eventListener->eventActions()->paginate());
     }
 
     /**
@@ -94,36 +94,15 @@ class CustomEventListenerController extends Controller
      */
     public function storeEventListenerAction(Request $request, CustomEventListener $eventListener)
     {
-        $this->authorize('create', [CustomActionSettings::class, $eventListener]);
+        $this->authorize('create-action', $eventListener);
 
-        $validated = $this->validateType(
-            $request,
-            $eventListener,
-            false
-        );
+        $validated = $this->validateType($request, $eventListener);
 
         return new JsonResource($this->createAndAttachAction(
             $request,
             $eventListener,
             $validated['type'],
         ));
-    }
-
-    /**
-     * Store event listener action.
-     *
-     * @return \Illuminate\Http\Resources\Json\JsonResource
-     */
-    public function syncEventListenerAction(Request $request, CustomEventListener $eventListener)
-    {
-        $validated = $this->validateType($request, $eventListener, true);
-        $customActionSettings = CustomActionSettings::where('type', $validated['type'])->first();
-
-        $this->authorize('sync-action', [$eventListener, $customActionSettings]);
-
-        $eventListener->actions()->syncWithoutDetaching($customActionSettings);
-
-        return new JsonResource($customActionSettings);
     }
 
     /**
@@ -136,22 +115,24 @@ class CustomEventListenerController extends Controller
     ) {
         $validated = $this->validateActionSettings($request, $type, $eventListener);
 
-        $customActionSettings = new CustomActionSettings();
-        $customActionSettings->type = $type;
-        $customActionSettings->settings = $validated['settings'] ?? [];
-        $customActionSettings->save();
-        $eventListener->actions()->attach($customActionSettings);
+        $customEventAction = new CustomEventAction();
+        $customEventAction->eventListener()->associate($eventListener->id);
+        $customEventAction->type = $type;
 
-        $customActionSettings = $customActionSettings->toArray();
+        DB::transaction(function () use ($customEventAction, $validated) {
+            $customActionSettings = new CustomActionSettings();
+            $customActionSettings->settings = $validated['settings'] ?? [];
+            $customActionSettings->save();
 
-        return $customActionSettings;
+            $customEventAction->actionSettings()->associate($customActionSettings);
+            $customEventAction->save();
+        });
+
+        return $customEventAction;
     }
 
-    private function validateType(
-        Request $request,
-        CustomEventListener $eventListener,
-        bool $mustBeUniqueAction
-    ) {
+    private function validateType(Request $request, CustomEventListener $eventListener)
+    {
         $eventClass = CustomActionModelResolver::getClass($eventListener->event);
         $allowedTypes = collect($eventClass::getAllowedActions())
             ->map(fn ($class) => CustomActionModelResolver::getUniqueName($class))
@@ -162,7 +143,7 @@ class CustomEventListenerController extends Controller
                 'required',
                 'string',
                 'in:'.$allowedTypes->implode(','),
-                function (string $attribute, $type, $fail) use ($mustBeUniqueAction) {
+                function (string $attribute, $type, $fail) {
                     $actionClass = CustomActionModelResolver::getClass($type);
                     $customAction = $actionClass ? app($actionClass) : null;
                     if (! $customAction instanceof CustomActionInterface) {
@@ -170,20 +151,6 @@ class CustomEventListenerController extends Controller
                     }
                     if (! $customAction instanceof TriggerableFromEventInterface) {
                         $fail("The action {$type} is not an action triggerable from event.");
-                    }
-                    if (! $mustBeUniqueAction && $customAction instanceof CustomUniqueActionInterface) {
-                        $fail("The action {$type} must not be a unique action.");
-                    }
-                    if ($mustBeUniqueAction && ! $customAction instanceof CustomUniqueActionInterface) {
-                        $fail("The action {$type} must be a unique action.");
-                    }
-                    if ($mustBeUniqueAction) {
-                        $count = CustomActionSettings::where('type', $type)->count();
-                        if ($count == 0) {
-                            $fail("The action {$type} is not initialized.");
-                        } elseif ($count > 1) {
-                            throw new \Exception("several '$type' actions found");
-                        }
                     }
                 },
             ],
@@ -201,22 +168,16 @@ class CustomEventListenerController extends Controller
     }
 
     /**
-     * remove event listener action.
+     * delete event listener action.
      *
      * @return \Illuminate\Http\Response
      */
-    public function removeEventListenerAction(
-        CustomEventListener $eventListener,
-        CustomActionSettings $customActionSettings
-    ) {
-        $this->authorize('remove-action', [$eventListener, $customActionSettings]);
+    public function deleteEventListenerAction(CustomEventAction $eventAction)
+    {
+        $this->authorize('delete-action', [CustomEventListener::class, $eventAction]);
 
-        DB::transaction(function () use ($eventListener, $customActionSettings) {
-            $eventListener->actions()->detach($customActionSettings);
-            $class = CustomActionModelResolver::getClass($customActionSettings->type);
-            if (! is_subclass_of($class, CustomUniqueActionInterface::class)) {
-                $customActionSettings->delete();
-            }
+        DB::transaction(function () use ($eventAction) {
+            $eventAction->delete();
         });
 
         return response('', 204);

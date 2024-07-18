@@ -2,15 +2,13 @@
 
 namespace Comhon\CustomAction\Commands;
 
-use Comhon\CustomAction\Actions\QueueTemplatedMail;
-use Comhon\CustomAction\Actions\SendTemplatedMail;
 use Comhon\CustomAction\Contracts\CustomActionInterface;
-use Comhon\CustomAction\Contracts\CustomUniqueActionInterface;
+use Comhon\CustomAction\Facades\CustomActionModelResolver;
 use Illuminate\Console\Command;
 
 class GenerateActionCommand extends Command
 {
-    public $signature = 'custom-action:generate {name} {--extends=} {--generic}';
+    public $signature = 'custom-action:generate {name} {--extends=}';
 
     public $description = 'generate a custom action class';
 
@@ -18,38 +16,39 @@ class GenerateActionCommand extends Command
     {
         $name = $this->argument('name');
         $extendsArg = $this->option('extends');
-        $generic = $this->option('generic');
 
-        $directory = app()->path('Console/Commands');
-        $useExtends = match ($extendsArg) {
-            'send-email' => SendTemplatedMail::class,
-            'queue-email' => QueueTemplatedMail::class,
-            default => throw new \Exception("invalid extends parameter '{$extendsArg}'")
-        };
-        $explode = explode('\\', $useExtends);
-        $extends = $explode[count($explode) - 1];
+        $directory = app()->path('Actions'.DIRECTORY_SEPARATOR.'CustomActions');
+        $uses = [];
+        $extends = '';
+        $implements = '';
 
-        $useInterface = $generic ? CustomActionInterface::class : CustomUniqueActionInterface::class;
-        $explode = explode('\\', $useInterface);
-        $implements = $explode[count($explode) - 1];
+        if ($extendsArg) {
+            $useExtends = CustomActionModelResolver::getClass($extendsArg);
+            if (! $useExtends) {
+                throw new \Exception("invalid extends parameter '{$extendsArg}'");
+            }
+            $uses[] = $useExtends;
+            $explode = explode('\\', $useExtends);
+            $extends = ' extends '.$explode[count($explode) - 1];
+        }
+        if (empty($uses) || ! is_subclass_of($uses[0], CustomActionInterface::class)) {
+            $uses[] = CustomActionInterface::class;
+            $explode = explode('\\', CustomActionInterface::class);
+            $implements = ' implements '.$explode[count($explode) - 1];
+        }
+
+        $uses = collect($uses)->map(fn ($use) => "use $use;")->implode("\n");
 
         $fileContent = <<<EOT
 <?php
 
-namespace App\Console\Commands;
+namespace App\Actions\CustomActions;
 
-use $useExtends;
-use $useInterface;
+$uses
 
-class $name extends $extends implements $implements
+class {$name}{$extends}{$implements}
 {
-    public function getBindingSchema(): array
-    {
-        return [
-            ...parent::getBindingSchema(),
-            // Here goes your specific action bindings
-        ];
-    }
+
 }
 
 EOT;

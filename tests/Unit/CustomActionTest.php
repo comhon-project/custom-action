@@ -4,8 +4,7 @@ namespace Tests\Unit;
 
 use App\Actions\SendCompanyRegistrationMail;
 use Comhon\CustomAction\Actions\SendTemplatedMail;
-use Comhon\CustomAction\Contracts\CustomUniqueActionInterface;
-use Comhon\CustomAction\Models\CustomActionSettings;
+use Comhon\CustomAction\Models\CustomUniqueAction;
 use Tests\SetUpWithModelRegistration;
 use Tests\TestCase;
 
@@ -25,13 +24,13 @@ class CustomActionTest extends TestCase
 
     public function testHandleFromNotUniqueAction()
     {
-        $this->expectExceptionMessage('must be called from an instance of '.CustomUniqueActionInterface::class);
+        $this->expectExceptionMessage('No query results for model');
         $this->getSendMailAction()->handle([]);
     }
 
     public function testHandleWithoutReceiver()
     {
-        CustomActionSettings::factory()->sendMailRegistrationCompany([], false, 'send-company-email', false)->create();
+        CustomUniqueAction::factory()->sendMailRegistrationCompany([], false, false)->create();
 
         $this->expectExceptionMessage('there is no mail receiver defined');
         $this->getSendMailUniqueAction()->handle([]);

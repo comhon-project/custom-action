@@ -3,14 +3,11 @@
 namespace Comhon\CustomAction\Http\Controllers;
 
 use Comhon\CustomAction\Contracts\CustomActionInterface;
-use Comhon\CustomAction\Contracts\CustomUniqueActionInterface;
 use Comhon\CustomAction\Facades\CustomActionModelResolver;
 use Comhon\CustomAction\Models\CustomActionSettings;
 use Comhon\CustomAction\Rules\RuleHelper;
 use Illuminate\Http\Request;
 use Illuminate\Http\Resources\Json\JsonResource;
-use Symfony\Component\HttpKernel\Exception\NotFoundHttpException;
-use Symfony\Component\HttpKernel\Exception\UnprocessableEntityHttpException;
 
 class ActionSettingsController extends Controller
 {
@@ -21,37 +18,11 @@ class ActionSettingsController extends Controller
      *
      * @return \Illuminate\Http\Resources\Json\JsonResource
      */
-    public function show($actionKeyOrId)
+    public function show(CustomActionSettings $actionSetting)
     {
-        $customActionSettings = null;
-        if (is_int($actionKeyOrId) || is_numeric($actionKeyOrId)) {
-            $customActionSettings = CustomActionSettings::findOrFail($actionKeyOrId);
-        } else {
-            $actionUniqueName = $actionKeyOrId;
-            if (! CustomActionModelResolver::isAllowedAction($actionUniqueName)) {
-                throw new NotFoundHttpException('not found');
-            }
+        $this->authorize('view', $actionSetting);
 
-            $actionClass = CustomActionModelResolver::getClass($actionUniqueName);
-            if (! is_subclass_of($actionClass, CustomUniqueActionInterface::class)) {
-                throw new UnprocessableEntityHttpException('action must be a unique action');
-            }
-            $customActionSettingss = CustomActionSettings::where('type', $actionUniqueName)->get();
-            if ($customActionSettingss->count() == 0) {
-                $customActionSettings = new CustomActionSettings();
-                $customActionSettings->type = $actionUniqueName;
-                $customActionSettings->settings = [];
-                $customActionSettings->save();
-            } else {
-                if ($customActionSettingss->count() > 1) {
-                    throw new \Exception("several '$actionKeyOrId' actions found");
-                }
-                $customActionSettings = $customActionSettingss->first();
-            }
-        }
-        $this->authorize('view', $customActionSettings);
-
-        return new JsonResource($customActionSettings);
+        return new JsonResource($actionSetting);
     }
 
     /**
@@ -64,20 +35,20 @@ class ActionSettingsController extends Controller
         $customActionSettings = $actionSetting;
         $this->authorize('update', $customActionSettings);
 
-        $eventListener = $customActionSettings->eventListener();
+        $eventListener = $customActionSettings->eventAction?->eventListener;
         $eventContext = $eventListener
             ? CustomActionModelResolver::getClass($eventListener->event)
             : null;
 
         /** @var CustomActionInterface $customAction */
-        $customAction = app(CustomActionModelResolver::getClass($customActionSettings->type));
+        $customAction = app(CustomActionModelResolver::getClass($customActionSettings->getAction()->type));
         $rules = RuleHelper::getSettingsRules($customAction->getSettingsSchema($eventContext));
 
         $validated = $request->validate($rules);
         $customActionSettings->settings = $validated['settings'] ?? [];
         $customActionSettings->save();
 
-        return new JsonResource($customActionSettings);
+        return new JsonResource($customActionSettings->unsetRelations());
     }
 
     /**

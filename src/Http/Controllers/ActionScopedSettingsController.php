@@ -35,13 +35,13 @@ class ActionScopedSettingsController extends Controller
     public function store(Request $request, CustomActionSettings $customActionSettings)
     {
         $this->authorize('create', [ActionScopedSettings::class, $customActionSettings]);
-        $eventListener = $customActionSettings->eventListener();
+        $eventListener = $customActionSettings->eventAction?->eventListener;
         $eventContext = $eventListener
             ? CustomActionModelResolver::getClass($eventListener->event)
             : null;
 
         /** @var CustomActionInterface $customAction */
-        $customAction = app(CustomActionModelResolver::getClass($customActionSettings->type));
+        $customAction = app(CustomActionModelResolver::getClass($customActionSettings->getAction()->type));
         $rules = RuleHelper::getSettingsRules($customAction->getSettingsSchema($eventContext));
         $rules['scope'] = 'array|required';
         $validated = $request->validate($rules);
@@ -49,7 +49,7 @@ class ActionScopedSettingsController extends Controller
         $scopedSettings = new ActionScopedSettings();
         $scopedSettings->settings = $validated['settings'] ?? [];
         $scopedSettings->scope = $validated['scope'];
-        $scopedSettings->custom_action_settings_id = $customActionSettings->id;
+        $scopedSettings->actionSettings()->associate($customActionSettings->id);
         $scopedSettings->save();
 
         return new JsonResource($scopedSettings);
@@ -65,12 +65,12 @@ class ActionScopedSettingsController extends Controller
         $scopedSettings = $scopedSetting;
         $this->authorize('update', $scopedSettings);
 
-        $eventListener = $scopedSettings->customActionSettings->eventListener();
+        $eventListener = $scopedSettings->actionSettings->eventAction?->eventListener;
         $eventContext = $eventListener
             ? CustomActionModelResolver::getClass($eventListener->event)
             : null;
 
-        $customAction = app(CustomActionModelResolver::getClass($scopedSettings->customActionSettings->type));
+        $customAction = app(CustomActionModelResolver::getClass($scopedSettings->actionSettings->getAction()->type));
         $rules = RuleHelper::getSettingsRules($customAction->getSettingsSchema($eventContext));
         $rules['scope'] = 'array|required';
         $validated = $request->validate($rules);
@@ -81,7 +81,7 @@ class ActionScopedSettingsController extends Controller
         }
         $scopedSettings->save();
 
-        return new JsonResource($scopedSettings);
+        return new JsonResource($scopedSettings->unsetRelations());
     }
 
     /**

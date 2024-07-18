@@ -3,7 +3,7 @@
 namespace App\Policies\CustomAction;
 
 use App\Models\User;
-use Comhon\CustomAction\Models\CustomActionSettings;
+use Comhon\CustomAction\Models\CustomEventAction;
 use Comhon\CustomAction\Models\CustomEventListener;
 
 class CustomEventListenerPolicy
@@ -43,7 +43,7 @@ class CustomEventListenerPolicy
     /**
      * Determine whether the user can delete the model.
      */
-    public function syncAction(User $user, CustomEventListener $model, CustomActionSettings $customActionSettings)
+    public function createAction(User $user, CustomEventListener $model)
     {
         // TODO put your authorization logic here
     }
@@ -51,7 +51,7 @@ class CustomEventListenerPolicy
     /**
      * Determine whether the user can delete the model.
      */
-    public function removeAction(User $user, CustomEventListener $model, CustomActionSettings $customActionSettings)
+    public function deleteAction(User $user, CustomEventAction $model)
     {
         // TODO put your authorization logic here
     }

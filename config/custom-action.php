@@ -41,7 +41,7 @@ return [
 
     /*
      | actions that may be defined as unique actions.
-     | each element must a class that implements CustomUniqueActionInterface.
+     | each element must a class that implements CustomActionInterface.
      */
     'unique_actions' => [],
 

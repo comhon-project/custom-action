@@ -4,13 +4,13 @@ namespace Comhon\CustomAction\Actions;
 
 use Comhon\CustomAction\Contracts\CustomActionInterface;
 use Comhon\CustomAction\Contracts\CustomEventInterface;
-use Comhon\CustomAction\Contracts\CustomUniqueActionInterface;
 use Comhon\CustomAction\Contracts\HasTimezonePreferenceInterface;
 use Comhon\CustomAction\Contracts\TriggerableFromEventInterface;
 use Comhon\CustomAction\Facades\CustomActionModelResolver;
 use Comhon\CustomAction\Mail\Custom;
 use Comhon\CustomAction\Models\ActionSettingsContainer;
 use Comhon\CustomAction\Models\CustomActionSettings;
+use Comhon\CustomAction\Models\CustomUniqueAction;
 use Comhon\CustomAction\Rules\RuleHelper;
 use Illuminate\Contracts\Translation\HasLocalePreference;
 use Illuminate\Foundation\Auth\User;
@@ -112,19 +112,11 @@ class SendTemplatedMail implements CustomActionInterface, TriggerableFromEventIn
      */
     public function handle(array $bindings, ?User $to = null)
     {
-        if (! ($this instanceof CustomUniqueActionInterface)) {
-            throw new \Exception('must be called from an instance of '.CustomUniqueActionInterface::class);
-        }
         $class = get_class($this);
         $type = CustomActionModelResolver::getUniqueName($class);
-        $customActionSettingss = CustomActionSettings::where('type', $type)->get();
-        if ($customActionSettingss->isEmpty()) {
-            throw new \Exception("action settings not set for $class");
-        }
-        if ($customActionSettingss->count() > 1) {
-            throw new \Exception("several '$type' actions found");
-        }
-        $this->handleFromAction($customActionSettingss->first(), $bindings, null, $to);
+        $action = CustomUniqueAction::findOrFail($type);
+
+        $this->handleFromAction($action->actionSettings, $bindings, null, $to);
     }
 
     /**

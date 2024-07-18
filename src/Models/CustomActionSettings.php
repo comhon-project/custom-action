@@ -3,8 +3,8 @@
 namespace Comhon\CustomAction\Models;
 
 use Illuminate\Database\Eloquent\Factories\HasFactory;
-use Illuminate\Database\Eloquent\Relations\BelongsToMany;
 use Illuminate\Database\Eloquent\Relations\HasMany;
+use Illuminate\Database\Eloquent\Relations\HasOne;
 
 class CustomActionSettings extends ActionSettingsContainer
 {
@@ -45,20 +45,22 @@ class CustomActionSettings extends ActionSettingsContainer
 
     public function scopedSettings(): HasMany
     {
-        return $this->hasMany(ActionScopedSettings::class);
+        return $this->hasMany(ActionScopedSettings::class, 'action_settings_id');
     }
 
-    /**
-     * the action is attached to at most one event listener
-     */
-    public function eventListeners(): BelongsToMany
+    public function eventAction(): HasOne
     {
-        return $this->belongsToMany(CustomEventListener::class);
+        return $this->hasOne(CustomEventAction::class, 'action_settings_id');
     }
 
-    public function eventListener(): ?CustomEventListener
+    public function uniqueAction(): HasOne
     {
-        return $this->eventListeners->first();
+        return $this->hasOne(CustomUniqueAction::class, 'action_settings_id');
+    }
+
+    public function getAction(): CustomUniqueAction|CustomEventAction
+    {
+        return $this->eventAction ?? $this->uniqueAction;
     }
 
     /**

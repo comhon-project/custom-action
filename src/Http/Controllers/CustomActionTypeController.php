@@ -3,21 +3,20 @@
 namespace Comhon\CustomAction\Http\Controllers;
 
 use Comhon\CustomAction\Contracts\CustomActionInterface;
-use Comhon\CustomAction\Contracts\CustomUniqueActionInterface;
 use Comhon\CustomAction\Facades\CustomActionModelResolver;
 use Comhon\CustomAction\Rules\RuleHelper;
 use Illuminate\Http\Request;
 use Illuminate\Http\Resources\Json\JsonResource;
 use Symfony\Component\HttpKernel\Exception\NotFoundHttpException;
 
-class CustomActionController extends Controller
+class CustomActionTypeController extends Controller
 {
     /**
      * Display a listing of actions.
      *
      * @return \Illuminate\Http\Resources\Json\JsonResource
      */
-    public function listUniqueActions()
+    public function listUniqueActionTypes()
     {
         $this->authorize('view-any', CustomActionInterface::class);
 
@@ -39,7 +38,7 @@ class CustomActionController extends Controller
      *
      * @return \Illuminate\Http\Resources\Json\JsonResource
      */
-    public function showActionSchema(Request $request, $actionUniqueName)
+    public function showActionTypeSchema(Request $request, $actionUniqueName)
     {
         if (! CustomActionModelResolver::isAllowedAction($actionUniqueName)) {
             throw new NotFoundHttpException('not found');
@@ -63,7 +62,6 @@ class CustomActionController extends Controller
             'binding_schema' => [],
             'settings_schema' => [],
             'localized_settings_schema' => [],
-            'unique' => $action instanceof CustomUniqueActionInterface,
         ];
         if ($action instanceof CustomActionInterface) {
             $actionSchema['settings_schema'] = $action->getSettingsSchema($eventClassContext);

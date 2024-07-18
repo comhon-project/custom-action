@@ -21,18 +21,17 @@ return new class extends Migration
         });
         Schema::create('custom_action_settings', function (Blueprint $table) {
             $table->id();
-            $table->string('type', 63);
             $table->json('settings');
             $table->timestamps();
         });
         Schema::create('action_scoped_settings', function (Blueprint $table) {
             $table->id();
-            $table->unsignedBigInteger('custom_action_settings_id');
+            $table->unsignedBigInteger('action_settings_id');
             $table->json('settings');
             $table->json('scope')->nullable(true);
             $table->timestamps();
 
-            $table->foreign('custom_action_settings_id')->references('id')->on('custom_action_settings');
+            $table->foreign('action_settings_id')->references('id')->on('custom_action_settings');
         });
         Schema::create('action_localized_settings', function (Blueprint $table) {
             $table->id();
@@ -43,13 +42,23 @@ return new class extends Migration
 
             $table->unique(['locale', 'localizable_id', 'localizable_type'], 'action_localized_settings_uk');
         });
-        Schema::create('custom_action_settings_custom_event_listener', function (Blueprint $table) {
+        Schema::create('custom_event_actions', function (Blueprint $table) {
             $table->id();
-            $table->unsignedBigInteger('custom_event_listener_id');
-            $table->unsignedBigInteger('custom_action_settings_id')->unique();
+            $table->string('type', 63);
+            $table->unsignedBigInteger('event_listener_id');
+            $table->unsignedBigInteger('action_settings_id')->unique();
+            $table->timestamps();
 
-            $table->foreign('custom_event_listener_id', 'custom_event_listener_id_fk')->references('id')->on('custom_event_listeners');
-            $table->foreign('custom_action_settings_id', 'custom_action_settings_id_fk')->references('id')->on('custom_action_settings');
+            $table->foreign('event_listener_id', 'event_listener_id_fk')->references('id')->on('custom_event_listeners');
+            $table->foreign('action_settings_id', 'action_settings_id_fk')->references('id')->on('custom_action_settings');
+        });
+        Schema::create('custom_unique_actions', function (Blueprint $table) {
+            $table->string('type', 63);
+            $table->unsignedBigInteger('action_settings_id')->unique();
+            $table->timestamps();
+
+            $table->primary('type');
+            $table->foreign('action_settings_id')->references('id')->on('custom_action_settings');
         });
     }
 
@@ -62,7 +71,8 @@ return new class extends Migration
     {
         Schema::dropIfExists('action_localized_settings');
         Schema::dropIfExists('action_scoped_settings');
-        Schema::dropIfExists('custom_action_settings_custom_event_listener');
+        Schema::dropIfExists('custom_event_actions');
+        Schema::dropIfExists('custom_unique_actions');
         Schema::dropIfExists('custom_event_listeners');
         Schema::dropIfExists('custom_action_settings');
     }

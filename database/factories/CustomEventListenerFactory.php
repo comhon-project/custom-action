@@ -2,7 +2,7 @@
 
 namespace Database\Factories;
 
-use Comhon\CustomAction\Models\CustomActionSettings;
+use Comhon\CustomAction\Models\CustomEventAction;
 use Comhon\CustomAction\Models\CustomEventListener;
 use Illuminate\Database\Eloquent\Factories\Factory;
 
@@ -47,14 +47,14 @@ class CustomEventListenerFactory extends Factory
                 'scope' => $companyNameScope ? ['company' => ['name' => $companyNameScope]] : null,
             ];
         })->afterCreating(function (CustomEventListener $listener) use ($toOtherUserId, $shoudQueue, $withAttachement) {
-            $type = $shoudQueue ? 'queue-email' : 'send-email';
-            $listener->actions()->attach(
-                CustomActionSettings::factory()->sendMailRegistrationCompany(null, true, $type, $withAttachement)->create()
-            );
+            CustomEventAction::factory()
+                ->sendMailRegistrationCompany(null, true, $shoudQueue, $withAttachement)
+                ->for($listener, 'eventListener')->create();
+
             if ($toOtherUserId) {
-                $listener->actions()->attach(
-                    CustomActionSettings::factory()->sendMailRegistrationCompany($toOtherUserId, false, $type)->create()
-                );
+                CustomEventAction::factory()
+                    ->sendMailRegistrationCompany($toOtherUserId, false, $shoudQueue)
+                    ->for($listener, 'eventListener')->create();
             }
         });
     }

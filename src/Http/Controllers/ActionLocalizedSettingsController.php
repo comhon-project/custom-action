@@ -34,14 +34,14 @@ class ActionLocalizedSettingsController extends Controller
         $this->authorize('update', $localizedSettings);
 
         $container = $localizedSettings->localizable;
-        $customActionSettings = $container instanceof ActionScopedSettings ? $container->customActionSettings : $container;
+        $customActionSettings = $container instanceof ActionScopedSettings ? $container->actionSettings : $container;
 
-        $eventListener = $customActionSettings->eventListener();
+        $eventListener = $customActionSettings->eventAction?->eventListener;
         $eventContext = $eventListener
             ? CustomActionModelResolver::getClass($eventListener->event)
             : null;
 
-        $customAction = app(CustomActionModelResolver::getClass($customActionSettings->type));
+        $customAction = app(CustomActionModelResolver::getClass($customActionSettings->getAction()->type));
         $rules = RuleHelper::getSettingsRules($customAction->getLocalizedSettingsSchema($eventContext));
         $rules['locale'] = 'string';
         $validated = $request->validate($rules);
@@ -52,7 +52,7 @@ class ActionLocalizedSettingsController extends Controller
         }
         $localizedSettings->save();
 
-        return new ActionLocalizedSettingsResource($localizedSettings);
+        return new ActionLocalizedSettingsResource($localizedSettings->unsetRelations());
     }
 
     /**

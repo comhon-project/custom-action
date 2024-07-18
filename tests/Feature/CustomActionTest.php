@@ -13,7 +13,8 @@ use Comhon\CustomAction\Models\ActionLocalizedSettings;
 use Comhon\CustomAction\Models\ActionScopedSettings;
 use Comhon\CustomAction\Models\ActionSettingsContainer;
 use Comhon\CustomAction\Models\CustomActionSettings;
-use Comhon\CustomAction\Models\CustomEventListener;
+use Comhon\CustomAction\Models\CustomEventAction;
+use Comhon\CustomAction\Models\CustomUniqueAction;
 use Comhon\CustomAction\Rules\RuleHelper;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Mail\Mailables\Attachment;
@@ -45,9 +46,9 @@ class CustomActionTest extends TestCase
     {
         App::setLocale($appLocale);
         App::setFallbackLocale($fallbackLocale);
-        $user = User::factory(null, ['preferred_locale' => $preferredLocale])->create();
+        $user = User::factory(['preferred_locale' => $preferredLocale])->create();
         $company = Company::factory()->create();
-        CustomActionSettings::factory()->sendMailRegistrationCompany(null, false, 'send-company-email', true)->create();
+        CustomUniqueAction::factory()->sendMailRegistrationCompany(null, false, true)->create();
 
         $bindings = ['company' => $company, 'logo' => new SystemFile($this->getAssetPath())];
 
@@ -91,7 +92,7 @@ class CustomActionTest extends TestCase
         App::setFallbackLocale($fallbackLocale);
         $user = UserWithoutPreference::factory()->create();
         $company = Company::factory()->create();
-        CustomActionSettings::factory()->sendMailRegistrationCompany(null, false, 'send-company-email', true)->create();
+        CustomUniqueAction::factory()->sendMailRegistrationCompany(null, false, true)->create();
 
         $bindings = ['company' => $company, 'logo' => new SystemFile($this->getAssetPath())];
 
@@ -131,21 +132,7 @@ class CustomActionTest extends TestCase
         $company = Company::factory()->create();
 
         $bindings = ['company' => $company, 'logo' => new SystemFile($this->getAssetPath())];
-        $this->expectExceptionMessage('action settings not set for App\Actions\SendCompanyRegistrationMail');
-        $this->getActionInstance()->handle($bindings, $user);
-    }
-
-    public function testHandleUniqueActionDuplicated()
-    {
-        $user = User::factory()->create();
-        $company = Company::factory()->create();
-
-        // create two unique actions
-        CustomActionSettings::factory()->sendMailRegistrationCompany(null, false, 'send-company-email', true)->create();
-        CustomActionSettings::factory()->sendMailRegistrationCompany(null, false, 'send-company-email', true)->create();
-
-        $bindings = ['company' => $company, 'logo' => new SystemFile($this->getAssetPath())];
-        $this->expectExceptionMessage("several 'send-company-email' actions found");
+        $this->expectExceptionMessage('No query results for model');
         $this->getActionInstance()->handle($bindings, $user);
     }
 
@@ -153,7 +140,7 @@ class CustomActionTest extends TestCase
     {
         config(['custom-action.unique_actions' => [SendCompanyRegistrationMail::class]]);
         $user = User::factory()->hasConsumerAbility()->create();
-        $response = $this->actingAs($user)->getJson('custom/unique-actions');
+        $response = $this->actingAs($user)->getJson('custom/action-types/unique');
         $response->assertJson([
             'data' => [
                 [
@@ -167,7 +154,7 @@ class CustomActionTest extends TestCase
     public function testGetActionsForbidden()
     {
         $user = User::factory()->create();
-        $this->actingAs($user)->getJson('custom/unique-actions')
+        $this->actingAs($user)->getJson('custom/action-types/unique')
             ->assertForbidden();
     }
 
@@ -175,7 +162,7 @@ class CustomActionTest extends TestCase
     {
         $user = User::factory()->hasConsumerAbility()->create();
 
-        $response = $this->actingAs($user)->getJson('custom/actions/send-email/schema');
+        $response = $this->actingAs($user)->getJson('custom/action-types/send-email/schema');
         $response->assertJson([
             'data' => [
                 'binding_schema' => [
@@ -191,11 +178,10 @@ class CustomActionTest extends TestCase
                     'subject' => RuleHelper::getRuleName('text_template'),
                     'body' => RuleHelper::getRuleName('html_template'),
                 ],
-                'unique' => false,
             ],
         ]);
 
-        $response = $this->actingAs($user)->getJson('custom/actions/send-company-email/schema');
+        $response = $this->actingAs($user)->getJson('custom/action-types/send-company-email/schema');
         $response->assertJson([
             'data' => [
                 'binding_schema' => [
@@ -215,7 +201,6 @@ class CustomActionTest extends TestCase
                     'body' => RuleHelper::getRuleName('html_template'),
                     'test_localized' => 'string',
                 ],
-                'unique' => true,
             ],
         ]);
     }
@@ -225,7 +210,7 @@ class CustomActionTest extends TestCase
         $user = User::factory()->hasConsumerAbility()->create();
 
         $params = http_build_query(['event_context' => 'company-registered']);
-        $this->actingAs($user)->getJson("custom/actions/send-email/schema?$params")
+        $this->actingAs($user)->getJson("custom/action-types/send-email/schema?$params")
             ->assertOk()
             ->assertJson([
                 'data' => [
@@ -249,7 +234,6 @@ class CustomActionTest extends TestCase
                         'subject' => RuleHelper::getRuleName('text_template'),
                         'body' => RuleHelper::getRuleName('html_template'),
                     ],
-                    'unique' => false,
                 ],
             ]);
     }
@@ -259,7 +243,7 @@ class CustomActionTest extends TestCase
         $user = User::factory()->hasConsumerAbility()->create();
 
         $params = http_build_query(['event_context' => 'stored-file']);
-        $this->actingAs($user)->getJson("custom/actions/send-email/schema?$params")
+        $this->actingAs($user)->getJson("custom/action-types/send-email/schema?$params")
             ->assertUnprocessable()
             ->assertJson([
                 'message' => 'the event context is not subclass of custom-event',
@@ -271,7 +255,7 @@ class CustomActionTest extends TestCase
         $user = User::factory()->hasConsumerAbility()->create();
 
         $params = http_build_query(['event_context' => 'custom-event']);
-        $this->actingAs($user)->getJson("custom/actions/send-email/schema?$params")
+        $this->actingAs($user)->getJson("custom/action-types/send-email/schema?$params")
             ->assertUnprocessable()
             ->assertJson([
                 'message' => 'the event context is not subclass of custom-event',
@@ -283,46 +267,52 @@ class CustomActionTest extends TestCase
         CustomActionModelResolver::register([], true);
         $user = User::factory()->hasConsumerAbility()->create();
 
-        $response = $this->actingAs($user)->getJson('custom/actions/send-email/schema');
+        $response = $this->actingAs($user)->getJson('custom/action-types/send-email/schema');
         $response->assertNotFound();
     }
 
     public function testActionShemaForbidden()
     {
         $user = User::factory()->create();
-        $this->actingAs($user)->getJson('custom/actions/send-email/schema')
+        $this->actingAs($user)->getJson('custom/action-types/send-email/schema')
             ->assertForbidden();
     }
 
     public function testGetUniqueActionNotCreated()
     {
         $user = User::factory()->hasConsumerAbility()->create();
-        $response = $this->actingAs($user)->getJson('custom/action-settings/send-company-email');
+        $response = $this->actingAs($user)->getJson('custom/unique-actions/send-company-email');
         $response->assertJson([
             'data' => [
                 'type' => 'send-company-email',
-                'settings' => [],
+                'action_settings' => [
+                    'settings' => [],
+                ],
             ],
         ]);
     }
 
     public function testGetUniqueActionCreated()
     {
-        $customActionSettings = CustomActionSettings::factory(null, [
+        $customActionSettings = CustomUniqueAction::factory([
             'type' => 'send-company-email',
-            'settings' => [
-                'subject' => 'the subject',
-            ],
-        ])->create();
+        ])->sendMailRegistrationCompany()
+            ->create()
+            ->actionSettings;
         $user = User::factory()->hasConsumerAbility()->create();
 
-        $response = $this->actingAs($user)->getJson('custom/action-settings/send-company-email');
+        $response = $this->actingAs($user)->getJson('custom/unique-actions/send-company-email');
         $response->assertJson([
             'data' => [
-                'id' => $customActionSettings->id,
                 'type' => 'send-company-email',
-                'settings' => [
-                    'subject' => 'the subject',
+                'action_settings' => [
+                    'id' => $customActionSettings->id,
+                    'settings' => [
+                        'to_bindings_receivers' => [
+                            'user',
+                        ],
+                        'attachments' => null,
+                    ],
                 ],
             ],
         ]);
@@ -331,44 +321,30 @@ class CustomActionTest extends TestCase
         $response->assertJson([
             'data' => [
                 'id' => $customActionSettings->id,
-                'type' => 'send-company-email',
                 'settings' => [
-                    'subject' => 'the subject',
+                    'to_bindings_receivers' => [
+                        'user',
+                    ],
+                    'attachments' => null,
                 ],
             ],
         ]);
-    }
-
-    public function testGetUniqueActionWithSeveralSettings()
-    {
-        CustomActionSettings::factory(null, [
-            'type' => 'send-company-email',
-            'settings' => [],
-        ])->create();
-        CustomActionSettings::factory(null, [
-            'type' => 'send-company-email',
-            'settings' => [],
-        ])->create();
-        $user = User::factory()->hasConsumerAbility()->create();
-
-        $response = $this->actingAs($user)->getJson('custom/action-settings/send-company-email');
-        $response->assertServerError();
     }
 
     public function testGetGenericAction()
     {
-        $customActionSettings = CustomActionSettings::factory(null, [
-            'type' => 'send-email',
+        $customActionSettings = CustomActionSettings::factory([
             'settings' => [
                 'subject' => 'the subject',
             ],
-        ])->create();
+        ])->withEventActionType('send-email')->create();
         $user = User::factory()->hasConsumerAbility()->create();
         $response = $this->actingAs($user)->getJson('custom/action-settings/'.$customActionSettings->id);
         $response->assertJson([
             'data' => [
-                'type' => 'send-email',
-                'settings' => [],
+                'settings' => [
+                    'subject' => 'the subject',
+                ],
                 'id' => $customActionSettings->id,
             ],
         ]);
@@ -378,35 +354,25 @@ class CustomActionTest extends TestCase
     {
         CustomActionModelResolver::register([], true);
         $user = User::factory()->hasConsumerAbility()->create();
-        $response = $this->actingAs($user)->getJson('custom/action-settings/send-email');
+        $response = $this->actingAs($user)->getJson('custom/unique-actions/send-email');
         $response->assertNotFound();
         $response->assertJson([
             'message' => 'not found',
         ]);
     }
 
-    public function testGetGenericActionWithKey()
-    {
-        $user = User::factory()->hasConsumerAbility()->create();
-        $response = $this->actingAs($user)->getJson('custom/action-settings/send-email');
-        $response->assertJson([
-            'message' => 'action must be a unique action',
-        ]);
-    }
-
     public function testGetActionSettingsForbidden()
     {
         $user = User::factory()->create();
-        $this->actingAs($user)->getJson('custom/action-settings/send-company-email')
+        $this->actingAs($user)->getJson('custom/unique-actions/send-company-email')
             ->assertForbidden();
     }
 
     public function testUpdateGenericActionSettings()
     {
-        $customActionSettings = CustomActionSettings::factory(null, [
-            'type' => 'send-email',
+        $customActionSettings = CustomActionSettings::factory([
             'settings' => [],
-        ])->create();
+        ])->withEventActionType('send-email')->create();
         $newSettings = [
             'to_receivers' => [
                 ['receiver_id' => User::factory()->create()->id, 'receiver_type' => 'user'],
@@ -421,7 +387,6 @@ class CustomActionTest extends TestCase
         $response->assertJson([
             'data' => [
                 'id' => $customActionSettings->id,
-                'type' => 'send-email',
                 'settings' => $newSettings,
             ],
         ]);
@@ -431,10 +396,12 @@ class CustomActionTest extends TestCase
 
     public function testUpdateUniqueActionSettings()
     {
-        $customActionSettings = CustomActionSettings::factory(null, [
+        $customActionSettings = CustomUniqueAction::factory([
             'type' => 'send-company-email',
-            'settings' => [],
-        ])->create();
+        ])->sendMailRegistrationCompany()
+            ->create()
+            ->actionSettings;
+
         $newSettings = [
             'to_receivers' => [
                 ['receiver_id' => User::factory()->create()->id, 'receiver_type' => 'user'],
@@ -449,7 +416,6 @@ class CustomActionTest extends TestCase
         $response->assertJson([
             'data' => [
                 'id' => $customActionSettings->id,
-                'type' => 'send-company-email',
                 'settings' => $newSettings,
             ],
         ]);
@@ -459,10 +425,9 @@ class CustomActionTest extends TestCase
 
     public function testUpdateActionWithEventContextSettings()
     {
-        $customActionSettings = CustomActionSettings::factory(null, [
-            'type' => 'send-email',
+        $customActionSettings = CustomActionSettings::factory([
             'settings' => [],
-        ])->hasAttached(CustomEventListener::factory(), [], 'eventListeners')->create();
+        ])->withEventActionType('send-email')->create();
         $newSettings = [
             'to_bindings_receivers' => ['user'],
         ];
@@ -475,7 +440,6 @@ class CustomActionTest extends TestCase
         $response->assertJson([
             'data' => [
                 'id' => $customActionSettings->id,
-                'type' => 'send-email',
                 'settings' => $newSettings,
             ],
         ]);
@@ -485,10 +449,9 @@ class CustomActionTest extends TestCase
 
     public function testUpdateActionSettingsForbidden()
     {
-        $customActionSettings = CustomActionSettings::factory(null, [
-            'type' => 'send-email',
+        $customActionSettings = CustomActionSettings::factory([
             'settings' => [],
-        ])->create();
+        ])->withEventActionType('send-email')->create();
 
         $user = User::factory()->create();
         $this->actingAs($user)->putJson("custom/action-settings/$customActionSettings->id")
@@ -505,9 +468,9 @@ class CustomActionTest extends TestCase
         $resource = $settingsContainerClass == CustomActionSettings::class ? 'action-settings' : 'scoped-settings';
 
         /** @var ActionSettingsContainer $settingsContainer */
-        $settingsContainer = $settingsContainerClass::factory(null, [
+        $settingsContainer = $settingsContainerClass::factory([
             'settings' => [],
-        ])->create();
+        ])->withEventActionType('send-email')->create();
         $originalSettingsEn = [
             'subject' => 'original subject',
             'body' => 'original body',
@@ -582,17 +545,13 @@ class CustomActionTest extends TestCase
 
         /** @var ActionSettingsContainer $settingsContainer */
         $settingsContainer = $settingsContainerClass::factory()
-            ->actionType('send-company-email')
+            ->withEventActionType('send-company-email')
             ->create();
         $originalSettingsEn = [
             'subject' => 'original subject',
             'body' => 'original body',
             'test_localized' => 'foo',
         ];
-        $customActionSettings = $settingsContainer instanceof ActionScopedSettings
-            ? $settingsContainer->customActionSettings
-            : $settingsContainer;
-        $customActionSettings->eventListeners()->attach(CustomEventListener::factory()->create());
         $user = User::factory()->hasConsumerAbility()->create();
 
         // add en
@@ -623,7 +582,7 @@ class CustomActionTest extends TestCase
         $resource = $settingsContainerClass == CustomActionSettings::class ? 'action-settings' : 'scoped-settings';
 
         /** @var ActionSettingsContainer $settingsContainer */
-        $settingsContainer = $settingsContainerClass::factory(null, [
+        $settingsContainer = $settingsContainerClass::factory([
             'settings' => [],
         ])->create();
 
@@ -640,7 +599,7 @@ class CustomActionTest extends TestCase
     public function testUpdateActionLocalizedSettings($settingsContainerClass)
     {
         /** @var ActionSettingsContainer $settingsContainer */
-        $settingsContainer = $settingsContainerClass::factory()->create();
+        $settingsContainer = $settingsContainerClass::factory()->withEventActionType('send-email')->create();
         $localizedSettings = new ActionLocalizedSettings();
         $localizedSettings->settings = [
             'subject' => 'original subject',
@@ -680,7 +639,7 @@ class CustomActionTest extends TestCase
     {
         /** @var ActionSettingsContainer $settingsContainer */
         $settingsContainer = $settingsContainerClass::factory()
-            ->actionType('send-company-email')
+            ->withEventActionType('send-company-email')
             ->create();
         $localizedSettings = new ActionLocalizedSettings();
         $localizedSettings->settings = [
@@ -796,9 +755,9 @@ class CustomActionTest extends TestCase
     public function testStoreActionScopedSettings()
     {
         /** @var CustomActionSettings $customActionSettings */
-        $customActionSettings = CustomActionSettings::factory(null, [
+        $customActionSettings = CustomActionSettings::factory([
             'settings' => [],
-        ])->create();
+        ])->withEventActionType('send-email')->create();
         $settingsScope1 = [
             'to_receivers' => [
                 ['receiver_id' => User::factory()->create()->id, 'receiver_type' => 'user'],
@@ -875,9 +834,9 @@ class CustomActionTest extends TestCase
     public function testStoreActionScopedWithEventContextSettings()
     {
         /** @var CustomActionSettings $customActionSettings */
-        $customActionSettings = CustomActionSettings::factory(null, [
+        $customActionSettings = CustomActionSettings::factory([
             'settings' => [],
-        ])->hasAttached(CustomEventListener::factory(), [], 'eventListeners')->create();
+        ])->withEventActionType('send-email')->create();
         $settingsScope1 = [
             'to_bindings_receivers' => ['user'],
         ];
@@ -910,7 +869,7 @@ class CustomActionTest extends TestCase
     public function testStoreActionScopedSettingsForbidden()
     {
         /** @var CustomActionSettings $customActionSettings */
-        $customActionSettings = CustomActionSettings::factory(null, [
+        $customActionSettings = CustomActionSettings::factory([
             'settings' => [],
         ])->create();
 
@@ -922,7 +881,7 @@ class CustomActionTest extends TestCase
     public function testUpdateActionScopedSettings()
     {
         /** @var CustomActionSettings $customActionSettings */
-        $customActionSettings = CustomActionSettings::factory()->create();
+        $customActionSettings = CustomActionSettings::factory()->withEventActionType('send-email')->create();
         $scopedSettings = new ActionScopedSettings();
         $scopedSettings->settings = [
             'to_receivers' => [
@@ -932,7 +891,7 @@ class CustomActionTest extends TestCase
         $scopedSettings->scope = ['company' => [
             'name' => 'my company scope 1',
         ]];
-        $scopedSettings->customActionSettings()->associate($customActionSettings);
+        $scopedSettings->actionSettings()->associate($customActionSettings);
         $scopedSettings->save();
 
         $updatedSettings = [
@@ -966,9 +925,10 @@ class CustomActionTest extends TestCase
     public function testUpdateActionScopedWithEventContextSettings()
     {
         /** @var CustomActionSettings $customActionSettings */
-        $customActionSettings = CustomActionSettings::factory()
-            ->hasAttached(CustomEventListener::factory(), [], 'eventListeners')
-            ->create();
+        $customActionSettings = CustomEventAction::factory()
+            ->sendMailRegistrationCompany()
+            ->create()
+            ->actionSettings;
         $scopedSettings = new ActionScopedSettings();
         $scopedSettings->settings = [
             'to_receivers' => [
@@ -978,7 +938,7 @@ class CustomActionTest extends TestCase
         $scopedSettings->scope = ['company' => [
             'name' => 'my company scope 1',
         ]];
-        $scopedSettings->customActionSettings()->associate($customActionSettings);
+        $scopedSettings->actionSettings()->associate($customActionSettings);
         $scopedSettings->save();
 
         $settingsScope1 = [
@@ -1024,7 +984,7 @@ class CustomActionTest extends TestCase
         $scopedSettings = new ActionScopedSettings();
         $scopedSettings->settings = [];
         $scopedSettings->scope = [];
-        $scopedSettings->customActionSettings()->associate($customActionSettings);
+        $scopedSettings->actionSettings()->associate($customActionSettings);
         $scopedSettings->save();
 
         $this->assertEquals(1, $customActionSettings->scopedSettings()->count());
@@ -1054,9 +1014,9 @@ class CustomActionTest extends TestCase
      */
     public function testSettingsValidation($settings, $success)
     {
-        $customActionSettings = CustomActionSettings::factory(null, [
+        $customActionSettings = CustomActionSettings::factory([
             'settings' => [],
-        ])->create();
+        ])->withEventActionType('send-email')->create();
 
         $user = User::factory()->hasConsumerAbility()->create();
         $response = $this->actingAs($user)->postJson("custom/action-settings/{$customActionSettings->id}/localized-settings", [

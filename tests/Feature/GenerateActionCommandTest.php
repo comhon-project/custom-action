@@ -2,6 +2,8 @@
 
 namespace Tests\Feature;
 
+use App\Models\User;
+use Comhon\CustomAction\Facades\CustomActionModelResolver;
 use Tests\Support\Utils;
 use Tests\TestCase;
 
@@ -12,9 +14,10 @@ class GenerateActionCommandTest extends TestCase
     /**
      * @dataProvider providerGenerateActionFileSuccess
      */
-    public function testGenerateActionFileSuccess($generic, $dirShouldExists, $expectContent)
+    public function testGenerateActionFileSuccess($dirShouldExists, $extends, $expectContent)
     {
-        $dir = Utils::joinPaths(Utils::getTestPath('Console'), 'Commands');
+        CustomActionModelResolver::bind('user', User::class);
+        $dir = Utils::joinPaths(Utils::getTestPath('Actions'), 'CustomActions');
         if (file_exists($dir)) {
             rmdir($dir);
         }
@@ -24,14 +27,16 @@ class GenerateActionCommandTest extends TestCase
         app()->useAppPath(Utils::getTestPath());
         artisan($this, 'custom-action:generate', [
             'name' => 'TestGenericSendEmail',
-            '--extends' => 'send-email',
-            '--generic' => $generic,
+            ...($extends ? ['--extends' => $extends] : []),
         ]);
 
-        $path = Utils::joinPaths(Utils::getTestPath('Console'), 'Commands', 'TestGenericSendEmail.php');
-        $this->assertFileExists($path);
-        $this->assertEquals($expectContent, file_get_contents($path));
-        unlink($path);
+        $path = Utils::joinPaths(Utils::getTestPath('Actions'), 'CustomActions', 'TestGenericSendEmail.php');
+        $fileContent = file_exists($path) ? file_get_contents($path) : null;
+        if ($fileContent !== null) {
+            unlink($path);
+        }
+        $this->assertNotNull($fileContent, "file doesn't exist");
+        $this->assertEquals($expectContent, $fileContent);
     }
 
     public static function providerGenerateActionFileSuccess()
@@ -39,48 +44,52 @@ class GenerateActionCommandTest extends TestCase
         return [
             [
                 true,
-                true,
+                null,
                 <<<EOT
 <?php
 
-namespace App\Console\Commands;
+namespace App\Actions\CustomActions;
 
-use Comhon\CustomAction\Actions\SendTemplatedMail;
 use Comhon\CustomAction\Contracts\CustomActionInterface;
 
-class TestGenericSendEmail extends SendTemplatedMail implements CustomActionInterface
+class TestGenericSendEmail implements CustomActionInterface
 {
-    public function getBindingSchema(): array
-    {
-        return [
-            ...parent::getBindingSchema(),
-            // Here goes your specific action bindings
-        ];
-    }
+
 }
 
 EOT
             ],
             [
                 false,
-                false,
+                'send-email',
                 <<<EOT
 <?php
 
-namespace App\Console\Commands;
+namespace App\Actions\CustomActions;
 
 use Comhon\CustomAction\Actions\SendTemplatedMail;
-use Comhon\CustomAction\Contracts\CustomUniqueActionInterface;
 
-class TestGenericSendEmail extends SendTemplatedMail implements CustomUniqueActionInterface
+class TestGenericSendEmail extends SendTemplatedMail
 {
-    public function getBindingSchema(): array
-    {
-        return [
-            ...parent::getBindingSchema(),
-            // Here goes your specific action bindings
-        ];
-    }
+
+}
+
+EOT
+            ],
+            [
+                false,
+                'user',
+                <<<EOT
+<?php
+
+namespace App\Actions\CustomActions;
+
+use App\Models\User;
+use Comhon\CustomAction\Contracts\CustomActionInterface;
+
+class TestGenericSendEmail extends User implements CustomActionInterface
+{
+
 }
 
 EOT
@@ -96,7 +105,6 @@ EOT
         artisan($this, 'custom-action:generate', [
             'name' => 'TestGenericSendEmail',
             '--extends' => 'failure',
-            '--generic' => false,
         ]);
     }
 }

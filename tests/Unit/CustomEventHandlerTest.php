@@ -23,7 +23,7 @@ class CustomEventHandlerTest extends TestCase
     {
         $listener = CustomEventListener::factory()->genericRegistrationCompany()->create();
         $event = new CompanyRegistered(Company::factory()->create(), User::factory()->create());
-        foreach ($listener->actions as $action) {
+        foreach ($listener->eventActions as $action) {
             $action->type = Company::class;
             $action->save();
         }

@@ -3,10 +3,9 @@
 namespace App\Actions;
 
 use Comhon\CustomAction\Actions\SendTemplatedMail;
-use Comhon\CustomAction\Contracts\CustomUniqueActionInterface;
 use Comhon\CustomAction\Rules\RuleHelper;
 
-class SendCompanyRegistrationMail extends SendTemplatedMail implements CustomUniqueActionInterface
+class SendCompanyRegistrationMail extends SendTemplatedMail
 {
     public function getGlobalBindingSchema(): array
     {

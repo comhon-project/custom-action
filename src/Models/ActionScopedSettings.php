@@ -41,7 +41,7 @@ class ActionScopedSettings extends ActionSettingsContainer
     /**
      * @return \Illuminate\Database\Eloquent\Relations\BelongsTo
      */
-    public function customActionSettings()
+    public function actionSettings()
     {
         return $this->belongsTo(CustomActionSettings::class);
     }
