@@ -63,6 +63,7 @@ class CustomActionServiceProvider extends PackageServiceProvider
         $this->registerPolicies();
         $this->registerRules();
         $this->bindModels();
+        $this->publishFiles();
     }
 
     public function registerPolicies()
@@ -103,5 +104,14 @@ class CustomActionServiceProvider extends PackageServiceProvider
         FacadesCustomActionModelResolver::bind('stored-file', StoredFile::class);
         FacadesCustomActionModelResolver::bind('email-receiver', EmailReceiverInterface::class);
         FacadesCustomActionModelResolver::bind('custom-event', CustomEventInterface::class);
+    }
+
+    public function publishFiles()
+    {
+        if ($this->app->runningInConsole()) {
+            $this->publishes([
+                dirname(__DIR__).DIRECTORY_SEPARATOR.'policies' => app_path('Policies'.DIRECTORY_SEPARATOR.'CustomAction'),
+            ], 'custom-action-policies');
+        }
     }
 }
