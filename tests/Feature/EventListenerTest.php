@@ -442,6 +442,32 @@ class EventListenerTest extends TestCase
         $this->assertEquals($actionValues['settings'], $customActionSettings->settings);
     }
 
+    public function testStoreEventListenerBadActionSuccess()
+    {
+        // create event listener for CompanyRegistered event
+        $eventListener = CustomEventListener::factory([
+            'event' => 'bad-event',
+        ])->create();
+        $this->assertEquals(0, $eventListener->eventActions()->count());
+
+        $user = User::factory()->hasConsumerAbility()->create();
+        $actionValues = [
+            'type' => 'bad-action',
+            'settings' => [],
+        ];
+        $this->actingAs($user)->postJson("custom/event-listeners/$eventListener->id/actions", $actionValues)
+            ->assertUnprocessable()
+            ->assertJson([
+                'message' => 'Action bad-action not found. (and 1 more error)',
+                'errors' => [
+                    'type' => [
+                        'Action bad-action not found.',
+                        'The action bad-action is not an action triggerable from event.',
+                    ],
+                ],
+            ]);
+    }
+
     public function testStoreEventListenerActionForbidden()
     {
         // create event listener for CompanyRegistered event

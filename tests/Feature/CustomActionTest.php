@@ -246,7 +246,7 @@ class CustomActionTest extends TestCase
         $this->actingAs($user)->getJson("custom/action-types/send-email/schema?$params")
             ->assertUnprocessable()
             ->assertJson([
-                'message' => 'the event context is not subclass of custom-event',
+                'message' => 'The event context is not subclass of custom-event.',
             ]);
     }
 
@@ -258,7 +258,7 @@ class CustomActionTest extends TestCase
         $this->actingAs($user)->getJson("custom/action-types/send-email/schema?$params")
             ->assertUnprocessable()
             ->assertJson([
-                'message' => 'the event context is not subclass of custom-event',
+                'message' => 'The event context is not subclass of custom-event.',
             ]);
     }
 
@@ -460,17 +460,16 @@ class CustomActionTest extends TestCase
 
     /**
      * @dataProvider providerActionLocalizedSettings
-     *
-     * @return void
      */
-    public function testStoreActionLocalizedSettings($settingsContainerClass)
+    public function testStoreActionLocalizedSettings($settingsContainerClass, $fromEventAction)
     {
         $resource = $settingsContainerClass == CustomActionSettings::class ? 'action-settings' : 'scoped-settings';
+        $withActionType = $fromEventAction ? 'withEventActionType' : 'withUniqueActionType';
 
         /** @var ActionSettingsContainer $settingsContainer */
         $settingsContainer = $settingsContainerClass::factory([
             'settings' => [],
-        ])->withEventActionType('send-email')->create();
+        ])->{$withActionType}('send-email')->create();
         $originalSettingsEn = [
             'subject' => 'original subject',
             'body' => 'original body',
@@ -536,16 +535,15 @@ class CustomActionTest extends TestCase
 
     /**
      * @dataProvider providerActionLocalizedSettings
-     *
-     * @return void
      */
-    public function testStoreActionLocalizedSettingsWithEventContext($settingsContainerClass)
+    public function testStoreActionLocalizedSettingsWithEventContext($settingsContainerClass, $fromEventAction)
     {
         $resource = $settingsContainerClass == CustomActionSettings::class ? 'action-settings' : 'scoped-settings';
+        $withActionType = $fromEventAction ? 'withEventActionType' : 'withUniqueActionType';
 
         /** @var ActionSettingsContainer $settingsContainer */
         $settingsContainer = $settingsContainerClass::factory()
-            ->withEventActionType('send-company-email')
+            ->{$withActionType}('send-company-email')
             ->create();
         $originalSettingsEn = [
             'subject' => 'original subject',
@@ -574,17 +572,15 @@ class CustomActionTest extends TestCase
 
     /**
      * @dataProvider providerActionLocalizedSettings
-     *
-     * @return void
      */
-    public function testStoreActionLocalizedSettingsForbidden($settingsContainerClass)
+    public function testStoreActionLocalizedSettingsForbidden($settingsContainerClass, $fromEventAction)
     {
         $resource = $settingsContainerClass == CustomActionSettings::class ? 'action-settings' : 'scoped-settings';
+        $withActionType = $fromEventAction ? 'withEventActionType' : 'withUniqueActionType';
 
         /** @var ActionSettingsContainer $settingsContainer */
-        $settingsContainer = $settingsContainerClass::factory([
-            'settings' => [],
-        ])->create();
+        $settingsContainer = $settingsContainerClass::factory()
+            ->{$withActionType}('send-company-email')->create();
 
         $user = User::factory()->create();
         $this->actingAs($user)->postJson("custom/{$resource}/{$settingsContainer->id}/localized-settings")
@@ -593,13 +589,16 @@ class CustomActionTest extends TestCase
 
     /**
      * @dataProvider providerActionLocalizedSettings
-     *
-     * @return void
      */
-    public function testUpdateActionLocalizedSettings($settingsContainerClass)
+    public function testUpdateActionLocalizedSettings($settingsContainerClass, $fromEventAction)
     {
+        $withActionType = $fromEventAction ? 'withEventActionType' : 'withUniqueActionType';
+
         /** @var ActionSettingsContainer $settingsContainer */
-        $settingsContainer = $settingsContainerClass::factory()->withEventActionType('send-email')->create();
+        $settingsContainer = $settingsContainerClass::factory()
+            ->{$withActionType}('send-email')
+            ->create();
+
         $localizedSettings = new ActionLocalizedSettings();
         $localizedSettings->settings = [
             'subject' => 'original subject',
@@ -632,14 +631,14 @@ class CustomActionTest extends TestCase
 
     /**
      * @dataProvider providerActionLocalizedSettings
-     *
-     * @return void
      */
-    public function testUpdateActionLocalizedSettingsWithEventContext($settingsContainerClass)
+    public function testUpdateActionLocalizedSettingsWithActionLocalizedSetting($settingsContainerClass, $fromEventAction)
     {
+        $withActionType = $fromEventAction ? 'withEventActionType' : 'withUniqueActionType';
+
         /** @var ActionSettingsContainer $settingsContainer */
         $settingsContainer = $settingsContainerClass::factory()
-            ->withEventActionType('send-company-email')
+            ->{$withActionType}('send-company-email')
             ->create();
         $localizedSettings = new ActionLocalizedSettings();
         $localizedSettings->settings = [
@@ -675,13 +674,13 @@ class CustomActionTest extends TestCase
 
     /**
      * @dataProvider providerActionLocalizedSettings
-     *
-     * @return void
      */
-    public function testUpdateActionLocalizedSettingsForbidden($settingsContainerClass)
+    public function testUpdateActionLocalizedSettingsForbidden($settingsContainerClass, $fromEventAction)
     {
+        $withActionType = $fromEventAction ? 'withEventActionType' : 'withUniqueActionType';
+
         /** @var ActionSettingsContainer $settingsContainer */
-        $settingsContainer = $settingsContainerClass::factory()->create();
+        $settingsContainer = $settingsContainerClass::factory()->{$withActionType}('send-email')->create();
         $localizedSettings = new ActionLocalizedSettings();
         $localizedSettings->settings = [
             'subject' => 'original subject',
@@ -698,13 +697,13 @@ class CustomActionTest extends TestCase
 
     /**
      * @dataProvider providerActionLocalizedSettings
-     *
-     * @return void
      */
-    public function testDeleteActionLocalizedSettings($settingsContainerClass)
+    public function testDeleteActionLocalizedSettings($settingsContainerClass, $fromEventAction)
     {
+        $withActionType = $fromEventAction ? 'withEventActionType' : 'withUniqueActionType';
+
         /** @var ActionSettingsContainer $settingsContainer */
-        $settingsContainer = $settingsContainerClass::factory()->create();
+        $settingsContainer = $settingsContainerClass::factory()->{$withActionType}('send-email')->create();
         $localizedSettings = new ActionLocalizedSettings();
         $localizedSettings->settings = [];
         $localizedSettings->locale = 'en';
@@ -723,13 +722,13 @@ class CustomActionTest extends TestCase
 
     /**
      * @dataProvider providerActionLocalizedSettings
-     *
-     * @return void
      */
-    public function testDeleteActionLocalizedSettingsForbidden($settingsContainerClass)
+    public function testDeleteActionLocalizedSettingsForbidden($settingsContainerClass, $fromEventAction)
     {
+        $withActionType = $fromEventAction ? 'withEventActionType' : 'withUniqueActionType';
+
         /** @var ActionSettingsContainer $settingsContainer */
-        $settingsContainer = $settingsContainerClass::factory()->create();
+        $settingsContainer = $settingsContainerClass::factory()->$withActionType('send-email')->create();
         $localizedSettings = new ActionLocalizedSettings();
         $localizedSettings->settings = [];
         $localizedSettings->locale = 'en';
@@ -744,20 +743,24 @@ class CustomActionTest extends TestCase
     public static function providerActionLocalizedSettings()
     {
         return [
-            [CustomActionSettings::class],
-            [ActionScopedSettings::class],
+            [CustomActionSettings::class, true],
+            [CustomActionSettings::class, false],
+            [ActionScopedSettings::class, true],
+            [ActionScopedSettings::class, false],
         ];
     }
 
     /**
-     * @return void
+     * @dataProvider providerActionScopedSettings
      */
-    public function testStoreActionScopedSettings()
+    public function testStoreActionScopedSettings($fromEventAction)
     {
+        $withActionType = $fromEventAction ? 'withEventActionType' : 'withUniqueActionType';
+
         /** @var CustomActionSettings $customActionSettings */
         $customActionSettings = CustomActionSettings::factory([
             'settings' => [],
-        ])->withEventActionType('send-email')->create();
+        ])->{$withActionType}('send-email')->create();
         $settingsScope1 = [
             'to_receivers' => [
                 ['receiver_id' => User::factory()->create()->id, 'receiver_type' => 'user'],
@@ -864,24 +867,29 @@ class CustomActionTest extends TestCase
     }
 
     /**
-     * @return void
+     * @dataProvider providerActionScopedSettings
      */
-    public function testStoreActionScopedSettingsForbidden()
+    public function testStoreActionScopedSettingsForbidden($fromEventAction)
     {
+        $withActionType = $fromEventAction ? 'withEventActionType' : 'withUniqueActionType';
+
         /** @var CustomActionSettings $customActionSettings */
-        $customActionSettings = CustomActionSettings::factory([
-            'settings' => [],
-        ])->create();
+        $customActionSettings = CustomActionSettings::factory()->{$withActionType}('send-email')->create();
 
         $user = User::factory()->create();
         $this->actingAs($user)->postJson("custom/action-settings/{$customActionSettings->id}/scoped-settings")
             ->assertForbidden();
     }
 
-    public function testUpdateActionScopedSettings()
+    /**
+     * @dataProvider providerActionScopedSettings
+     */
+    public function testUpdateActionScopedSettings($fromEventAction)
     {
+        $withActionType = $fromEventAction ? 'withEventActionType' : 'withUniqueActionType';
+
         /** @var CustomActionSettings $customActionSettings */
-        $customActionSettings = CustomActionSettings::factory()->withEventActionType('send-email')->create();
+        $customActionSettings = CustomActionSettings::factory()->{$withActionType}('send-email')->create();
         $scopedSettings = new ActionScopedSettings();
         $scopedSettings->settings = [
             'to_receivers' => [
@@ -968,19 +976,29 @@ class CustomActionTest extends TestCase
         $this->assertEquals($settingsScope1, $scopedSettings1->settings);
     }
 
-    public function testUpdateActionScopedSettingsForbidden()
+    /**
+     * @dataProvider providerActionScopedSettings
+     */
+    public function testUpdateActionScopedSettingsForbidden($fromEventAction)
     {
-        $scopedSettings = ActionScopedSettings::factory()->create();
+        $withActionType = $fromEventAction ? 'withEventActionType' : 'withUniqueActionType';
+
+        $scopedSettings = ActionScopedSettings::factory()->{$withActionType}('send-email')->create();
 
         $user = User::factory()->create();
         $this->actingAs($user)->putJson("custom/scoped-settings/{$scopedSettings->id}")
             ->assertForbidden();
     }
 
-    public function testDeleteActionScopedSettings()
+    /**
+     * @dataProvider providerActionScopedSettings
+     */
+    public function testDeleteActionScopedSettings($fromEventAction)
     {
+        $withActionType = $fromEventAction ? 'withEventActionType' : 'withUniqueActionType';
+
         /** @var CustomActionSettings $customActionSettings */
-        $customActionSettings = CustomActionSettings::factory()->create();
+        $customActionSettings = CustomActionSettings::factory()->{$withActionType}('send-email')->create();
         $scopedSettings = new ActionScopedSettings();
         $scopedSettings->settings = [];
         $scopedSettings->scope = [];
@@ -997,20 +1015,31 @@ class CustomActionTest extends TestCase
         $this->assertEquals(0, ActionScopedSettings::count());
     }
 
-    public function testDeleteActionScopedSettingsForbidden()
+    /**
+     * @dataProvider providerActionScopedSettings
+     */
+    public function testDeleteActionScopedSettingsForbidden($fromEventAction)
     {
+        $withActionType = $fromEventAction ? 'withEventActionType' : 'withUniqueActionType';
+
         /** @var CustomActionSettings $customActionSettings */
-        $scopedSettings = ActionScopedSettings::factory()->create();
+        $scopedSettings = ActionScopedSettings::factory()->{$withActionType}('send-email')->create();
 
         $user = User::factory()->create();
         $this->actingAs($user)->delete("custom/scoped-settings/$scopedSettings->id")
             ->assertForbidden();
     }
 
+    public static function providerActionScopedSettings()
+    {
+        return [
+            [true],
+            [false],
+        ];
+    }
+
     /**
      * @dataProvider providerSettingsValidation
-     *
-     * @return void
      */
     public function testSettingsValidation($settings, $success)
     {

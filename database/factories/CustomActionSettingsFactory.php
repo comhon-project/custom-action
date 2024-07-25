@@ -6,6 +6,7 @@ use Comhon\CustomAction\Models\ActionLocalizedSettings;
 use Comhon\CustomAction\Models\ActionScopedSettings;
 use Comhon\CustomAction\Models\CustomActionSettings;
 use Comhon\CustomAction\Models\CustomEventAction;
+use Comhon\CustomAction\Models\CustomUniqueAction;
 use Illuminate\Database\Eloquent\Factories\Factory;
 
 /**
@@ -42,6 +43,20 @@ class CustomActionSettingsFactory extends Factory
             } else {
                 $customActionSettings->eventAction->type = $type;
                 $customActionSettings->eventAction->save();
+            }
+        });
+    }
+
+    public function withUniqueActionType(string $type): Factory
+    {
+        return $this->afterCreating(function (CustomActionSettings $customActionSettings) use ($type) {
+            if (! $customActionSettings->uniqueAction) {
+                CustomUniqueAction::factory([
+                    'type' => $type,
+                ])->for($customActionSettings, 'actionSettings')->create();
+            } else {
+                $customActionSettings->uniqueAction->type = $type;
+                $customActionSettings->uniqueAction->save();
             }
         });
     }

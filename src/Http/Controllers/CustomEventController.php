@@ -43,9 +43,6 @@ class CustomEventController extends Controller
             throw new NotFoundHttpException('not found');
         }
         $eventClass = CustomActionModelResolver::getClass($eventUniqueName);
-        if (! is_subclass_of($eventClass, CustomEventInterface::class)) {
-            throw new \Exception("invalid event '$eventClass', it should implement CustomEventInterface");
-        }
 
         $this->authorize('view', [CustomEventInterface::class, $eventClass]);
 

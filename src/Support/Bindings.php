@@ -1,14 +1,17 @@
 <?php
 
-namespace Comhon\CustomAction\Actions;
+namespace Comhon\CustomAction\Support;
 
 use Comhon\CustomAction\Contracts\CustomEventInterface;
 use Comhon\CustomAction\Facades\BindingFinder;
 use Illuminate\Support\Arr;
 
-trait EventBindingAwareTrait
+class Bindings
 {
-    protected function getEventBindingRules(string $eventClass, array $types): array
+    /**
+     * get all bindings keys from given event that have given types.
+     */
+    public static function getEventBindingRules(string $eventClass, array $types): array
     {
         if (! is_subclass_of($eventClass, CustomEventInterface::class)) {
             throw new \InvalidArgumentException('first argument must be a subclass of CustomEventInterface');
@@ -32,7 +35,10 @@ trait EventBindingAwareTrait
         return $bindingRules;
     }
 
-    public function retrieveBindingAsList(array $bindings, string $key): array
+    /**
+     * get all bindings values from given key
+     */
+    public static function getBindingValues(array $bindings, string $key): array
     {
         if (strpos($key, '*') === false) {
             return [Arr::get($bindings, $key)];

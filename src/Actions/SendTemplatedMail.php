@@ -12,6 +12,7 @@ use Comhon\CustomAction\Models\ActionSettingsContainer;
 use Comhon\CustomAction\Models\CustomActionSettings;
 use Comhon\CustomAction\Models\CustomUniqueAction;
 use Comhon\CustomAction\Rules\RuleHelper;
+use Comhon\CustomAction\Support\Bindings;
 use Illuminate\Contracts\Translation\HasLocalePreference;
 use Illuminate\Foundation\Auth\User;
 use Illuminate\Support\Arr;
@@ -19,8 +20,6 @@ use Illuminate\Support\Facades\Mail;
 
 class SendTemplatedMail implements CustomActionInterface, TriggerableFromEventInterface
 {
-    use EventBindingAwareTrait;
-
     /**
      * Indicates if the mail should be queued.
      *
@@ -45,7 +44,7 @@ class SendTemplatedMail implements CustomActionInterface, TriggerableFromEventIn
                 'to_bindings_emails' => 'array:email',
                 'attachments' => 'array:stored-file',
             ];
-            $rules = $this->getEventBindingRules($eventClassContext, $bindingTypes);
+            $rules = Bindings::getEventBindingRules($eventClassContext, $bindingTypes);
             $schema = array_merge($schema, $rules);
         }
 
@@ -208,7 +207,7 @@ class SendTemplatedMail implements CustomActionInterface, TriggerableFromEventIn
             if (isset($settingsContainer->settings[$key])) {
                 $toBindings = $settingsContainer->settings[$key];
                 foreach ($toBindings as $toBinding) {
-                    foreach ($this->retrieveBindingAsList($bindings, $toBinding) as $to) {
+                    foreach (Bindings::getBindingValues($bindings, $toBinding) as $to) {
                         if ($to) {
                             $tos[] = is_string($to) ? ['email' => $to] : $to;
                         }

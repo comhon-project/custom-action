@@ -41,7 +41,7 @@ class CustomEventListenerPolicy
     }
 
     /**
-     * Determine whether the user can delete the model.
+     * Determine whether the user can create models.
      */
     public function createAction(User $user, CustomEventListener $model)
     {

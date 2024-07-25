@@ -26,7 +26,7 @@ class ModelReference
             $exploded = explode('.', $attribute);
             $lastAttributePart = $exploded[array_key_last($exploded)];
             $validator->setFallbackMessages([
-                RuleHelper::getRuleName('model_reference') => "$lastAttributePart must be an array",
+                RuleHelper::getRuleName('model_reference') => "$lastAttributePart must be an array.",
             ]);
 
             return false;
@@ -37,21 +37,22 @@ class ModelReference
                 'string',
                 function (string $attribute, mixed $valueType, Closure $fail) use ($baseClass, $uniqueName, $prefix, $value) {
                     $valueClass = CustomActionModelResolver::getClass($valueType);
-                    if (! is_subclass_of($valueClass, $baseClass)) {
+                    if ($valueClass !== $baseClass && ! is_subclass_of($valueClass, $baseClass)) {
                         $fail("The {$prefix}_type is not instance of {$uniqueName}.");
                     }
                     if (! is_subclass_of($valueClass, Model::class)) {
                         $fail("The {$prefix}_type is not instance of eloquent model.");
-                    }
-                    $id = $value["{$prefix}_id"] ?? null;
+                    } else {
+                        $id = $value["{$prefix}_id"] ?? null;
 
-                    /** @var \Illuminate\Database\Eloquent\Model $model */
-                    $model = new $valueClass();
-                    if (
-                        (! is_string($id) && ! is_numeric($id))
-                        || ! $valueClass::where($model->getKeyName(), $id)->exists()
-                    ) {
-                        $fail("$prefix doesn't exist.");
+                        /** @var \Illuminate\Database\Eloquent\Model $model */
+                        $model = new $valueClass();
+                        if (
+                            (! is_string($id) && ! is_numeric($id))
+                            || ! $valueClass::where($model->getKeyName(), $id)->exists()
+                        ) {
+                            $fail("$prefix doesn't exist.");
+                        }
                     }
                 },
             ],

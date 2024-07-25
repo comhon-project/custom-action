@@ -19,10 +19,7 @@ class BindingFinder implements BindingFinderInterface
             }
             if (is_array($value)) {
                 foreach ($value as $rule) {
-                    if (! is_string($rule)) {
-                        continue;
-                    }
-                    if ($rule == $bindingType || $this->isSubclassOf($rule, $bindingClass)) {
+                    if (is_string($rule) && ($rule == $bindingType || $this->isSubclassOf($rule, $bindingClass))) {
                         $founds[] = $key;
                     }
                 }

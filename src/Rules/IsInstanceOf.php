@@ -9,10 +9,10 @@ class IsInstanceOf
 {
     public function validate(string $attribute, mixed $value, array $parameters, Validator $validator): bool
     {
-        $uniqueName = $parameters[0];
-        if (! isset($uniqueName)) {
+        if (! isset($parameters[0])) {
             throw new \Exception('must have one parameter');
         }
+        $uniqueName = $parameters[0];
         $isInstanceOf = $uniqueName === $value;
         $mustBeSubclass = isset($parameters[1]) && ($parameters[1] == 'false' || $parameters[1] == '0');
 
@@ -27,7 +27,7 @@ class IsInstanceOf
         if (! $isInstanceOf) {
             $part = $mustBeSubclass ? 'subclass' : 'instance';
             $validator->setFallbackMessages([
-                RuleHelper::getRuleName('is') => "the :attribute is not $part of $uniqueName",
+                RuleHelper::getRuleName('is') => "The :attribute is not $part of $uniqueName.",
             ]);
         }
 
