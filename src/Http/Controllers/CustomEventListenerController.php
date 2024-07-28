@@ -29,13 +29,10 @@ class CustomEventListenerController extends Controller
         $eventClass = CustomActionModelResolver::getClass($eventUniqueName);
         $this->authorize('create', [CustomEventListener::class, $eventClass]);
 
-        $request->validate([
-            'scope' => 'array|nullable',
-        ]);
+        $validated = $this->validateCustomEventListenerRequest($request);
 
-        $eventListener = new CustomEventListener();
+        $eventListener = new CustomEventListener($validated);
         $eventListener->event = $eventUniqueName;
-        $eventListener->scope = $request->input('scope');
         $eventListener->save();
 
         return new JsonResource($eventListener);
@@ -50,10 +47,8 @@ class CustomEventListenerController extends Controller
     {
         $this->authorize('update', $eventListener);
 
-        $validated = $request->validate([
-            'scope' => 'array|nullable',
-        ]);
-        $eventListener->scope = $validated['scope'] ?? null;
+        $validated = $this->validateCustomEventListenerRequest($request);
+        $eventListener->fill($validated);
         $eventListener->save();
 
         return new JsonResource($eventListener);
@@ -115,12 +110,13 @@ class CustomEventListenerController extends Controller
     ) {
         $validated = $this->validateActionSettings($request, $type, $eventListener);
 
-        $customEventAction = new CustomEventAction();
+        $customEventAction = new CustomEventAction;
         $customEventAction->eventListener()->associate($eventListener->id);
         $customEventAction->type = $type;
+        $customEventAction->name = $validated['name'];
 
         DB::transaction(function () use ($customEventAction, $validated) {
-            $customActionSettings = new CustomActionSettings();
+            $customActionSettings = new CustomActionSettings;
             $customActionSettings->settings = $validated['settings'] ?? [];
             $customActionSettings->save();
 
@@ -163,14 +159,29 @@ class CustomEventListenerController extends Controller
         $actionClass = CustomActionModelResolver::getClass($type);
         $customAction = app($actionClass);
         $rules = RuleHelper::getSettingsRules($customAction->getSettingsSchema($eventClass));
+        $rules['name'] = 'required|string|max:63';
 
         return $request->validate($rules);
     }
 
     /**
+     * update event listener action.
+     */
+    public function updateEventListenerAction(Request $request, CustomEventAction $eventAction)
+    {
+        $this->authorize('update-action', [CustomEventListener::class, $eventAction]);
+
+        $validated = $request->validate([
+            'name' => 'required|string|max:63',
+        ]);
+        $eventAction->name = $validated['name'];
+        $eventAction->save();
+
+        return new JsonResource($eventAction);
+    }
+
+    /**
      * delete event listener action.
-     *
-     * @return \Illuminate\Http\Response
      */
     public function deleteEventListenerAction(CustomEventAction $eventAction)
     {
@@ -181,5 +192,13 @@ class CustomEventListenerController extends Controller
         });
 
         return response('', 204);
+    }
+
+    private function validateCustomEventListenerRequest(Request $request)
+    {
+        return $request->validate([
+            'scope' => 'array|nullable',
+            'name' => 'required|string|max:63',
+        ]);
     }
 }

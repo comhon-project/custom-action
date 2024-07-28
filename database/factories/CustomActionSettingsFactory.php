@@ -84,15 +84,16 @@ class CustomActionSettingsFactory extends Factory
             ActionLocalizedSettings::factory()->for($action, 'localizable')->emailSettings('fr', true)->create();
 
             if ($withScopedSettings) {
-                $scopedSettings = new ActionScopedSettings();
+                $scopedSettings = new ActionScopedSettings;
                 $scopedSettings->actionSettings()->associate($action);
+                $scopedSettings->name = 'my scoped settings';
                 $scopedSettings->scope = ['company' => ['name' => 'My VIP company']];
                 $scopedSettings->settings = [
                     $keyReceivers => $valueReceivers,
                 ];
                 $scopedSettings->save();
 
-                $localizedSettings = new ActionLocalizedSettings();
+                $localizedSettings = new ActionLocalizedSettings;
                 $localizedSettings->localizable()->associate($scopedSettings);
                 $localizedSettings->locale = 'en';
                 $localizedSettings->settings = [
@@ -101,7 +102,7 @@ class CustomActionSettingsFactory extends Factory
                 ];
                 $localizedSettings->save();
 
-                $localizedSettings = new ActionLocalizedSettings();
+                $localizedSettings = new ActionLocalizedSettings;
                 $localizedSettings->localizable()->associate($scopedSettings);
                 $localizedSettings->locale = 'fr';
                 $localizedSettings->settings = [

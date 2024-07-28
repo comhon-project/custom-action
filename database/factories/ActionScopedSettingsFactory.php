@@ -27,6 +27,7 @@ class ActionScopedSettingsFactory extends Factory
     public function definition()
     {
         return [
+            'name' => 'My Action Scoped Settings',
             'action_settings_id' => CustomActionSettings::factory(),
             'scope' => [],
             'settings' => [],

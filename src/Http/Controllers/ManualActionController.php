@@ -26,11 +26,11 @@ class ManualActionController extends Controller
 
         $manualAction = CustomManualAction::with('actionSettings')->find($actionType);
         if (! $manualAction) {
-            $manualAction = new CustomManualAction();
+            $manualAction = new CustomManualAction;
             $manualAction->type = $actionType;
 
             DB::transaction(function () use ($manualAction) {
-                $settings = new CustomActionSettings();
+                $settings = new CustomActionSettings;
                 $settings->settings = [];
                 $settings->save();
                 $manualAction->actionSettings()->associate($settings);

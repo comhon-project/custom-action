@@ -21,6 +21,16 @@ class CustomEventListener extends Model
         'scope' => 'array',
     ];
 
+    /**
+     * The attributes that are mass assignable.
+     *
+     * @var array<int, string>
+     */
+    protected $fillable = [
+        'name',
+        'scope',
+    ];
+
     protected static function booted()
     {
         static::deleting(function (CustomEventListener $eventListener) {

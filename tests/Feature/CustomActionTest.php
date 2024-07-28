@@ -599,7 +599,7 @@ class CustomActionTest extends TestCase
             ->{$withActionType}('send-email')
             ->create();
 
-        $localizedSettings = new ActionLocalizedSettings();
+        $localizedSettings = new ActionLocalizedSettings;
         $localizedSettings->settings = [
             'subject' => 'original subject',
             'body' => 'original body',
@@ -640,7 +640,7 @@ class CustomActionTest extends TestCase
         $settingsContainer = $settingsContainerClass::factory()
             ->{$withActionType}('send-company-email')
             ->create();
-        $localizedSettings = new ActionLocalizedSettings();
+        $localizedSettings = new ActionLocalizedSettings;
         $localizedSettings->settings = [
             'subject' => 'original subject',
             'body' => 'original body',
@@ -681,7 +681,7 @@ class CustomActionTest extends TestCase
 
         /** @var ActionSettingsContainer $settingsContainer */
         $settingsContainer = $settingsContainerClass::factory()->{$withActionType}('send-email')->create();
-        $localizedSettings = new ActionLocalizedSettings();
+        $localizedSettings = new ActionLocalizedSettings;
         $localizedSettings->settings = [
             'subject' => 'original subject',
             'body' => 'original body',
@@ -704,7 +704,7 @@ class CustomActionTest extends TestCase
 
         /** @var ActionSettingsContainer $settingsContainer */
         $settingsContainer = $settingsContainerClass::factory()->{$withActionType}('send-email')->create();
-        $localizedSettings = new ActionLocalizedSettings();
+        $localizedSettings = new ActionLocalizedSettings;
         $localizedSettings->settings = [];
         $localizedSettings->locale = 'en';
         $localizedSettings->localizable()->associate($settingsContainer);
@@ -729,7 +729,7 @@ class CustomActionTest extends TestCase
 
         /** @var ActionSettingsContainer $settingsContainer */
         $settingsContainer = $settingsContainerClass::factory()->$withActionType('send-email')->create();
-        $localizedSettings = new ActionLocalizedSettings();
+        $localizedSettings = new ActionLocalizedSettings;
         $localizedSettings->settings = [];
         $localizedSettings->locale = 'en';
         $localizedSettings->localizable()->associate($settingsContainer);
@@ -783,15 +783,17 @@ class CustomActionTest extends TestCase
         $response = $this->actingAs($user)->postJson("custom/action-settings/{$customActionSettings->id}/scoped-settings", [
             'scope' => $scope1,
             'settings' => $settingsScope1,
+            'name' => 'Scoped Settings 1',
         ]);
         $response->assertCreated();
         $this->assertEquals(1, $customActionSettings->scopedSettings()->count());
-        $scopedSettings1 = $customActionSettings->scopedSettings()->where('scope', 'like', '%my company scope 1%')->first();
+        $scopedSettings1 = $customActionSettings->scopedSettings()->where('name', 'Scoped Settings 1')->first();
         $response->assertJson([
             'data' => [
                 'id' => $scopedSettings1->id,
                 'scope' => $scope1,
                 'settings' => $settingsScope1,
+                'name' => 'Scoped Settings 1',
             ],
         ]);
         $this->assertEquals($settingsScope1, $scopedSettings1->settings);
@@ -800,15 +802,17 @@ class CustomActionTest extends TestCase
         $response = $this->actingAs($user)->postJson("custom/action-settings/{$customActionSettings->id}/scoped-settings", [
             'scope' => $scope2,
             'settings' => $settingsScope2,
+            'name' => 'Scoped Settings 2',
         ]);
         $response->assertCreated();
         $this->assertEquals(2, $customActionSettings->scopedSettings()->count());
-        $scopedSettings2 = $customActionSettings->scopedSettings()->where('scope', 'like', '%my company scope 2%')->first();
+        $scopedSettings2 = $customActionSettings->scopedSettings()->where('name', 'Scoped Settings 2')->first();
         $response->assertJson([
             'data' => [
                 'id' => $scopedSettings2->id,
                 'scope' => $scope2,
                 'settings' => $settingsScope2,
+                'name' => 'Scoped Settings 2',
             ],
         ]);
         $this->assertEquals($settingsScope2, $scopedSettings2->settings);
@@ -830,6 +834,7 @@ class CustomActionTest extends TestCase
                 'id' => $scopedSettings1->id,
                 'scope' => $scope1,
                 'settings' => $settingsScope1,
+                'name' => 'Scoped Settings 1',
             ],
         ]);
     }
@@ -852,6 +857,7 @@ class CustomActionTest extends TestCase
         $response = $this->actingAs($user)->postJson("custom/action-settings/{$customActionSettings->id}/scoped-settings", [
             'scope' => $scope1,
             'settings' => $settingsScope1,
+            'name' => 'my scoped stettings name',
         ]);
         $response->assertCreated();
         $this->assertEquals(1, $customActionSettings->scopedSettings()->count());
@@ -861,6 +867,7 @@ class CustomActionTest extends TestCase
                 'id' => $scopedSettings1->id,
                 'scope' => $scope1,
                 'settings' => $settingsScope1,
+                'name' => 'my scoped stettings name',
             ],
         ]);
         $this->assertEquals($settingsScope1, $scopedSettings1->settings);
@@ -884,23 +891,25 @@ class CustomActionTest extends TestCase
     /**
      * @dataProvider providerActionScopedSettings
      */
-    public function testUpdateActionScopedSettings($fromEventAction)
+    public function testUpdateActionScopedSettingsSuccess($fromEventAction)
     {
         $withActionType = $fromEventAction ? 'withEventActionType' : 'withManualActionType';
 
         /** @var CustomActionSettings $customActionSettings */
         $customActionSettings = CustomActionSettings::factory()->{$withActionType}('send-email')->create();
-        $scopedSettings = new ActionScopedSettings();
-        $scopedSettings->settings = [
-            'to_receivers' => [
-                ['receiver_id' => 789, 'receiver_type' => 'user'],
+        $scopedSettings = ActionScopedSettings::factory([
+            'settings' => [
+                'to_receivers' => [
+                    ['receiver_id' => 789, 'receiver_type' => 'user'],
+                ],
             ],
-        ];
-        $scopedSettings->scope = ['company' => [
-            'name' => 'my company scope 1',
-        ]];
-        $scopedSettings->actionSettings()->associate($customActionSettings);
-        $scopedSettings->save();
+            'scope' => [
+                'company' => [
+                    'name' => 'my company scope 1',
+                ],
+            ],
+        ])->for($customActionSettings, 'actionSettings')
+            ->create();
 
         $updatedSettings = [
             'to_receivers' => [
@@ -914,6 +923,7 @@ class CustomActionTest extends TestCase
         $response = $this->actingAs($user)->putJson("custom/scoped-settings/{$scopedSettings->id}", [
             'settings' => $updatedSettings,
             'scope' => $updatedScope,
+            'name' => 'updated name',
         ]);
         $response->assertOk();
         $response->assertJson([
@@ -921,6 +931,7 @@ class CustomActionTest extends TestCase
                 'id' => $scopedSettings->id,
                 'scope' => $updatedScope,
                 'settings' => $updatedSettings,
+                'name' => 'updated name',
             ],
         ]);
         $storedScopedSettings = ActionScopedSettings::findOrFail($scopedSettings->id);
@@ -937,17 +948,20 @@ class CustomActionTest extends TestCase
             ->sendMailRegistrationCompany()
             ->create()
             ->actionSettings;
-        $scopedSettings = new ActionScopedSettings();
-        $scopedSettings->settings = [
-            'to_receivers' => [
-                ['receiver_id' => 789, 'receiver_type' => 'user'],
+
+        $scopedSettings = ActionScopedSettings::factory([
+            'settings' => [
+                'to_receivers' => [
+                    ['receiver_id' => 789, 'receiver_type' => 'user'],
+                ],
             ],
-        ];
-        $scopedSettings->scope = ['company' => [
-            'name' => 'my company scope 1',
-        ]];
-        $scopedSettings->actionSettings()->associate($customActionSettings);
-        $scopedSettings->save();
+            'scope' => [
+                'company' => [
+                    'name' => 'my company scope 1',
+                ],
+            ],
+        ])->for($customActionSettings, 'actionSettings')
+            ->create();
 
         $settingsScope1 = [
             'to_bindings_receivers' => ['user'],
@@ -962,6 +976,7 @@ class CustomActionTest extends TestCase
         $response = $this->actingAs($user)->putJson("custom/scoped-settings/{$scopedSettings->id}", [
             'scope' => $scope1,
             'settings' => $settingsScope1,
+            'name' => 'updated name',
         ]);
         $response->assertOk();
         $this->assertEquals(1, $customActionSettings->scopedSettings()->count());
@@ -971,6 +986,7 @@ class CustomActionTest extends TestCase
                 'id' => $scopedSettings1->id,
                 'scope' => $scope1,
                 'settings' => $settingsScope1,
+                'name' => 'updated name',
             ],
         ]);
         $this->assertEquals($settingsScope1, $scopedSettings1->settings);
@@ -999,11 +1015,12 @@ class CustomActionTest extends TestCase
 
         /** @var CustomActionSettings $customActionSettings */
         $customActionSettings = CustomActionSettings::factory()->{$withActionType}('send-email')->create();
-        $scopedSettings = new ActionScopedSettings();
-        $scopedSettings->settings = [];
-        $scopedSettings->scope = [];
-        $scopedSettings->actionSettings()->associate($customActionSettings);
-        $scopedSettings->save();
+
+        $scopedSettings = ActionScopedSettings::factory([
+            'settings' => [],
+            'scope' => [],
+        ])->for($customActionSettings, 'actionSettings')
+            ->create();
 
         $this->assertEquals(1, $customActionSettings->scopedSettings()->count());
         $this->assertEquals(1, ActionScopedSettings::count());

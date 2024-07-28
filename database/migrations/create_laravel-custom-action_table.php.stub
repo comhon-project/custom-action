@@ -16,6 +16,7 @@ return new class extends Migration
         Schema::create('custom_event_listeners', function (Blueprint $table) {
             $table->id();
             $table->string('event', 63);
+            $table->string('name', 63);
             $table->json('scope')->nullable(true);
 
             $table->timestamps();
@@ -31,6 +32,7 @@ return new class extends Migration
         Schema::create('action_scoped_settings', function (Blueprint $table) {
             $table->id();
             $table->unsignedBigInteger('action_settings_id');
+            $table->string('name', 63);
             $table->json('settings');
             $table->json('scope')->nullable(true);
 
@@ -53,6 +55,7 @@ return new class extends Migration
         Schema::create('custom_event_actions', function (Blueprint $table) {
             $table->id();
             $table->string('type', 63);
+            $table->string('name', 63);
             $table->unsignedBigInteger('event_listener_id');
             $table->unsignedBigInteger('action_settings_id')->unique();
 

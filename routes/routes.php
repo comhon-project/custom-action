@@ -45,5 +45,8 @@ Route::group($attributes, function () {
         Route::get('actions', [CustomEventListenerController::class, 'listEventListenerActions']);
         Route::post('actions', [CustomEventListenerController::class, 'storeEventListenerAction']);
     });
-    Route::delete('event-actions/{event_action}', [CustomEventListenerController::class, 'deleteEventListenerAction']);
+    Route::prefix('event-actions/{event_action}')->group(function () {
+        Route::put('', [CustomEventListenerController::class, 'updateEventListenerAction']);
+        Route::delete('', [CustomEventListenerController::class, 'deleteEventListenerAction']);
+    });
 });

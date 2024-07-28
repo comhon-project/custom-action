@@ -46,7 +46,7 @@ class ModelReference
                         $id = $value["{$prefix}_id"] ?? null;
 
                         /** @var \Illuminate\Database\Eloquent\Model $model */
-                        $model = new $valueClass();
+                        $model = new $valueClass;
                         if (
                             (! is_string($id) && ! is_numeric($id))
                             || ! $valueClass::where($model->getKeyName(), $id)->exists()

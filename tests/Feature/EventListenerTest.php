@@ -271,6 +271,7 @@ class EventListenerTest extends TestCase
         $user = User::factory()->hasConsumerAbility()->create();
         $response = $this->actingAs($user)->postJson('custom/events/company-registered/listeners', [
             'scope' => $scope,
+            'name' => 'my event listener',
         ]);
         $response->assertCreated();
         $this->assertEquals(1, CustomEventListener::count());
@@ -280,6 +281,7 @@ class EventListenerTest extends TestCase
             'data' => [
                 'event' => 'company-registered',
                 'scope' => $scope,
+                'name' => 'my event listener',
                 'id' => $eventListener->id,
             ],
         ]);
@@ -314,6 +316,7 @@ class EventListenerTest extends TestCase
         $user = User::factory()->hasConsumerAbility()->create();
         $response = $this->actingAs($user)->putJson("custom/event-listeners/$eventListener->id", [
             'scope' => $scope,
+            'name' => 'updated event listener',
         ]);
         $response->assertOk();
         $response->assertJson([
@@ -321,6 +324,7 @@ class EventListenerTest extends TestCase
                 'id' => $eventListener->id,
                 'event' => 'company-registered',
                 'scope' => $scope,
+                'name' => 'updated event listener',
             ],
         ]);
         $storedEventListener = CustomEventListener::findOrFail($eventListener->id);
@@ -413,6 +417,7 @@ class EventListenerTest extends TestCase
 
         $user = User::factory()->hasConsumerAbility()->create();
         $actionValues = [
+            'name' => 'my custom event listener',
             'type' => 'send-email',
             'settings' => [
                 'to_receivers' => [
@@ -431,6 +436,7 @@ class EventListenerTest extends TestCase
 
         $response->assertJson([
             'data' => [
+                'name' => $actionValues['name'],
                 'type' => $actionValues['type'],
                 'action_settings' => [
                     'id' => $customActionSettings->id,
@@ -477,6 +483,37 @@ class EventListenerTest extends TestCase
         $user = User::factory()->create();
         $this->actingAs($user)->postJson("custom/event-listeners/$eventListener->id/actions")
             ->assertForbidden();
+    }
+
+    public function testUpdateEventListenerAction()
+    {
+        // create event listener for CompanyRegistered event
+        $eventListener = CustomEventListener::factory()->genericRegistrationCompany()->create();
+
+        $this->assertCount(1, $eventListener->eventActions);
+        $action = $eventListener->eventActions[0];
+        $updateName = 'updated event action';
+
+        $user = User::factory()->hasConsumerAbility()->create();
+        $this->actingAs($user)->putJson("custom/event-actions/$action->id", [
+            'name' => $updateName,
+        ])->assertOk()
+            ->assertJson([
+                'data' => [
+                    'name' => $updateName,
+                ],
+            ]);
+        $this->assertEquals($updateName, $action->refresh()->name);
+    }
+
+    public function testUpdateEventListenerActionForbidden()
+    {
+        // create event listener for CompanyRegistered event
+        $eventListener = CustomEventListener::factory()->genericRegistrationCompany()->create();
+        $action = $eventListener->eventActions[0];
+
+        $user = User::factory()->create();
+        $this->actingAs($user)->putJson("custom/event-actions/$action->id")->assertForbidden();
     }
 
     public function testRemoveEventListenerAction()

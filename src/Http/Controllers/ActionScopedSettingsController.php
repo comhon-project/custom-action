@@ -40,15 +40,9 @@ class ActionScopedSettingsController extends Controller
             ? CustomActionModelResolver::getClass($eventListener->event)
             : null;
 
-        /** @var CustomActionInterface $customAction */
-        $customAction = app(CustomActionModelResolver::getClass($customActionSettings->getAction()->type));
-        $rules = RuleHelper::getSettingsRules($customAction->getSettingsSchema($eventContext));
-        $rules['scope'] = 'array|required';
-        $validated = $request->validate($rules);
+        $validated = $this->validateRequest($request, $customActionSettings->getAction()->type, $eventContext);
 
-        $scopedSettings = new ActionScopedSettings();
-        $scopedSettings->settings = $validated['settings'] ?? [];
-        $scopedSettings->scope = $validated['scope'];
+        $scopedSettings = new ActionScopedSettings($validated);
         $scopedSettings->actionSettings()->associate($customActionSettings->id);
         $scopedSettings->save();
 
@@ -70,15 +64,8 @@ class ActionScopedSettingsController extends Controller
             ? CustomActionModelResolver::getClass($eventListener->event)
             : null;
 
-        $customAction = app(CustomActionModelResolver::getClass($scopedSettings->actionSettings->getAction()->type));
-        $rules = RuleHelper::getSettingsRules($customAction->getSettingsSchema($eventContext));
-        $rules['scope'] = 'array|required';
-        $validated = $request->validate($rules);
-
-        $scopedSettings->settings = $validated['settings'] ?? [];
-        if (isset($validated['scope'])) {
-            $scopedSettings->scope = $validated['scope'];
-        }
+        $validated = $this->validateRequest($request, $scopedSettings->actionSettings->getAction()->type, $eventContext);
+        $scopedSettings->fill($validated);
         $scopedSettings->save();
 
         return new JsonResource($scopedSettings->unsetRelations());
@@ -123,5 +110,16 @@ class ActionScopedSettingsController extends Controller
         $paginator = $scopedSettings->localizedSettings()->select('id', 'locale')->paginate();
 
         return JsonResource::collection($paginator);
+    }
+
+    private function validateRequest(Request $request, string $type, ?string $eventContext)
+    {
+        /** @var CustomActionInterface $customAction */
+        $customAction = app(CustomActionModelResolver::getClass($type));
+        $rules = RuleHelper::getSettingsRules($customAction->getSettingsSchema($eventContext));
+        $rules['scope'] = 'required|array';
+        $rules['name'] = 'required|string|max:63';
+
+        return $request->validate($rules);
     }
 }

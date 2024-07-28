@@ -49,6 +49,14 @@ class CustomEventListenerPolicy
     }
 
     /**
+     * Determine whether the user can update the model.
+     */
+    public function updateAction(User $user, CustomEventAction $model)
+    {
+        // TODO put your authorization logic here
+    }
+
+    /**
      * Determine whether the user can delete the model.
      */
     public function deleteAction(User $user, CustomEventAction $model)

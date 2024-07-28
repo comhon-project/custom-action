@@ -50,7 +50,7 @@ class CustomActionServiceProvider extends PackageServiceProvider
             return new CustomActionModelResolver($app->make($app['config']['custom-action.model_resolver']));
         });
         $this->app->singletonIf(BindingFinderInterface::class, function (Application $app) {
-            return new BindingFinder();
+            return new BindingFinder;
         });
     }
 

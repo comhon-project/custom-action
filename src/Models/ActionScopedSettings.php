@@ -27,6 +27,17 @@ class ActionScopedSettings extends ActionSettingsContainer
         'settings' => 'array',
     ];
 
+    /**
+     * The attributes that are mass assignable.
+     *
+     * @var array<int, string>
+     */
+    protected $fillable = [
+        'name',
+        'settings',
+        'scope',
+    ];
+
     protected static function booted()
     {
         static::deleting(function (ActionScopedSettings $actionScopedSettings) {

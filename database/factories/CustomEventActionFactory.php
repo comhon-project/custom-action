@@ -27,6 +27,7 @@ class CustomEventActionFactory extends Factory
     public function definition()
     {
         return [
+            'name' => 'My Custom Event Action',
             'type' => 'send-email',
             'event_listener_id' => CustomEventListener::factory(),
             'action_settings_id' => CustomActionSettings::factory(),

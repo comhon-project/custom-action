@@ -27,6 +27,7 @@ class CustomEventListenerFactory extends Factory
     {
         return [
             'event' => 'company-registered',
+            'name' => 'My Custom Event Listener',
             'scope' => null,
         ];
     }

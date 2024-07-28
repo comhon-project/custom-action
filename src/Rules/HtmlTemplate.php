@@ -10,7 +10,7 @@ class HtmlTemplate
     public function validate(string $attribute, mixed $value, array $parameters, Validator $validator): bool
     {
         $valid = true;
-        $validation = new Template();
+        $validation = new Template;
         $validation->validate($attribute, $value, function ($message) use (&$valid, $validator) {
             $valid = false;
             $validator->setFallbackMessages([RuleHelper::getRuleName('html_template') => $message]);
