@@ -37,7 +37,7 @@ class GenerateActionCommand extends Command
             $implements = ' implements '.$explode[count($explode) - 1];
         }
 
-        $uses = collect($uses)->map(fn ($use) => "use $use;")->implode("\n");
+        $uses = collect($uses)->map(fn ($use) => "use $use;")->implode(PHP_EOL);
 
         $fileContent = <<<EOT
 <?php
