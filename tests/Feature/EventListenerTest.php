@@ -229,11 +229,13 @@ class EventListenerTest extends TestCase
                 [
                     'id' => $eventListener->id,
                     'event' => 'company-registered',
+                    'name' => 'My Custom Event Listener',
                     'scope' => null,
                 ],
                 [
                     'id' => $eventListener2->id,
                     'event' => 'company-registered',
+                    'name' => 'My Custom Event Listener',
                     'scope' => [
                         'company' => [
                             'name' => 'my company',
@@ -242,6 +244,28 @@ class EventListenerTest extends TestCase
                 ],
             ],
         ]);
+    }
+
+    public function testGetEventListenersWithFilter()
+    {
+        // create event listener for CompanyRegistered event
+        $eventListener = CustomEventListener::factory(['name' => 'my one'])->genericRegistrationCompany()->create();
+        CustomEventListener::factory(['name' => 'my two'])->genericRegistrationCompany()->create();
+
+        $user = User::factory()->hasConsumerAbility()->create();
+        $params = http_build_query(['name' => 'one']);
+        $this->actingAs($user)->getJson("custom/events/company-registered/listeners?$params")
+            ->assertJsonCount(1, 'data')
+            ->assertJson([
+                'data' => [
+                    [
+                        'id' => $eventListener->id,
+                        'event' => 'company-registered',
+                        'name' => 'my one',
+                        'scope' => null,
+                    ],
+                ],
+            ]);
     }
 
     public function testGetEventListenersWithNotFoundEvent()
@@ -395,6 +419,35 @@ class EventListenerTest extends TestCase
                 ],
             ],
         ]);
+    }
+
+    public function testGetEventListenerActionsWithFilter()
+    {
+        $toUser = User::factory()->create();
+
+        // create event listener for CompanyRegistered event
+        $eventListener = CustomEventListener::factory([
+            'event' => 'company-registered',
+        ])->create();
+        $eventAction = CustomEventAction::factory(['name' => 'my one'])
+            ->sendMailRegistrationCompany()
+            ->for($eventListener, 'eventListener')->create();
+        CustomEventAction::factory(['name' => 'my two'])
+            ->sendMailRegistrationCompany()
+            ->for($eventListener, 'eventListener')->create();
+
+        $user = User::factory()->hasConsumerAbility()->create();
+        $params = http_build_query(['name' => 'one']);
+        $this->actingAs($user)->getJson("custom/event-listeners/$eventListener->id/actions?$params")
+            ->assertJsonCount(1, 'data')->assertJson([
+                'data' => [
+                    [
+                        'id' => $eventAction->id,
+                        'type' => 'send-email',
+                        'name' => 'my one',
+                    ]
+                ],
+            ]);
     }
 
     public function testGetEventListenerActionsForbidden()

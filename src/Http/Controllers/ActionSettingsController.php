@@ -56,13 +56,18 @@ class ActionSettingsController extends Controller
      *
      * @return \Illuminate\Http\Resources\Json\JsonResource
      */
-    public function listActionScopedSettings(CustomActionSettings $customActionSettings)
+    public function listActionScopedSettings(Request $request, CustomActionSettings $customActionSettings)
     {
         $this->authorize('view', $customActionSettings);
 
-        return new JsonResource(
-            $customActionSettings->scopedSettings()->get(['id'])->pluck('id')
-        );
+        $query = $customActionSettings->scopedSettings();
+
+        $name = $request->input('name');
+        if ($name !== null) {
+            $query->where('name', 'LIKE', "%$name%");
+        }
+
+        return new JsonResource($query->select('id', 'name')->paginate());
     }
 
     /**

@@ -75,11 +75,18 @@ class CustomEventListenerController extends Controller
      *
      * @return \Illuminate\Http\Resources\Json\AnonymousResourceCollection
      */
-    public function listEventListenerActions(CustomEventListener $eventListener)
+    public function listEventListenerActions(Request $request, CustomEventListener $eventListener)
     {
         $this->authorize('view', $eventListener);
 
-        return JsonResource::collection($eventListener->eventActions()->paginate());
+        $query = $eventListener->eventActions();
+
+        $name = $request->input('name');
+        if ($name !== null) {
+            $query->where('name', 'LIKE', "%$name%");
+        }
+
+        return JsonResource::collection($query->paginate());
     }
 
     /**

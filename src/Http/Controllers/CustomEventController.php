@@ -5,6 +5,7 @@ namespace Comhon\CustomAction\Http\Controllers;
 use Comhon\CustomAction\Contracts\CustomEventInterface;
 use Comhon\CustomAction\Facades\CustomActionModelResolver;
 use Comhon\CustomAction\Models\CustomEventListener;
+use Illuminate\Http\Request;
 use Illuminate\Http\Resources\Json\JsonResource;
 use Symfony\Component\HttpKernel\Exception\NotFoundHttpException;
 
@@ -64,7 +65,7 @@ class CustomEventController extends Controller
      *
      * @return \Illuminate\Http\Resources\Json\AnonymousResourceCollection
      */
-    public function listEventListeners($eventUniqueName)
+    public function listEventListeners(Request $request, $eventUniqueName)
     {
         if (! CustomActionModelResolver::isAllowedEvent($eventUniqueName)) {
             throw new NotFoundHttpException('not found');
@@ -73,6 +74,13 @@ class CustomEventController extends Controller
         $eventClass = CustomActionModelResolver::getClass($eventUniqueName);
         $this->authorize('view', [CustomEventInterface::class, $eventClass]);
 
-        return JsonResource::collection(CustomEventListener::where('event', $eventUniqueName)->get());
+        $query = CustomEventListener::where('event', $eventUniqueName);
+
+        $name = $request->input('name');
+        if ($name !== null) {
+            $query->where('name', 'LIKE', "%$name%");
+        }
+
+        return JsonResource::collection($query->paginate());
     }
 }

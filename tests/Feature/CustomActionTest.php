@@ -821,8 +821,14 @@ class CustomActionTest extends TestCase
         $response = $this->actingAs($user)->getJson("custom/action-settings/{$customActionSettings->id}/scoped-settings");
         $response->assertJson([
             'data' => [
-                $scopedSettings1->id,
-                $scopedSettings2->id,
+                [
+                    'id' => $scopedSettings1->id,
+                    'name' => 'Scoped Settings 1',
+                ],
+                [
+                    'id' => $scopedSettings2->id,
+                    'name' => 'Scoped Settings 2',
+                ],
             ],
         ]);
 
@@ -837,6 +843,31 @@ class CustomActionTest extends TestCase
                 'name' => 'Scoped Settings 1',
             ],
         ]);
+    }
+
+    public function testListScopedActionsWithFilter()
+    {
+        /** @var CustomActionSettings $customActionSettings */
+        $customActionSettings = CustomActionSettings::factory()->create();
+        $scopedSettings = ActionScopedSettings::factory([
+            'name' => 'my one',
+        ])->for($customActionSettings, 'actionSettings')->create();
+        ActionScopedSettings::factory([
+            'name' => 'my two',
+        ])->for($customActionSettings, 'actionSettings')->create();
+
+        $user = User::factory()->hasConsumerAbility()->create();
+        $params = http_build_query(['name' => 'one']);
+        $this->actingAs($user)->getJson("custom/action-settings/$customActionSettings->id/scoped-settings?$params")
+            ->assertJsonCount(1, 'data')
+            ->assertJson([
+                'data' => [
+                    [
+                        'id' => $scopedSettings->id,
+                        'name' => 'my one',
+                    ]
+                ],
+            ]);
     }
 
     public function testStoreActionScopedWithEventContextSettings()
