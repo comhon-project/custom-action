@@ -5,10 +5,12 @@ namespace Comhon\CustomAction\Models;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
+use Illuminate\Database\Eloquent\SoftDeletes;
 
 class CustomUniqueAction extends Model
 {
     use HasFactory;
+    use SoftDeletes;
 
     /**
      * The primary key for the model.

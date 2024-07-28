@@ -5,10 +5,12 @@ namespace Comhon\CustomAction\Models;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\HasMany;
+use Illuminate\Database\Eloquent\SoftDeletes;
 
 class CustomEventListener extends Model
 {
     use HasFactory;
+    use SoftDeletes;
 
     /**
      * The attributes that should be cast to native types.

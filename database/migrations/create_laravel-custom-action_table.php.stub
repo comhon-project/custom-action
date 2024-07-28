@@ -17,19 +17,25 @@ return new class extends Migration
             $table->id();
             $table->string('event', 63);
             $table->json('scope')->nullable(true);
+
             $table->timestamps();
+            $table->softDeletes();
         });
         Schema::create('custom_action_settings', function (Blueprint $table) {
             $table->id();
             $table->json('settings');
+
             $table->timestamps();
+            $table->softDeletes();
         });
         Schema::create('action_scoped_settings', function (Blueprint $table) {
             $table->id();
             $table->unsignedBigInteger('action_settings_id');
             $table->json('settings');
             $table->json('scope')->nullable(true);
+
             $table->timestamps();
+            $table->softDeletes();
 
             $table->foreign('action_settings_id')->references('id')->on('custom_action_settings');
         });
@@ -38,7 +44,9 @@ return new class extends Migration
             $table->morphs('localizable');
             $table->string('locale', 7);
             $table->json('settings');
+
             $table->timestamps();
+            $table->softDeletes();
 
             $table->unique(['locale', 'localizable_id', 'localizable_type'], 'action_localized_settings_uk');
         });
@@ -47,7 +55,9 @@ return new class extends Migration
             $table->string('type', 63);
             $table->unsignedBigInteger('event_listener_id');
             $table->unsignedBigInteger('action_settings_id')->unique();
+
             $table->timestamps();
+            $table->softDeletes();
 
             $table->foreign('event_listener_id', 'event_listener_id_fk')->references('id')->on('custom_event_listeners');
             $table->foreign('action_settings_id', 'action_settings_id_fk')->references('id')->on('custom_action_settings');
@@ -55,7 +65,9 @@ return new class extends Migration
         Schema::create('custom_unique_actions', function (Blueprint $table) {
             $table->string('type', 63);
             $table->unsignedBigInteger('action_settings_id')->unique();
+
             $table->timestamps();
+            $table->softDeletes();
 
             $table->primary('type');
             $table->foreign('action_settings_id')->references('id')->on('custom_action_settings');
