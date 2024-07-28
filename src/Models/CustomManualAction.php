@@ -7,7 +7,7 @@ use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\SoftDeletes;
 
-class CustomUniqueAction extends Model
+class CustomManualAction extends Model
 {
     use HasFactory;
     use SoftDeletes;

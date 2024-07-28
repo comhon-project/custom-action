@@ -40,10 +40,10 @@ return [
     'model_resolver' => Comhon\CustomAction\Resolver\ModelResolver::class,
 
     /*
-     | actions that may be defined as unique actions.
+     | actions that may be defined as manual actions.
      | each element must a class that implements CustomActionInterface.
      */
-    'unique_actions' => [],
+    'manual_actions' => [],
 
     /*
      | events that may be linked to actions

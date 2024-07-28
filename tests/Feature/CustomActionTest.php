@@ -14,7 +14,7 @@ use Comhon\CustomAction\Models\ActionScopedSettings;
 use Comhon\CustomAction\Models\ActionSettingsContainer;
 use Comhon\CustomAction\Models\CustomActionSettings;
 use Comhon\CustomAction\Models\CustomEventAction;
-use Comhon\CustomAction\Models\CustomUniqueAction;
+use Comhon\CustomAction\Models\CustomManualAction;
 use Comhon\CustomAction\Rules\RuleHelper;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Mail\Mailables\Attachment;
@@ -40,15 +40,15 @@ class CustomActionTest extends TestCase
     }
 
     /**
-     * @dataProvider providerHandleUniqueActionSuccess
+     * @dataProvider providerHandleManualActionSuccess
      */
-    public function testHandleUniqueActionSuccess($preferredLocale, $appLocale, $fallbackLocale, $success)
+    public function testHandleManualActionSuccess($preferredLocale, $appLocale, $fallbackLocale, $success)
     {
         App::setLocale($appLocale);
         App::setFallbackLocale($fallbackLocale);
         $user = User::factory(['preferred_locale' => $preferredLocale])->create();
         $company = Company::factory()->create();
-        CustomUniqueAction::factory()->sendMailRegistrationCompany(null, false, true)->create();
+        CustomManualAction::factory()->sendMailRegistrationCompany(null, false, true)->create();
 
         $bindings = ['company' => $company, 'logo' => new SystemFile($this->getAssetPath())];
 
@@ -73,7 +73,7 @@ class CustomActionTest extends TestCase
         $this->assertTrue($mails[0]->hasAttachment(Attachment::fromPath($this->getAssetPath())));
     }
 
-    public static function providerHandleUniqueActionSuccess()
+    public static function providerHandleManualActionSuccess()
     {
         return [
             ['en', 'fr', 'fr', true],
@@ -84,15 +84,15 @@ class CustomActionTest extends TestCase
     }
 
     /**
-     * @dataProvider providerHandleUniqueActionUserWithoutPreferencesSuccess
+     * @dataProvider providerHandleManualActionUserWithoutPreferencesSuccess
      */
-    public function testHandleUniqueActionUserWithoutPreferencesSuccess($appLocale, $fallbackLocale, $success)
+    public function testHandleManualActionUserWithoutPreferencesSuccess($appLocale, $fallbackLocale, $success)
     {
         App::setLocale($appLocale);
         App::setFallbackLocale($fallbackLocale);
         $user = UserWithoutPreference::factory()->create();
         $company = Company::factory()->create();
-        CustomUniqueAction::factory()->sendMailRegistrationCompany(null, false, true)->create();
+        CustomManualAction::factory()->sendMailRegistrationCompany(null, false, true)->create();
 
         $bindings = ['company' => $company, 'logo' => new SystemFile($this->getAssetPath())];
 
@@ -117,7 +117,7 @@ class CustomActionTest extends TestCase
         $this->assertTrue($mails[0]->hasAttachment(Attachment::fromPath($this->getAssetPath())));
     }
 
-    public static function providerHandleUniqueActionUserWithoutPreferencesSuccess()
+    public static function providerHandleManualActionUserWithoutPreferencesSuccess()
     {
         return [
             ['en', 'fr', true],
@@ -126,7 +126,7 @@ class CustomActionTest extends TestCase
         ];
     }
 
-    public function testHandleUniqueActionWithoutSettings()
+    public function testHandleManualActionWithoutSettings()
     {
         $user = User::factory()->create();
         $company = Company::factory()->create();
@@ -138,9 +138,9 @@ class CustomActionTest extends TestCase
 
     public function testGetActionsSuccess()
     {
-        config(['custom-action.unique_actions' => [SendCompanyRegistrationMail::class]]);
+        config(['custom-action.manual_actions' => [SendCompanyRegistrationMail::class]]);
         $user = User::factory()->hasConsumerAbility()->create();
-        $response = $this->actingAs($user)->getJson('custom/action-types/unique');
+        $response = $this->actingAs($user)->getJson('custom/action-types/manual');
         $response->assertJson([
             'data' => [
                 [
@@ -154,7 +154,7 @@ class CustomActionTest extends TestCase
     public function testGetActionsForbidden()
     {
         $user = User::factory()->create();
-        $this->actingAs($user)->getJson('custom/action-types/unique')
+        $this->actingAs($user)->getJson('custom/action-types/manual')
             ->assertForbidden();
     }
 
@@ -278,10 +278,10 @@ class CustomActionTest extends TestCase
             ->assertForbidden();
     }
 
-    public function testGetUniqueActionNotCreated()
+    public function testGetManualActionNotCreated()
     {
         $user = User::factory()->hasConsumerAbility()->create();
-        $response = $this->actingAs($user)->getJson('custom/unique-actions/send-company-email');
+        $response = $this->actingAs($user)->getJson('custom/manual-actions/send-company-email');
         $response->assertJson([
             'data' => [
                 'type' => 'send-company-email',
@@ -292,16 +292,16 @@ class CustomActionTest extends TestCase
         ]);
     }
 
-    public function testGetUniqueActionCreated()
+    public function testGetManualActionCreated()
     {
-        $customActionSettings = CustomUniqueAction::factory([
+        $customActionSettings = CustomManualAction::factory([
             'type' => 'send-company-email',
         ])->sendMailRegistrationCompany()
             ->create()
             ->actionSettings;
         $user = User::factory()->hasConsumerAbility()->create();
 
-        $response = $this->actingAs($user)->getJson('custom/unique-actions/send-company-email');
+        $response = $this->actingAs($user)->getJson('custom/manual-actions/send-company-email');
         $response->assertJson([
             'data' => [
                 'type' => 'send-company-email',
@@ -354,7 +354,7 @@ class CustomActionTest extends TestCase
     {
         CustomActionModelResolver::register([], true);
         $user = User::factory()->hasConsumerAbility()->create();
-        $response = $this->actingAs($user)->getJson('custom/unique-actions/send-email');
+        $response = $this->actingAs($user)->getJson('custom/manual-actions/send-email');
         $response->assertNotFound();
         $response->assertJson([
             'message' => 'not found',
@@ -364,7 +364,7 @@ class CustomActionTest extends TestCase
     public function testGetActionSettingsForbidden()
     {
         $user = User::factory()->create();
-        $this->actingAs($user)->getJson('custom/unique-actions/send-company-email')
+        $this->actingAs($user)->getJson('custom/manual-actions/send-company-email')
             ->assertForbidden();
     }
 
@@ -394,9 +394,9 @@ class CustomActionTest extends TestCase
         $this->assertEquals($newSettings, CustomActionSettings::findOrFail($customActionSettings->id)->settings);
     }
 
-    public function testUpdateUniqueActionSettings()
+    public function testUpdateManualActionSettings()
     {
-        $customActionSettings = CustomUniqueAction::factory([
+        $customActionSettings = CustomManualAction::factory([
             'type' => 'send-company-email',
         ])->sendMailRegistrationCompany()
             ->create()
@@ -464,7 +464,7 @@ class CustomActionTest extends TestCase
     public function testStoreActionLocalizedSettings($settingsContainerClass, $fromEventAction)
     {
         $resource = $settingsContainerClass == CustomActionSettings::class ? 'action-settings' : 'scoped-settings';
-        $withActionType = $fromEventAction ? 'withEventActionType' : 'withUniqueActionType';
+        $withActionType = $fromEventAction ? 'withEventActionType' : 'withManualActionType';
 
         /** @var ActionSettingsContainer $settingsContainer */
         $settingsContainer = $settingsContainerClass::factory([
@@ -539,7 +539,7 @@ class CustomActionTest extends TestCase
     public function testStoreActionLocalizedSettingsWithEventContext($settingsContainerClass, $fromEventAction)
     {
         $resource = $settingsContainerClass == CustomActionSettings::class ? 'action-settings' : 'scoped-settings';
-        $withActionType = $fromEventAction ? 'withEventActionType' : 'withUniqueActionType';
+        $withActionType = $fromEventAction ? 'withEventActionType' : 'withManualActionType';
 
         /** @var ActionSettingsContainer $settingsContainer */
         $settingsContainer = $settingsContainerClass::factory()
@@ -576,7 +576,7 @@ class CustomActionTest extends TestCase
     public function testStoreActionLocalizedSettingsForbidden($settingsContainerClass, $fromEventAction)
     {
         $resource = $settingsContainerClass == CustomActionSettings::class ? 'action-settings' : 'scoped-settings';
-        $withActionType = $fromEventAction ? 'withEventActionType' : 'withUniqueActionType';
+        $withActionType = $fromEventAction ? 'withEventActionType' : 'withManualActionType';
 
         /** @var ActionSettingsContainer $settingsContainer */
         $settingsContainer = $settingsContainerClass::factory()
@@ -592,7 +592,7 @@ class CustomActionTest extends TestCase
      */
     public function testUpdateActionLocalizedSettings($settingsContainerClass, $fromEventAction)
     {
-        $withActionType = $fromEventAction ? 'withEventActionType' : 'withUniqueActionType';
+        $withActionType = $fromEventAction ? 'withEventActionType' : 'withManualActionType';
 
         /** @var ActionSettingsContainer $settingsContainer */
         $settingsContainer = $settingsContainerClass::factory()
@@ -634,7 +634,7 @@ class CustomActionTest extends TestCase
      */
     public function testUpdateActionLocalizedSettingsWithActionLocalizedSetting($settingsContainerClass, $fromEventAction)
     {
-        $withActionType = $fromEventAction ? 'withEventActionType' : 'withUniqueActionType';
+        $withActionType = $fromEventAction ? 'withEventActionType' : 'withManualActionType';
 
         /** @var ActionSettingsContainer $settingsContainer */
         $settingsContainer = $settingsContainerClass::factory()
@@ -677,7 +677,7 @@ class CustomActionTest extends TestCase
      */
     public function testUpdateActionLocalizedSettingsForbidden($settingsContainerClass, $fromEventAction)
     {
-        $withActionType = $fromEventAction ? 'withEventActionType' : 'withUniqueActionType';
+        $withActionType = $fromEventAction ? 'withEventActionType' : 'withManualActionType';
 
         /** @var ActionSettingsContainer $settingsContainer */
         $settingsContainer = $settingsContainerClass::factory()->{$withActionType}('send-email')->create();
@@ -700,7 +700,7 @@ class CustomActionTest extends TestCase
      */
     public function testDeleteActionLocalizedSettings($settingsContainerClass, $fromEventAction)
     {
-        $withActionType = $fromEventAction ? 'withEventActionType' : 'withUniqueActionType';
+        $withActionType = $fromEventAction ? 'withEventActionType' : 'withManualActionType';
 
         /** @var ActionSettingsContainer $settingsContainer */
         $settingsContainer = $settingsContainerClass::factory()->{$withActionType}('send-email')->create();
@@ -725,7 +725,7 @@ class CustomActionTest extends TestCase
      */
     public function testDeleteActionLocalizedSettingsForbidden($settingsContainerClass, $fromEventAction)
     {
-        $withActionType = $fromEventAction ? 'withEventActionType' : 'withUniqueActionType';
+        $withActionType = $fromEventAction ? 'withEventActionType' : 'withManualActionType';
 
         /** @var ActionSettingsContainer $settingsContainer */
         $settingsContainer = $settingsContainerClass::factory()->$withActionType('send-email')->create();
@@ -755,7 +755,7 @@ class CustomActionTest extends TestCase
      */
     public function testStoreActionScopedSettings($fromEventAction)
     {
-        $withActionType = $fromEventAction ? 'withEventActionType' : 'withUniqueActionType';
+        $withActionType = $fromEventAction ? 'withEventActionType' : 'withManualActionType';
 
         /** @var CustomActionSettings $customActionSettings */
         $customActionSettings = CustomActionSettings::factory([
@@ -871,7 +871,7 @@ class CustomActionTest extends TestCase
      */
     public function testStoreActionScopedSettingsForbidden($fromEventAction)
     {
-        $withActionType = $fromEventAction ? 'withEventActionType' : 'withUniqueActionType';
+        $withActionType = $fromEventAction ? 'withEventActionType' : 'withManualActionType';
 
         /** @var CustomActionSettings $customActionSettings */
         $customActionSettings = CustomActionSettings::factory()->{$withActionType}('send-email')->create();
@@ -886,7 +886,7 @@ class CustomActionTest extends TestCase
      */
     public function testUpdateActionScopedSettings($fromEventAction)
     {
-        $withActionType = $fromEventAction ? 'withEventActionType' : 'withUniqueActionType';
+        $withActionType = $fromEventAction ? 'withEventActionType' : 'withManualActionType';
 
         /** @var CustomActionSettings $customActionSettings */
         $customActionSettings = CustomActionSettings::factory()->{$withActionType}('send-email')->create();
@@ -981,7 +981,7 @@ class CustomActionTest extends TestCase
      */
     public function testUpdateActionScopedSettingsForbidden($fromEventAction)
     {
-        $withActionType = $fromEventAction ? 'withEventActionType' : 'withUniqueActionType';
+        $withActionType = $fromEventAction ? 'withEventActionType' : 'withManualActionType';
 
         $scopedSettings = ActionScopedSettings::factory()->{$withActionType}('send-email')->create();
 
@@ -995,7 +995,7 @@ class CustomActionTest extends TestCase
      */
     public function testDeleteActionScopedSettings($fromEventAction)
     {
-        $withActionType = $fromEventAction ? 'withEventActionType' : 'withUniqueActionType';
+        $withActionType = $fromEventAction ? 'withEventActionType' : 'withManualActionType';
 
         /** @var CustomActionSettings $customActionSettings */
         $customActionSettings = CustomActionSettings::factory()->{$withActionType}('send-email')->create();
@@ -1020,7 +1020,7 @@ class CustomActionTest extends TestCase
      */
     public function testDeleteActionScopedSettingsForbidden($fromEventAction)
     {
-        $withActionType = $fromEventAction ? 'withEventActionType' : 'withUniqueActionType';
+        $withActionType = $fromEventAction ? 'withEventActionType' : 'withManualActionType';
 
         /** @var CustomActionSettings $customActionSettings */
         $scopedSettings = ActionScopedSettings::factory()->{$withActionType}('send-email')->create();

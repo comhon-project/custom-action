@@ -16,11 +16,11 @@ class CustomActionTypeController extends Controller
      *
      * @return \Illuminate\Http\Resources\Json\JsonResource
      */
-    public function listUniqueActionTypes()
+    public function listManualActionTypes()
     {
         $this->authorize('view-any', CustomActionInterface::class);
 
-        $actions = config('custom-action.unique_actions') ?? [];
+        $actions = config('custom-action.manual_actions') ?? [];
         $actions = collect($actions)->map(function ($class) {
             $uniqueName = CustomActionModelResolver::getUniqueName($class);
 
@@ -38,12 +38,12 @@ class CustomActionTypeController extends Controller
      *
      * @return \Illuminate\Http\Resources\Json\JsonResource
      */
-    public function showActionTypeSchema(Request $request, $actionUniqueName)
+    public function showActionTypeSchema(Request $request, $actionType)
     {
-        if (! CustomActionModelResolver::isAllowedAction($actionUniqueName)) {
+        if (! CustomActionModelResolver::isAllowedAction($actionType)) {
             throw new NotFoundHttpException('not found');
         }
-        $action = app(CustomActionModelResolver::getClass($actionUniqueName));
+        $action = app(CustomActionModelResolver::getClass($actionType));
 
         $this->authorize('view', $action);
 

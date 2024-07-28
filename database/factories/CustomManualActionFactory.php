@@ -3,20 +3,20 @@
 namespace Database\Factories;
 
 use Comhon\CustomAction\Models\CustomActionSettings;
-use Comhon\CustomAction\Models\CustomUniqueAction;
+use Comhon\CustomAction\Models\CustomManualAction;
 use Illuminate\Database\Eloquent\Factories\Factory;
 
 /**
- * @extends \Illuminate\Database\Eloquent\Factories\Factory<\Comhon\CustomAction\Models\CustomUniqueAction>
+ * @extends \Illuminate\Database\Eloquent\Factories\Factory<\Comhon\CustomAction\Models\CustomManualAction>
  */
-class CustomUniqueActionFactory extends Factory
+class CustomManualActionFactory extends Factory
 {
     /**
      * The name of the factory's corresponding model.
      *
      * @var class-string<\Illuminate\Database\Eloquent\Model>
      */
-    protected $model = CustomUniqueAction::class;
+    protected $model = CustomManualAction::class;
 
     /**
      * Define the model's default state.

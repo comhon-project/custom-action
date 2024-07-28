@@ -6,7 +6,7 @@ use Comhon\CustomAction\Http\Controllers\ActionSettingsController;
 use Comhon\CustomAction\Http\Controllers\CustomActionTypeController;
 use Comhon\CustomAction\Http\Controllers\CustomEventController;
 use Comhon\CustomAction\Http\Controllers\CustomEventListenerController;
-use Comhon\CustomAction\Http\Controllers\UniqueActionController;
+use Comhon\CustomAction\Http\Controllers\ManualActionController;
 use Illuminate\Support\Facades\Route;
 
 $attributes = [
@@ -15,9 +15,9 @@ $attributes = [
     'middleware' => config('custom-action.middleware'),
 ];
 Route::group($attributes, function () {
-    Route::get('action-types/unique', [CustomActionTypeController::class, 'listUniqueActionTypes']);
+    Route::get('action-types/manual', [CustomActionTypeController::class, 'listManualActionTypes']);
     Route::get('action-types/{key}/schema', [CustomActionTypeController::class, 'showActionTypeSchema']);
-    Route::get('unique-actions/{type}', [UniqueActionController::class, 'show']);
+    Route::get('manual-actions/{type}', [ManualActionController::class, 'show']);
     Route::apiResource('action-settings', ActionSettingsController::class)->only(['show', 'update']);
     Route::prefix('action-settings/{custom_action_settings}')->group(function () {
         Route::get('scoped-settings', [ActionSettingsController::class, 'listActionScopedSettings']);

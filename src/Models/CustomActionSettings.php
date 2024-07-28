@@ -55,14 +55,14 @@ class CustomActionSettings extends ActionSettingsContainer
         return $this->hasOne(CustomEventAction::class, 'action_settings_id');
     }
 
-    public function uniqueAction(): HasOne
+    public function manualAction(): HasOne
     {
-        return $this->hasOne(CustomUniqueAction::class, 'action_settings_id');
+        return $this->hasOne(CustomManualAction::class, 'action_settings_id');
     }
 
-    public function getAction(): CustomUniqueAction|CustomEventAction
+    public function getAction(): CustomManualAction|CustomEventAction
     {
-        return $this->eventAction ?? $this->uniqueAction;
+        return $this->eventAction ?? $this->manualAction;
     }
 
     /**

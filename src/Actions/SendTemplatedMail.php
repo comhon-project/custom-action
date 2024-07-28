@@ -10,7 +10,7 @@ use Comhon\CustomAction\Facades\CustomActionModelResolver;
 use Comhon\CustomAction\Mail\Custom;
 use Comhon\CustomAction\Models\ActionSettingsContainer;
 use Comhon\CustomAction\Models\CustomActionSettings;
-use Comhon\CustomAction\Models\CustomUniqueAction;
+use Comhon\CustomAction\Models\CustomManualAction;
 use Comhon\CustomAction\Rules\RuleHelper;
 use Comhon\CustomAction\Support\Bindings;
 use Illuminate\Contracts\Translation\HasLocalePreference;
@@ -113,7 +113,7 @@ class SendTemplatedMail implements CustomActionInterface, TriggerableFromEventIn
     {
         $class = get_class($this);
         $type = CustomActionModelResolver::getUniqueName($class);
-        $action = CustomUniqueAction::findOrFail($type);
+        $action = CustomManualAction::findOrFail($type);
 
         $this->handleFromAction($action->actionSettings, $bindings, null, $to);
     }

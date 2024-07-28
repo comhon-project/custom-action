@@ -53,7 +53,7 @@ class ActionScopedSettingsFactory extends Factory
         });
     }
 
-    public function withUniqueActionType(string $type): Factory
+    public function withManualActionType(string $type): Factory
     {
         return $this->afterMaking(function (ActionScopedSettings $actionScopedSettings) {
             if (! $actionScopedSettings->actionSettings) {
@@ -62,13 +62,13 @@ class ActionScopedSettingsFactory extends Factory
         })->afterCreating(function (ActionScopedSettings $actionScopedSettings) use ($type) {
             /** @var CustomActionSettings $customActionSettings */
             $customActionSettings = $actionScopedSettings->actionSettings;
-            if (! $customActionSettings->uniqueAction) {
+            if (! $customActionSettings->manualAction) {
                 CustomEventAction::factory([
                     'type' => $type,
                 ])->for($customActionSettings, 'actionSettings')->create();
             } else {
-                $customActionSettings->uniqueAction->type = $type;
-                $customActionSettings->uniqueAction->save();
+                $customActionSettings->manualAction->type = $type;
+                $customActionSettings->manualAction->save();
             }
         });
     }
