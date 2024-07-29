@@ -445,7 +445,7 @@ class EventListenerTest extends TestCase
                         'id' => $eventAction->id,
                         'type' => 'send-email',
                         'name' => 'my one',
-                    ]
+                    ],
                 ],
             ]);
     }

@@ -19,7 +19,7 @@ class SendCompanyRegistrationMail extends SendTemplatedMail
     {
         return [
             ...parent::getSettingsSchema(),
-            'test' => 'string',
+            'test' => 'required|string',
         ];
     }
 

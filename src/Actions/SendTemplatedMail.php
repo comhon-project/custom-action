@@ -57,8 +57,8 @@ class SendTemplatedMail implements CustomActionInterface, TriggerableFromEventIn
     public function getLocalizedSettingsSchema(?string $eventClassContext = null): array
     {
         return [
-            'subject' => RuleHelper::getRuleName('text_template'),
-            'body' => RuleHelper::getRuleName('html_template'),
+            'subject' => 'required|'.RuleHelper::getRuleName('text_template'),
+            'body' => 'required|'.RuleHelper::getRuleName('html_template'),
         ];
     }
 

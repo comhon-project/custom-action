@@ -175,8 +175,8 @@ class CustomActionTest extends TestCase
                     'to_emails.*' => 'email',
                 ],
                 'localized_settings_schema' => [
-                    'subject' => RuleHelper::getRuleName('text_template'),
-                    'body' => RuleHelper::getRuleName('html_template'),
+                    'subject' => 'required|'.RuleHelper::getRuleName('text_template'),
+                    'body' => 'required|'.RuleHelper::getRuleName('html_template'),
                 ],
             ],
         ]);
@@ -194,11 +194,11 @@ class CustomActionTest extends TestCase
                     'to_receivers.*' => 'model_reference:email-receiver,receiver',
                     'to_emails' => 'array',
                     'to_emails.*' => 'email',
-                    'test' => 'string',
+                    'test' => 'required|string',
                 ],
                 'localized_settings_schema' => [
-                    'subject' => RuleHelper::getRuleName('text_template'),
-                    'body' => RuleHelper::getRuleName('html_template'),
+                    'subject' => 'required|'.RuleHelper::getRuleName('text_template'),
+                    'body' => 'required|'.RuleHelper::getRuleName('html_template'),
                     'test_localized' => 'string',
                 ],
             ],
@@ -231,8 +231,8 @@ class CustomActionTest extends TestCase
                         'attachments.*' => 'string|in:logo',
                     ],
                     'localized_settings_schema' => [
-                        'subject' => RuleHelper::getRuleName('text_template'),
-                        'body' => RuleHelper::getRuleName('html_template'),
+                        'subject' => 'required|'.RuleHelper::getRuleName('text_template'),
+                        'body' => 'required|'.RuleHelper::getRuleName('html_template'),
                     ],
                 ],
             ]);
@@ -406,6 +406,7 @@ class CustomActionTest extends TestCase
             'to_receivers' => [
                 ['receiver_id' => User::factory()->create()->id, 'receiver_type' => 'user'],
             ],
+            'test' => 'foo',
         ];
 
         $user = User::factory()->hasConsumerAbility()->create();
@@ -421,6 +422,35 @@ class CustomActionTest extends TestCase
         ]);
 
         $this->assertEquals($newSettings, CustomActionSettings::findOrFail($customActionSettings->id)->settings);
+    }
+
+    public function testUpdateManualActionSettingsMissingRequired()
+    {
+        $customActionSettings = CustomManualAction::factory([
+            'type' => 'send-company-email',
+        ])->sendMailRegistrationCompany()
+            ->create()
+            ->actionSettings;
+
+        $newSettings = [
+            'to_receivers' => [
+                ['receiver_id' => User::factory()->create()->id, 'receiver_type' => 'user'],
+            ],
+        ];
+
+        $user = User::factory()->hasConsumerAbility()->create();
+        $this->actingAs($user)->putJson("custom/action-settings/$customActionSettings->id", [
+            'settings' => $newSettings,
+        ])->assertUnprocessable()
+            ->assertJson([
+                'message' => 'The settings.test field is required.',
+                'errors' => [
+                    'settings.test' => [
+                        'The settings.test field is required.',
+                    ],
+                ],
+            ]);
+
     }
 
     public function testUpdateActionWithEventContextSettings()
@@ -536,7 +566,38 @@ class CustomActionTest extends TestCase
     /**
      * @dataProvider providerActionLocalizedSettings
      */
-    public function testStoreActionLocalizedSettingsWithEventContext($settingsContainerClass, $fromEventAction)
+    public function testStoreActionLocalizedSettingsMissingRequired($settingsContainerClass, $fromEventAction)
+    {
+        $resource = $settingsContainerClass == CustomActionSettings::class ? 'action-settings' : 'scoped-settings';
+        $withActionType = $fromEventAction ? 'withEventActionType' : 'withManualActionType';
+
+        /** @var ActionSettingsContainer $settingsContainer */
+        $settingsContainer = $settingsContainerClass::factory([
+            'settings' => [],
+        ])->{$withActionType}('send-email')->create();
+        $user = User::factory()->hasConsumerAbility()->create();
+
+        $this->actingAs($user)->postJson("custom/{$resource}/{$settingsContainer->id}/localized-settings", [
+            'locale' => 'en',
+            'settings' => ['foo' => 'bar'],
+        ])->assertUnprocessable()
+            ->assertJson([
+                'message' => 'The settings.subject field is required. (and 1 more error)',
+                'errors' => [
+                    'settings.subject' => [
+                        'The settings.subject field is required.',
+                    ],
+                    'settings.body' => [
+                        'The settings.body field is required.',
+                    ],
+                ],
+            ]);
+    }
+
+    /**
+     * @dataProvider providerActionLocalizedSettings
+     */
+    public function testStoreActionLocalizedSettingsWithLocalizedSettings($settingsContainerClass, $fromEventAction)
     {
         $resource = $settingsContainerClass == CustomActionSettings::class ? 'action-settings' : 'scoped-settings';
         $withActionType = $fromEventAction ? 'withEventActionType' : 'withManualActionType';
@@ -865,7 +926,7 @@ class CustomActionTest extends TestCase
                     [
                         'id' => $scopedSettings->id,
                         'name' => 'my one',
-                    ]
+                    ],
                 ],
             ]);
     }
