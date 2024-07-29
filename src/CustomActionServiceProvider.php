@@ -12,6 +12,7 @@ use Comhon\CustomAction\Files\StoredFile;
 use Comhon\CustomAction\Models\ActionLocalizedSettings;
 use Comhon\CustomAction\Models\ActionScopedSettings;
 use Comhon\CustomAction\Models\CustomActionSettings;
+use Comhon\CustomAction\Models\CustomEventAction;
 use Comhon\CustomAction\Models\CustomEventListener;
 use Comhon\CustomAction\Resolver\CustomActionModelResolver;
 use Comhon\CustomAction\Rules\HtmlTemplate;
@@ -87,6 +88,9 @@ class CustomActionServiceProvider extends PackageServiceProvider
             }
             if (! isset($policies[CustomEventListener::class])) {
                 Gate::policy(CustomEventListener::class, 'App\Policies\CustomAction\CustomEventListenerPolicy');
+            }
+            if (! isset($policies[CustomEventAction::class])) {
+                Gate::policy(CustomEventAction::class, 'App\Policies\CustomAction\CustomEventActionPolicy');
             }
         }
     }

@@ -517,11 +517,14 @@ class EventListenerTest extends TestCase
         $this->actingAs($user)->postJson("custom/event-listeners/$eventListener->id/actions", $actionValues)
             ->assertUnprocessable()
             ->assertJson([
-                'message' => 'Action bad-action not found. (and 1 more error)',
+                'message' => 'Action bad-action not found. (and 2 more errors)',
                 'errors' => [
                     'type' => [
                         'Action bad-action not found.',
                         'The action bad-action is not an action triggerable from event.',
+                    ],
+                    'name' => [
+                        'The name field is required.',
                     ],
                 ],
             ]);
@@ -535,6 +538,36 @@ class EventListenerTest extends TestCase
 
         $user = User::factory()->create();
         $this->actingAs($user)->postJson("custom/event-listeners/$eventListener->id/actions")
+            ->assertForbidden();
+    }
+
+    public function testGetEventListenerAction()
+    {
+        // create event listener for CompanyRegistered event
+        $eventListener = CustomEventListener::factory()->genericRegistrationCompany()->create();
+        $action = $eventListener->eventActions[0];
+
+        $user = User::factory()->hasConsumerAbility()->create();
+        $this->actingAs($user)->getJson("custom/event-actions/$action->id")
+            ->assertOk()
+            ->assertJson([
+                'data' => [
+                    'id' => $action->id,
+                    'name' => $action->name,
+                    'event_listener_id' => $action->event_listener_id,
+                    'action_settings_id' => $action->action_settings_id,
+                ],
+            ]);
+    }
+
+    public function testGetEventListenerActionForbidden()
+    {
+        // create event listener for CompanyRegistered event
+        $eventListener = CustomEventListener::factory()->genericRegistrationCompany()->create();
+        $action = $eventListener->eventActions[0];
+
+        $user = User::factory()->create();
+        $this->actingAs($user)->getJson("custom/event-actions/$action->id")
             ->assertForbidden();
     }
 
@@ -569,7 +602,7 @@ class EventListenerTest extends TestCase
         $this->actingAs($user)->putJson("custom/event-actions/$action->id")->assertForbidden();
     }
 
-    public function testRemoveEventListenerAction()
+    public function testDeleteEventAction()
     {
         // create event listener for CompanyRegistered event
         $eventListener = CustomEventListener::factory()->genericRegistrationCompany()->create();
@@ -587,7 +620,7 @@ class EventListenerTest extends TestCase
         $this->assertNull(CustomActionSettings::find($action->id));
     }
 
-    public function testRemoveEventListenerActionForbidden()
+    public function testDeleteEventActionForbidden()
     {
         // create event listener for CompanyRegistered event
         $eventListener = CustomEventListener::factory()->genericRegistrationCompany()->create();

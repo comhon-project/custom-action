@@ -4,6 +4,7 @@ use Comhon\CustomAction\Http\Controllers\ActionLocalizedSettingsController;
 use Comhon\CustomAction\Http\Controllers\ActionScopedSettingsController;
 use Comhon\CustomAction\Http\Controllers\ActionSettingsController;
 use Comhon\CustomAction\Http\Controllers\CustomActionTypeController;
+use Comhon\CustomAction\Http\Controllers\CustomEventActionController;
 use Comhon\CustomAction\Http\Controllers\CustomEventController;
 use Comhon\CustomAction\Http\Controllers\CustomEventListenerController;
 use Comhon\CustomAction\Http\Controllers\ManualActionController;
@@ -43,10 +44,7 @@ Route::group($attributes, function () {
     Route::apiResource('event-listeners', CustomEventListenerController::class)->only(['update', 'destroy']);
     Route::prefix('event-listeners/{event_listener}')->group(function () {
         Route::get('actions', [CustomEventListenerController::class, 'listEventListenerActions']);
-        Route::post('actions', [CustomEventListenerController::class, 'storeEventListenerAction']);
+        Route::post('actions', [CustomEventActionController::class, 'store']);
     });
-    Route::prefix('event-actions/{event_action}')->group(function () {
-        Route::put('', [CustomEventListenerController::class, 'updateEventListenerAction']);
-        Route::delete('', [CustomEventListenerController::class, 'deleteEventListenerAction']);
-    });
+    Route::apiResource('event-actions', CustomEventActionController::class)->only(['show', 'update', 'destroy']);
 });
