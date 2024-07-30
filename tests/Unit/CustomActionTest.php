@@ -4,7 +4,7 @@ namespace Tests\Unit;
 
 use App\Actions\SendCompanyRegistrationMail;
 use Comhon\CustomAction\Actions\SendTemplatedMail;
-use Comhon\CustomAction\Models\CustomManualAction;
+use Comhon\CustomAction\Models\ManualAction;
 use Tests\SetUpWithModelRegistration;
 use Tests\TestCase;
 
@@ -30,7 +30,7 @@ class CustomActionTest extends TestCase
 
     public function testHandleWithoutReceiver()
     {
-        CustomManualAction::factory()->sendMailRegistrationCompany([], false, false)->create();
+        ManualAction::factory()->sendMailRegistrationCompany([], false, false)->create();
 
         $this->expectExceptionMessage('there is no mail receiver defined');
         $this->getSendMailManualAction()->handle([]);

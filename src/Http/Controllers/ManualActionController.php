@@ -3,8 +3,8 @@
 namespace Comhon\CustomAction\Http\Controllers;
 
 use Comhon\CustomAction\Facades\CustomActionModelResolver;
-use Comhon\CustomAction\Models\CustomActionSettings;
-use Comhon\CustomAction\Models\CustomManualAction;
+use Comhon\CustomAction\Models\ActionSettings;
+use Comhon\CustomAction\Models\ManualAction;
 use Illuminate\Http\Resources\Json\JsonResource;
 use Illuminate\Support\Facades\DB;
 use Symfony\Component\HttpKernel\Exception\NotFoundHttpException;
@@ -24,13 +24,13 @@ class ManualActionController extends Controller
         $action = app(CustomActionModelResolver::getClass($actionType));
         $this->authorize('view', $action);
 
-        $manualAction = CustomManualAction::with('actionSettings')->find($actionType);
+        $manualAction = ManualAction::with('actionSettings')->find($actionType);
         if (! $manualAction) {
-            $manualAction = new CustomManualAction;
+            $manualAction = new ManualAction;
             $manualAction->type = $actionType;
 
             DB::transaction(function () use ($manualAction) {
-                $settings = new CustomActionSettings;
+                $settings = new ActionSettings;
                 $settings->settings = [];
                 $settings->save();
                 $manualAction->actionSettings()->associate($settings);

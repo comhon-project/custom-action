@@ -5,9 +5,9 @@ namespace Comhon\CustomAction;
 use Comhon\CustomAction\Contracts\CustomEventInterface;
 use Comhon\CustomAction\Contracts\TriggerableFromEventInterface;
 use Comhon\CustomAction\Facades\CustomActionModelResolver;
-use Comhon\CustomAction\Models\CustomEventListener;
+use Comhon\CustomAction\Models\EventListener;
 
-class CustomEventHandler
+class EventActionDispatcher
 {
     public $afterCommit = true;
 
@@ -19,19 +19,19 @@ class CustomEventHandler
     public function handle(CustomEventInterface $event)
     {
         $eventUniqueName = CustomActionModelResolver::getUniqueName(get_class($event));
-        $listeners = CustomEventListener::with('eventActions.actionSettings')
+        $listeners = EventListener::with('eventActions.actionSettings')
             ->where('event', $eventUniqueName)->whereHas('eventActions')->get();
         $bindings = $event->getBindingValues();
 
         foreach ($listeners as $listener) {
             if (! $listener->scope || $this->matchScope($listener->scope, $bindings)) {
                 foreach ($listener->eventActions as $eventAction) {
-                    $customActionSettings = $eventAction->actionSettings;
+                    $actionSettings = $eventAction->actionSettings;
                     $action = app(CustomActionModelResolver::getClass($eventAction->type));
                     if (! ($action instanceof TriggerableFromEventInterface)) {
                         throw new \Exception('invalid type '.$eventAction->type);
                     }
-                    $action->handleFromEvent($event, $customActionSettings);
+                    $action->handleFromEvent($event, $actionSettings);
                 }
             }
         }

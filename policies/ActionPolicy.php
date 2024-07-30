@@ -5,7 +5,7 @@ namespace App\Policies\CustomAction;
 use App\Models\User;
 use Comhon\CustomAction\Contracts\CustomActionInterface;
 
-class CustomActionPolicy
+class ActionPolicy
 {
     /**
      * Determine whether the user can view any models.

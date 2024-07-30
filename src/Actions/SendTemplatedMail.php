@@ -8,9 +8,9 @@ use Comhon\CustomAction\Contracts\HasTimezonePreferenceInterface;
 use Comhon\CustomAction\Contracts\TriggerableFromEventInterface;
 use Comhon\CustomAction\Facades\CustomActionModelResolver;
 use Comhon\CustomAction\Mail\Custom;
+use Comhon\CustomAction\Models\ActionSettings;
 use Comhon\CustomAction\Models\ActionSettingsContainer;
-use Comhon\CustomAction\Models\CustomActionSettings;
-use Comhon\CustomAction\Models\CustomManualAction;
+use Comhon\CustomAction\Models\ManualAction;
 use Comhon\CustomAction\Rules\RuleHelper;
 use Comhon\CustomAction\Support\Bindings;
 use Illuminate\Contracts\Translation\HasLocalePreference;
@@ -96,10 +96,10 @@ class SendTemplatedMail implements CustomActionInterface, TriggerableFromEventIn
             ->filter(fn ($path) => $path != null);
     }
 
-    public function handleFromEvent(CustomEventInterface $event, CustomActionSettings $customActionSettings)
+    public function handleFromEvent(CustomEventInterface $event, ActionSettings $actionSettings)
     {
         $this->handleFromAction(
-            $customActionSettings,
+            $actionSettings,
             $event->getBindingValues(),
             $event->getBindingSchema()
         );
@@ -113,25 +113,25 @@ class SendTemplatedMail implements CustomActionInterface, TriggerableFromEventIn
     {
         $class = get_class($this);
         $type = CustomActionModelResolver::getUniqueName($class);
-        $action = CustomManualAction::findOrFail($type);
+        $action = ManualAction::findOrFail($type);
 
         $this->handleFromAction($action->actionSettings, $bindings, null, $to);
     }
 
     /**
-     * @param \Comhon\CustomAction\Models\CustomActionSettings action settings
+     * @param \Comhon\CustomAction\Models\ActionSettings action settings
      * @param  \Illuminate\Foundation\Auth\User  $to  used only if 'to' is not defined in action settings
      * @param  array  $bindings  used to define scope, replacements and attachments
      * @param  array  $allowedBindings  add bindings to allowed bindings defined in current action
      */
     private function handleFromAction(
-        CustomActionSettings $customActionSettings,
+        ActionSettings $actionSettings,
         ?array $bindings = null,
         ?array $allowedBindings = null,
         mixed $to = null,
     ) {
         $localizedMails = [];
-        $settingsContainer = $customActionSettings->getSettingsContainer($bindings);
+        $settingsContainer = $actionSettings->getSettingsContainer($bindings);
         $reveivers = $this->getReceivers($settingsContainer, $bindings, $to);
         $attachments = $this->getAttachments($bindings, $settingsContainer->settings);
         $bindings = $this->getAuthorizedBindings($bindings, $allowedBindings);

@@ -4,7 +4,7 @@ namespace Comhon\CustomAction\Http\Controllers;
 
 use Comhon\CustomAction\Contracts\CustomActionInterface;
 use Comhon\CustomAction\Facades\CustomActionModelResolver;
-use Comhon\CustomAction\Models\CustomActionSettings;
+use Comhon\CustomAction\Models\ActionSettings;
 use Comhon\CustomAction\Rules\RuleHelper;
 use Illuminate\Http\Request;
 use Illuminate\Http\Resources\Json\JsonResource;
@@ -18,7 +18,7 @@ class ActionSettingsController extends Controller
      *
      * @return \Illuminate\Http\Resources\Json\JsonResource
      */
-    public function show(CustomActionSettings $actionSetting)
+    public function show(ActionSettings $actionSetting)
     {
         $this->authorize('view', $actionSetting);
 
@@ -30,25 +30,25 @@ class ActionSettingsController extends Controller
      *
      * @return \Illuminate\Http\Resources\Json\JsonResource
      */
-    public function update(Request $request, CustomActionSettings $actionSetting)
+    public function update(Request $request, ActionSettings $actionSetting)
     {
-        $customActionSettings = $actionSetting;
-        $this->authorize('update', $customActionSettings);
+        $actionSettings = $actionSetting;
+        $this->authorize('update', $actionSettings);
 
-        $eventListener = $customActionSettings->eventAction?->eventListener;
+        $eventListener = $actionSettings->eventAction?->eventListener;
         $eventContext = $eventListener
             ? CustomActionModelResolver::getClass($eventListener->event)
             : null;
 
-        /** @var CustomActionInterface $customAction */
-        $customAction = app(CustomActionModelResolver::getClass($customActionSettings->getAction()->type));
-        $rules = RuleHelper::getSettingsRules($customAction->getSettingsSchema($eventContext));
+        /** @var CustomActionInterface $action */
+        $action = app(CustomActionModelResolver::getClass($actionSettings->getAction()->type));
+        $rules = RuleHelper::getSettingsRules($action->getSettingsSchema($eventContext));
 
         $validated = $request->validate($rules);
-        $customActionSettings->settings = $validated['settings'] ?? [];
-        $customActionSettings->save();
+        $actionSettings->settings = $validated['settings'] ?? [];
+        $actionSettings->save();
 
-        return new JsonResource($customActionSettings->unsetRelations());
+        return new JsonResource($actionSettings->unsetRelations());
     }
 
     /**
@@ -56,11 +56,11 @@ class ActionSettingsController extends Controller
      *
      * @return \Illuminate\Http\Resources\Json\JsonResource
      */
-    public function listActionScopedSettings(Request $request, CustomActionSettings $customActionSettings)
+    public function listActionScopedSettings(Request $request, ActionSettings $actionSettings)
     {
-        $this->authorize('view', $customActionSettings);
+        $this->authorize('view', $actionSettings);
 
-        $query = $customActionSettings->scopedSettings();
+        $query = $actionSettings->scopedSettings();
 
         $name = $request->input('name');
         if ($name !== null) {
@@ -75,9 +75,9 @@ class ActionSettingsController extends Controller
      *
      * @return \Comhon\CustomAction\Resources\ActionLocalizedSettingsResource
      */
-    public function storeActionLocalizedSettings(Request $request, CustomActionSettings $customActionSettings)
+    public function storeActionLocalizedSettings(Request $request, ActionSettings $actionSettings)
     {
-        return $this->storeLocalizedSettings($request, $customActionSettings);
+        return $this->storeLocalizedSettings($request, $actionSettings);
     }
 
     /**
@@ -85,11 +85,11 @@ class ActionSettingsController extends Controller
      *
      * @return \Illuminate\Http\Resources\Json\AnonymousResourceCollection
      */
-    public function listActionLocalizedSettings(CustomActionSettings $customActionSettings)
+    public function listActionLocalizedSettings(ActionSettings $actionSettings)
     {
-        $this->authorize('view', $customActionSettings);
+        $this->authorize('view', $actionSettings);
 
-        $paginator = $customActionSettings->localizedSettings()->select('id', 'locale')->paginate();
+        $paginator = $actionSettings->localizedSettings()->select('id', 'locale')->paginate();
 
         return JsonResource::collection($paginator);
     }

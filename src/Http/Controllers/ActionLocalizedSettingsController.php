@@ -34,15 +34,15 @@ class ActionLocalizedSettingsController extends Controller
         $this->authorize('update', $localizedSettings);
 
         $container = $localizedSettings->localizable;
-        $customActionSettings = $container instanceof ActionScopedSettings ? $container->actionSettings : $container;
+        $actionSettings = $container instanceof ActionScopedSettings ? $container->actionSettings : $container;
 
-        $eventListener = $customActionSettings->eventAction?->eventListener;
+        $eventListener = $actionSettings->eventAction?->eventListener;
         $eventContext = $eventListener
             ? CustomActionModelResolver::getClass($eventListener->event)
             : null;
 
-        $customAction = app(CustomActionModelResolver::getClass($customActionSettings->getAction()->type));
-        $rules = RuleHelper::getSettingsRules($customAction->getLocalizedSettingsSchema($eventContext));
+        $action = app(CustomActionModelResolver::getClass($actionSettings->getAction()->type));
+        $rules = RuleHelper::getSettingsRules($action->getLocalizedSettingsSchema($eventContext));
         $rules['locale'] = 'string';
         $validated = $request->validate($rules);
 

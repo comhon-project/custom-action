@@ -27,7 +27,7 @@ class CustomActionModelResolver
     }
 
     /**
-     * verify if model is allowed in 'custom-generic-action' or 'custom-unique-action' scope
+     * verify if model is instance of CustomActionInterface
      */
     public function isAllowedAction(string $uniqueName): bool
     {
@@ -35,7 +35,7 @@ class CustomActionModelResolver
     }
 
     /**
-     * verify if model is allowed in 'custom-event' scope
+     * verify if model iss instance of CustomEventInterface
      */
     public function isAllowedEvent(string $uniqueName): bool
     {

@@ -15,7 +15,7 @@ class ActionScopedSettings extends ActionSettingsContainer
      *
      * @var string
      */
-    protected $table = 'action_scoped_settings';
+    protected $table = 'custom_action_scoped_settings';
 
     /**
      * The attributes that should be cast to native types.
@@ -56,6 +56,6 @@ class ActionScopedSettings extends ActionSettingsContainer
      */
     public function actionSettings()
     {
-        return $this->belongsTo(CustomActionSettings::class);
+        return $this->belongsTo(ActionSettings::class);
     }
 }

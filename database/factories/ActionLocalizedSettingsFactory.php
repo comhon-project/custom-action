@@ -3,7 +3,7 @@
 namespace Database\Factories;
 
 use Comhon\CustomAction\Models\ActionLocalizedSettings;
-use Comhon\CustomAction\Models\CustomActionSettings;
+use Comhon\CustomAction\Models\ActionSettings;
 use Illuminate\Database\Eloquent\Factories\Factory;
 
 /**
@@ -40,7 +40,7 @@ class ActionLocalizedSettingsFactory extends Factory
     {
         return $this->afterMaking(function (ActionLocalizedSettings $actionLocalizedSettings) {
             if (! $actionLocalizedSettings->localizable) {
-                $actionLocalizedSettings->localizable()->associate(CustomActionSettings::factory()->create());
+                $actionLocalizedSettings->localizable()->associate(ActionSettings::factory()->create());
             }
         });
     }

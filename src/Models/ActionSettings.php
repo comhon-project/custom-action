@@ -7,7 +7,7 @@ use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Database\Eloquent\Relations\HasOne;
 use Illuminate\Database\Eloquent\SoftDeletes;
 
-class CustomActionSettings extends ActionSettingsContainer
+class ActionSettings extends ActionSettingsContainer
 {
     use HasFactory;
     use SoftDeletes;
@@ -30,8 +30,10 @@ class CustomActionSettings extends ActionSettingsContainer
 
     protected static function booted()
     {
-        static::deleting(function (CustomActionSettings $action) {
-            $scopedSettingss = $action->scopedSettings()->get(['action_scoped_settings.id']);
+        static::deleting(function (ActionSettings $action) {
+            $scopedSettingss = $action->scopedSettings()->get([
+                $action->scopedSettings()->getRelated()->getTable().'.id',
+            ]);
             foreach ($scopedSettingss as $scopedSettings) {
                 $scopedSettings->delete();
             }
@@ -52,15 +54,15 @@ class CustomActionSettings extends ActionSettingsContainer
 
     public function eventAction(): HasOne
     {
-        return $this->hasOne(CustomEventAction::class, 'action_settings_id');
+        return $this->hasOne(EventAction::class, 'action_settings_id');
     }
 
     public function manualAction(): HasOne
     {
-        return $this->hasOne(CustomManualAction::class, 'action_settings_id');
+        return $this->hasOne(ManualAction::class, 'action_settings_id');
     }
 
-    public function getAction(): CustomManualAction|CustomEventAction
+    public function getAction(): ManualAction|EventAction
     {
         return $this->eventAction ?? $this->manualAction;
     }

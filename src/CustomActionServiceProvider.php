@@ -11,9 +11,9 @@ use Comhon\CustomAction\Facades\CustomActionModelResolver as FacadesCustomAction
 use Comhon\CustomAction\Files\StoredFile;
 use Comhon\CustomAction\Models\ActionLocalizedSettings;
 use Comhon\CustomAction\Models\ActionScopedSettings;
-use Comhon\CustomAction\Models\CustomActionSettings;
-use Comhon\CustomAction\Models\CustomEventAction;
-use Comhon\CustomAction\Models\CustomEventListener;
+use Comhon\CustomAction\Models\ActionSettings;
+use Comhon\CustomAction\Models\EventAction;
+use Comhon\CustomAction\Models\EventListener;
 use Comhon\CustomAction\Resolver\CustomActionModelResolver;
 use Comhon\CustomAction\Rules\HtmlTemplate;
 use Comhon\CustomAction\Rules\IsInstanceOf;
@@ -59,7 +59,7 @@ class CustomActionServiceProvider extends PackageServiceProvider
     {
         Event::listen(
             CustomEventInterface::class,
-            [CustomEventHandler::class, 'handle']
+            [EventActionDispatcher::class, 'handle']
         );
         $this->registerPolicies();
         $this->registerRules();
@@ -78,19 +78,19 @@ class CustomActionServiceProvider extends PackageServiceProvider
                 Gate::policy(ActionScopedSettings::class, 'App\Policies\CustomAction\ActionScopedSettingsPolicy');
             }
             if (! isset($policies[CustomActionInterface::class])) {
-                Gate::policy(CustomActionInterface::class, 'App\Policies\CustomAction\CustomActionPolicy');
+                Gate::policy(CustomActionInterface::class, 'App\Policies\CustomAction\ActionPolicy');
             }
-            if (! isset($policies[CustomActionSettings::class])) {
-                Gate::policy(CustomActionSettings::class, 'App\Policies\CustomAction\CustomActionSettingsPolicy');
+            if (! isset($policies[ActionSettings::class])) {
+                Gate::policy(ActionSettings::class, 'App\Policies\CustomAction\ActionSettingsPolicy');
             }
             if (! isset($policies[CustomEventInterface::class])) {
-                Gate::policy(CustomEventInterface::class, 'App\Policies\CustomAction\CustomEventPolicy');
+                Gate::policy(CustomEventInterface::class, 'App\Policies\CustomAction\EventPolicy');
             }
-            if (! isset($policies[CustomEventListener::class])) {
-                Gate::policy(CustomEventListener::class, 'App\Policies\CustomAction\CustomEventListenerPolicy');
+            if (! isset($policies[EventListener::class])) {
+                Gate::policy(EventListener::class, 'App\Policies\CustomAction\EventListenerPolicy');
             }
-            if (! isset($policies[CustomEventAction::class])) {
-                Gate::policy(CustomEventAction::class, 'App\Policies\CustomAction\CustomEventActionPolicy');
+            if (! isset($policies[EventAction::class])) {
+                Gate::policy(EventAction::class, 'App\Policies\CustomAction\EventActionPolicy');
             }
         }
     }

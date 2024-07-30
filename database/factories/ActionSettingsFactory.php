@@ -4,22 +4,22 @@ namespace Database\Factories;
 
 use Comhon\CustomAction\Models\ActionLocalizedSettings;
 use Comhon\CustomAction\Models\ActionScopedSettings;
-use Comhon\CustomAction\Models\CustomActionSettings;
-use Comhon\CustomAction\Models\CustomEventAction;
-use Comhon\CustomAction\Models\CustomManualAction;
+use Comhon\CustomAction\Models\ActionSettings;
+use Comhon\CustomAction\Models\EventAction;
+use Comhon\CustomAction\Models\ManualAction;
 use Illuminate\Database\Eloquent\Factories\Factory;
 
 /**
- * @extends \Illuminate\Database\Eloquent\Factories\Factory<\Comhon\CustomAction\Models\CustomActionSettings>
+ * @extends \Illuminate\Database\Eloquent\Factories\Factory<\Comhon\CustomAction\Models\ActionSettings>
  */
-class CustomActionSettingsFactory extends Factory
+class ActionSettingsFactory extends Factory
 {
     /**
      * The name of the factory's corresponding model.
      *
      * @var class-string<\Illuminate\Database\Eloquent\Model>
      */
-    protected $model = CustomActionSettings::class;
+    protected $model = ActionSettings::class;
 
     /**
      * Define the model's default state.
@@ -35,28 +35,28 @@ class CustomActionSettingsFactory extends Factory
 
     public function withEventActionType(string $type): Factory
     {
-        return $this->afterCreating(function (CustomActionSettings $customActionSettings) use ($type) {
-            if (! $customActionSettings->eventAction) {
-                CustomEventAction::factory([
+        return $this->afterCreating(function (ActionSettings $actionSettings) use ($type) {
+            if (! $actionSettings->eventAction) {
+                EventAction::factory([
                     'type' => $type,
-                ])->for($customActionSettings, 'actionSettings')->create();
+                ])->for($actionSettings, 'actionSettings')->create();
             } else {
-                $customActionSettings->eventAction->type = $type;
-                $customActionSettings->eventAction->save();
+                $actionSettings->eventAction->type = $type;
+                $actionSettings->eventAction->save();
             }
         });
     }
 
     public function withManualActionType(string $type): Factory
     {
-        return $this->afterCreating(function (CustomActionSettings $customActionSettings) use ($type) {
-            if (! $customActionSettings->manualAction) {
-                CustomManualAction::factory([
+        return $this->afterCreating(function (ActionSettings $actionSettings) use ($type) {
+            if (! $actionSettings->manualAction) {
+                ManualAction::factory([
                     'type' => $type,
-                ])->for($customActionSettings, 'actionSettings')->create();
+                ])->for($actionSettings, 'actionSettings')->create();
             } else {
-                $customActionSettings->manualAction->type = $type;
-                $customActionSettings->manualAction->save();
+                $actionSettings->manualAction->type = $type;
+                $actionSettings->manualAction->save();
             }
         });
     }
@@ -78,7 +78,7 @@ class CustomActionSettingsFactory extends Factory
                     'attachments' => $withAttachement ? ['logo'] : null,
                 ],
             ];
-        })->afterCreating(function (CustomActionSettings $action) use ($withScopedSettings, $keyReceivers, $valueReceivers) {
+        })->afterCreating(function (ActionSettings $action) use ($withScopedSettings, $keyReceivers, $valueReceivers) {
 
             ActionLocalizedSettings::factory()->for($action, 'localizable')->emailSettings('en', true)->create();
             ActionLocalizedSettings::factory()->for($action, 'localizable')->emailSettings('fr', true)->create();

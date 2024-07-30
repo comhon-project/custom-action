@@ -2,22 +2,22 @@
 
 namespace Database\Factories;
 
-use Comhon\CustomAction\Models\CustomActionSettings;
-use Comhon\CustomAction\Models\CustomEventAction;
-use Comhon\CustomAction\Models\CustomEventListener;
+use Comhon\CustomAction\Models\ActionSettings;
+use Comhon\CustomAction\Models\EventAction;
+use Comhon\CustomAction\Models\EventListener;
 use Illuminate\Database\Eloquent\Factories\Factory;
 
 /**
- * @extends \Illuminate\Database\Eloquent\Factories\Factory<\Comhon\CustomAction\Models\CustomEventAction>
+ * @extends \Illuminate\Database\Eloquent\Factories\Factory<\Comhon\CustomAction\Models\EventAction>
  */
-class CustomEventActionFactory extends Factory
+class EventActionFactory extends Factory
 {
     /**
      * The name of the factory's corresponding model.
      *
      * @var class-string<\Illuminate\Database\Eloquent\Model>
      */
-    protected $model = CustomEventAction::class;
+    protected $model = EventAction::class;
 
     /**
      * Define the model's default state.
@@ -29,8 +29,8 @@ class CustomEventActionFactory extends Factory
         return [
             'name' => 'My Custom Event Action',
             'type' => 'send-email',
-            'event_listener_id' => CustomEventListener::factory(),
-            'action_settings_id' => CustomActionSettings::factory(),
+            'event_listener_id' => EventListener::factory(),
+            'action_settings_id' => ActionSettings::factory(),
         ];
     }
 
@@ -44,7 +44,7 @@ class CustomEventActionFactory extends Factory
 
             return [
                 'type' => $type,
-                'action_settings_id' => CustomActionSettings::factory()->sendMailRegistrationCompany($toOtherUserIds, $withScopedSettings, $withAttachement),
+                'action_settings_id' => ActionSettings::factory()->sendMailRegistrationCompany($toOtherUserIds, $withScopedSettings, $withAttachement),
             ];
         });
     }

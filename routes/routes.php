@@ -3,10 +3,10 @@
 use Comhon\CustomAction\Http\Controllers\ActionLocalizedSettingsController;
 use Comhon\CustomAction\Http\Controllers\ActionScopedSettingsController;
 use Comhon\CustomAction\Http\Controllers\ActionSettingsController;
-use Comhon\CustomAction\Http\Controllers\CustomActionTypeController;
-use Comhon\CustomAction\Http\Controllers\CustomEventActionController;
-use Comhon\CustomAction\Http\Controllers\CustomEventController;
-use Comhon\CustomAction\Http\Controllers\CustomEventListenerController;
+use Comhon\CustomAction\Http\Controllers\ActionTypeController;
+use Comhon\CustomAction\Http\Controllers\EventActionController;
+use Comhon\CustomAction\Http\Controllers\EventController;
+use Comhon\CustomAction\Http\Controllers\EventListenerController;
 use Comhon\CustomAction\Http\Controllers\ManualActionController;
 use Illuminate\Support\Facades\Route;
 
@@ -16,11 +16,11 @@ $attributes = [
     'middleware' => config('custom-action.middleware'),
 ];
 Route::group($attributes, function () {
-    Route::get('action-types/manual', [CustomActionTypeController::class, 'listManualActionTypes']);
-    Route::get('action-types/{key}/schema', [CustomActionTypeController::class, 'showActionTypeSchema']);
+    Route::get('action-types/manual', [ActionTypeController::class, 'listManualActionTypes']);
+    Route::get('action-types/{key}/schema', [ActionTypeController::class, 'showActionTypeSchema']);
     Route::get('manual-actions/{type}', [ManualActionController::class, 'show']);
     Route::apiResource('action-settings', ActionSettingsController::class)->only(['show', 'update']);
-    Route::prefix('action-settings/{custom_action_settings}')->group(function () {
+    Route::prefix('action-settings/{action_settings}')->group(function () {
         Route::get('scoped-settings', [ActionSettingsController::class, 'listActionScopedSettings']);
         Route::post('scoped-settings', [ActionScopedSettingsController::class, 'store']);
         Route::get('localized-settings', [ActionSettingsController::class, 'listActionLocalizedSettings']);
@@ -35,16 +35,16 @@ Route::group($attributes, function () {
     Route::apiResource('localized-settings', ActionLocalizedSettingsController::class)
         ->only(['show', 'update', 'destroy']);
 
-    Route::get('events', [CustomEventController::class, 'listEvents']);
+    Route::get('events', [EventController::class, 'listEvents']);
     Route::prefix('events/{event}')->group(function () {
-        Route::get('schema', [CustomEventController::class, 'showEventSchema']);
-        Route::get('listeners', [CustomEventController::class, 'listEventListeners']);
-        Route::post('listeners', [CustomEventListenerController::class, 'store']);
+        Route::get('schema', [EventController::class, 'showEventSchema']);
+        Route::get('listeners', [EventController::class, 'listEventListeners']);
+        Route::post('listeners', [EventListenerController::class, 'store']);
     });
-    Route::apiResource('event-listeners', CustomEventListenerController::class)->only(['update', 'destroy']);
+    Route::apiResource('event-listeners', EventListenerController::class)->only(['update', 'destroy']);
     Route::prefix('event-listeners/{event_listener}')->group(function () {
-        Route::get('actions', [CustomEventListenerController::class, 'listEventListenerActions']);
-        Route::post('actions', [CustomEventActionController::class, 'store']);
+        Route::get('actions', [EventListenerController::class, 'listEventListenerActions']);
+        Route::post('actions', [EventActionController::class, 'store']);
     });
-    Route::apiResource('event-actions', CustomEventActionController::class)->only(['show', 'update', 'destroy']);
+    Route::apiResource('event-actions', EventActionController::class)->only(['show', 'update', 'destroy']);
 });

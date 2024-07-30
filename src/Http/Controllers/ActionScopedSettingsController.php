@@ -5,7 +5,7 @@ namespace Comhon\CustomAction\Http\Controllers;
 use Comhon\CustomAction\Contracts\CustomActionInterface;
 use Comhon\CustomAction\Facades\CustomActionModelResolver;
 use Comhon\CustomAction\Models\ActionScopedSettings;
-use Comhon\CustomAction\Models\CustomActionSettings;
+use Comhon\CustomAction\Models\ActionSettings;
 use Comhon\CustomAction\Rules\RuleHelper;
 use Illuminate\Http\Request;
 use Illuminate\Http\Resources\Json\JsonResource;
@@ -32,18 +32,18 @@ class ActionScopedSettingsController extends Controller
      *
      * @return \Illuminate\Http\Resources\Json\JsonResource
      */
-    public function store(Request $request, CustomActionSettings $customActionSettings)
+    public function store(Request $request, ActionSettings $actionSettings)
     {
-        $this->authorize('create', [ActionScopedSettings::class, $customActionSettings]);
-        $eventListener = $customActionSettings->eventAction?->eventListener;
+        $this->authorize('create', [ActionScopedSettings::class, $actionSettings]);
+        $eventListener = $actionSettings->eventAction?->eventListener;
         $eventContext = $eventListener
             ? CustomActionModelResolver::getClass($eventListener->event)
             : null;
 
-        $validated = $this->validateRequest($request, $customActionSettings->getAction()->type, $eventContext);
+        $validated = $this->validateRequest($request, $actionSettings->getAction()->type, $eventContext);
 
         $scopedSettings = new ActionScopedSettings($validated);
-        $scopedSettings->actionSettings()->associate($customActionSettings->id);
+        $scopedSettings->actionSettings()->associate($actionSettings->id);
         $scopedSettings->save();
 
         return new JsonResource($scopedSettings);
@@ -114,9 +114,9 @@ class ActionScopedSettingsController extends Controller
 
     private function validateRequest(Request $request, string $type, ?string $eventContext)
     {
-        /** @var CustomActionInterface $customAction */
-        $customAction = app(CustomActionModelResolver::getClass($type));
-        $rules = RuleHelper::getSettingsRules($customAction->getSettingsSchema($eventContext));
+        /** @var CustomActionInterface $action */
+        $action = app(CustomActionModelResolver::getClass($type));
+        $rules = RuleHelper::getSettingsRules($action->getSettingsSchema($eventContext));
         $rules['scope'] = 'required|array';
         $rules['name'] = 'required|string|max:63';
 

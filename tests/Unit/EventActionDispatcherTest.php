@@ -5,23 +5,23 @@ namespace Tests\Unit;
 use App\Events\CompanyRegistered;
 use App\Models\Company;
 use App\Models\User;
-use Comhon\CustomAction\CustomEventHandler;
-use Comhon\CustomAction\Models\CustomEventListener;
+use Comhon\CustomAction\EventActionDispatcher;
+use Comhon\CustomAction\Models\EventListener;
 use Tests\SetUpWithModelRegistration;
 use Tests\TestCase;
 
-class CustomEventHandlerTest extends TestCase
+class EventActionDispatcherTest extends TestCase
 {
     use SetUpWithModelRegistration;
 
-    public function handler(): CustomEventHandler
+    public function handler(): EventActionDispatcher
     {
-        return app(CustomEventHandler::class);
+        return app(EventActionDispatcher::class);
     }
 
     public function testHandleWithBadEventInstance()
     {
-        $listener = CustomEventListener::factory()->genericRegistrationCompany()->create();
+        $listener = EventListener::factory()->genericRegistrationCompany()->create();
         $event = new CompanyRegistered(Company::factory()->create(), User::factory()->create());
         foreach ($listener->eventActions as $action) {
             $action->type = Company::class;

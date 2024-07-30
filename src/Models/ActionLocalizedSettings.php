@@ -16,7 +16,7 @@ class ActionLocalizedSettings extends Model
      *
      * @var string
      */
-    protected $table = 'action_localized_settings';
+    protected $table = 'custom_action_localized_settings';
 
     /**
      * The attributes that should be cast to native types.

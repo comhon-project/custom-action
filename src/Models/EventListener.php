@@ -7,10 +7,17 @@ use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Database\Eloquent\SoftDeletes;
 
-class CustomEventListener extends Model
+class EventListener extends Model
 {
     use HasFactory;
     use SoftDeletes;
+
+    /**
+     * The table associated with the model.
+     *
+     * @var string
+     */
+    protected $table = 'custom_event_listeners';
 
     /**
      * The attributes that should be cast to native types.
@@ -33,7 +40,7 @@ class CustomEventListener extends Model
 
     protected static function booted()
     {
-        static::deleting(function (CustomEventListener $eventListener) {
+        static::deleting(function (EventListener $eventListener) {
             foreach ($eventListener->eventActions as $eventAction) {
                 $eventAction->delete();
             }
@@ -42,6 +49,6 @@ class CustomEventListener extends Model
 
     public function eventActions(): HasMany
     {
-        return $this->hasMany(CustomEventAction::class, 'event_listener_id');
+        return $this->hasMany(EventAction::class, 'event_listener_id');
     }
 }

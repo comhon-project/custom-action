@@ -22,15 +22,15 @@ trait ActionSettingsContainerTrait
     {
         $this->authorize('create', [ActionLocalizedSettings::class, $container]);
 
-        $customActionSettings = $container instanceof ActionScopedSettings ? $container->actionSettings : $container;
-        $eventListener = $customActionSettings->eventAction?->eventListener;
+        $actionSettings = $container instanceof ActionScopedSettings ? $container->actionSettings : $container;
+        $eventListener = $actionSettings->eventAction?->eventListener;
         $eventContext = $eventListener
             ? CustomActionModelResolver::getClass($eventListener->event)
             : null;
 
-        /** @var CustomActionInterface $customAction */
-        $customAction = app(CustomActionModelResolver::getClass($customActionSettings->getAction()->type));
-        $rules = RuleHelper::getSettingsRules($customAction->getLocalizedSettingsSchema($eventContext));
+        /** @var CustomActionInterface $action */
+        $action = app(CustomActionModelResolver::getClass($actionSettings->getAction()->type));
+        $rules = RuleHelper::getSettingsRules($action->getLocalizedSettingsSchema($eventContext));
         $rules['locale'] = 'required|string';
         $validated = $request->validate($rules);
 

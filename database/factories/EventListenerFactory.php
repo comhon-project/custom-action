@@ -2,21 +2,21 @@
 
 namespace Database\Factories;
 
-use Comhon\CustomAction\Models\CustomEventAction;
-use Comhon\CustomAction\Models\CustomEventListener;
+use Comhon\CustomAction\Models\EventAction;
+use Comhon\CustomAction\Models\EventListener;
 use Illuminate\Database\Eloquent\Factories\Factory;
 
 /**
- * @extends \Illuminate\Database\Eloquent\Factories\Factory<\Comhon\CustomAction\Models\CustomEventListener>
+ * @extends \Illuminate\Database\Eloquent\Factories\Factory<\Comhon\CustomAction\Models\EventListener>
  */
-class CustomEventListenerFactory extends Factory
+class EventListenerFactory extends Factory
 {
     /**
      * The name of the factory's corresponding model.
      *
      * @var class-string<\Illuminate\Database\Eloquent\Model>
      */
-    protected $model = CustomEventListener::class;
+    protected $model = EventListener::class;
 
     /**
      * Define the model's default state.
@@ -47,13 +47,13 @@ class CustomEventListenerFactory extends Factory
                 'event' => 'company-registered',
                 'scope' => $companyNameScope ? ['company' => ['name' => $companyNameScope]] : null,
             ];
-        })->afterCreating(function (CustomEventListener $listener) use ($toOtherUserId, $shoudQueue, $withAttachement) {
-            CustomEventAction::factory()
+        })->afterCreating(function (EventListener $listener) use ($toOtherUserId, $shoudQueue, $withAttachement) {
+            EventAction::factory()
                 ->sendMailRegistrationCompany(null, true, $shoudQueue, $withAttachement)
                 ->for($listener, 'eventListener')->create();
 
             if ($toOtherUserId) {
-                CustomEventAction::factory()
+                EventAction::factory()
                     ->sendMailRegistrationCompany($toOtherUserId, false, $shoudQueue)
                     ->for($listener, 'eventListener')->create();
             }

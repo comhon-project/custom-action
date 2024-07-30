@@ -4,7 +4,7 @@ namespace App\Policies\CustomAction;
 
 use App\Models\User;
 
-class CustomEventPolicy
+class EventPolicy
 {
     /**
      * Determine whether the user can view any models.

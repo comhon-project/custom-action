@@ -29,7 +29,7 @@ return new class extends Migration
             $table->timestamps();
             $table->softDeletes();
         });
-        Schema::create('action_scoped_settings', function (Blueprint $table) {
+        Schema::create('custom_action_scoped_settings', function (Blueprint $table) {
             $table->id();
             $table->unsignedBigInteger('action_settings_id');
             $table->string('name', 63);
@@ -41,7 +41,7 @@ return new class extends Migration
 
             $table->foreign('action_settings_id')->references('id')->on('custom_action_settings');
         });
-        Schema::create('action_localized_settings', function (Blueprint $table) {
+        Schema::create('custom_action_localized_settings', function (Blueprint $table) {
             $table->id();
             $table->morphs('localizable');
             $table->string('locale', 7);
@@ -50,7 +50,7 @@ return new class extends Migration
             $table->timestamps();
             $table->softDeletes();
 
-            $table->unique(['locale', 'localizable_id', 'localizable_type'], 'action_localized_settings_uk');
+            $table->unique(['locale', 'localizable_id', 'localizable_type'], 'custom_action_localized_settings_uk');
         });
         Schema::create('custom_event_actions', function (Blueprint $table) {
             $table->id();
@@ -84,8 +84,8 @@ return new class extends Migration
      */
     public function down()
     {
-        Schema::dropIfExists('action_localized_settings');
-        Schema::dropIfExists('action_scoped_settings');
+        Schema::dropIfExists('custom_action_localized_settings');
+        Schema::dropIfExists('custom_action_scoped_settings');
         Schema::dropIfExists('custom_event_actions');
         Schema::dropIfExists('custom_manual_actions');
         Schema::dropIfExists('custom_event_listeners');

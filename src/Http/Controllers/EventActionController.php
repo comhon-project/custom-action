@@ -5,48 +5,48 @@ namespace Comhon\CustomAction\Http\Controllers;
 use Comhon\CustomAction\Contracts\CustomActionInterface;
 use Comhon\CustomAction\Contracts\TriggerableFromEventInterface;
 use Comhon\CustomAction\Facades\CustomActionModelResolver;
-use Comhon\CustomAction\Models\CustomActionSettings;
-use Comhon\CustomAction\Models\CustomEventAction;
-use Comhon\CustomAction\Models\CustomEventListener;
+use Comhon\CustomAction\Models\ActionSettings;
+use Comhon\CustomAction\Models\EventAction;
+use Comhon\CustomAction\Models\EventListener;
 use Comhon\CustomAction\Rules\RuleHelper;
 use Illuminate\Http\Request;
 use Illuminate\Http\Resources\Json\JsonResource;
 use Illuminate\Support\Facades\DB;
 
-class CustomEventActionController extends Controller
+class EventActionController extends Controller
 {
     /**
      * Store event listener action.
      *
      * @return \Illuminate\Http\Resources\Json\JsonResource
      */
-    public function store(Request $request, CustomEventListener $eventListener)
+    public function store(Request $request, EventListener $eventListener)
     {
-        $this->authorize('create', [CustomEventAction::class, $eventListener]);
+        $this->authorize('create', [EventAction::class, $eventListener]);
 
         $validated = $this->validateStoreRequest($request, $eventListener);
 
-        $customEventAction = new CustomEventAction;
-        $customEventAction->eventListener()->associate($eventListener->id);
-        $customEventAction->type = $validated['type'];
-        $customEventAction->name = $validated['name'];
+        $eventAction = new EventAction;
+        $eventAction->eventListener()->associate($eventListener->id);
+        $eventAction->type = $validated['type'];
+        $eventAction->name = $validated['name'];
 
-        DB::transaction(function () use ($customEventAction, $validated) {
-            $customActionSettings = new CustomActionSettings;
-            $customActionSettings->settings = $validated['settings'] ?? [];
-            $customActionSettings->save();
+        DB::transaction(function () use ($eventAction, $validated) {
+            $actionSettings = new ActionSettings;
+            $actionSettings->settings = $validated['settings'] ?? [];
+            $actionSettings->save();
 
-            $customEventAction->actionSettings()->associate($customActionSettings);
-            $customEventAction->save();
+            $eventAction->actionSettings()->associate($actionSettings);
+            $eventAction->save();
         });
 
-        return new JsonResource($customEventAction);
+        return new JsonResource($eventAction);
     }
 
     /**
      * Show event listener action.
      */
-    public function show(CustomEventAction $eventAction)
+    public function show(EventAction $eventAction)
     {
         $this->authorize('view', $eventAction);
 
@@ -56,7 +56,7 @@ class CustomEventActionController extends Controller
     /**
      * update event listener action.
      */
-    public function update(Request $request, CustomEventAction $eventAction)
+    public function update(Request $request, EventAction $eventAction)
     {
         $this->authorize('update', $eventAction);
 
@@ -72,7 +72,7 @@ class CustomEventActionController extends Controller
     /**
      * delete event listener action.
      */
-    public function destroy(CustomEventAction $eventAction)
+    public function destroy(EventAction $eventAction)
     {
         $this->authorize('delete', $eventAction);
 
@@ -83,7 +83,7 @@ class CustomEventActionController extends Controller
         return response('', 204);
     }
 
-    private function validateStoreRequest(Request $request, CustomEventListener $eventListener)
+    private function validateStoreRequest(Request $request, EventListener $eventListener)
     {
         $eventClass = CustomActionModelResolver::getClass($eventListener->event);
         $allowedTypes = collect($eventClass::getAllowedActions())
@@ -97,11 +97,11 @@ class CustomEventActionController extends Controller
                 'in:'.$allowedTypes->implode(','),
                 function (string $attribute, $type, $fail) {
                     $actionClass = CustomActionModelResolver::getClass($type);
-                    $customAction = $actionClass ? app($actionClass) : null;
-                    if (! $customAction instanceof CustomActionInterface) {
+                    $action = $actionClass ? app($actionClass) : null;
+                    if (! $action instanceof CustomActionInterface) {
                         $fail("Action {$type} not found.");
                     }
-                    if (! $customAction instanceof TriggerableFromEventInterface) {
+                    if (! $action instanceof TriggerableFromEventInterface) {
                         $fail("The action {$type} is not an action triggerable from event.");
                     }
                 },
@@ -110,8 +110,8 @@ class CustomEventActionController extends Controller
         ]);
 
         $actionClass = CustomActionModelResolver::getClass($validated['type']);
-        $customAction = app($actionClass);
-        $settingsRules = RuleHelper::getSettingsRules($customAction->getSettingsSchema($eventClass));
+        $action = app($actionClass);
+        $settingsRules = RuleHelper::getSettingsRules($action->getSettingsSchema($eventClass));
 
         return [
             ...$validated,

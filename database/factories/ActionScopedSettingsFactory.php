@@ -3,8 +3,8 @@
 namespace Database\Factories;
 
 use Comhon\CustomAction\Models\ActionScopedSettings;
-use Comhon\CustomAction\Models\CustomActionSettings;
-use Comhon\CustomAction\Models\CustomEventAction;
+use Comhon\CustomAction\Models\ActionSettings;
+use Comhon\CustomAction\Models\EventAction;
 use Illuminate\Database\Eloquent\Factories\Factory;
 
 /**
@@ -28,7 +28,7 @@ class ActionScopedSettingsFactory extends Factory
     {
         return [
             'name' => 'My Action Scoped Settings',
-            'action_settings_id' => CustomActionSettings::factory(),
+            'action_settings_id' => ActionSettings::factory(),
             'scope' => [],
             'settings' => [],
         ];
@@ -38,18 +38,18 @@ class ActionScopedSettingsFactory extends Factory
     {
         return $this->afterMaking(function (ActionScopedSettings $actionScopedSettings) {
             if (! $actionScopedSettings->actionSettings) {
-                $actionScopedSettings->actionSettings()->associate(CustomActionSettings::factory()->create());
+                $actionScopedSettings->actionSettings()->associate(ActionSettings::factory()->create());
             }
         })->afterCreating(function (ActionScopedSettings $actionScopedSettings) use ($type) {
-            /** @var CustomActionSettings $customActionSettings */
-            $customActionSettings = $actionScopedSettings->actionSettings;
-            if (! $customActionSettings->eventAction) {
-                CustomEventAction::factory([
+            /** @var ActionSettings $actionSettings */
+            $actionSettings = $actionScopedSettings->actionSettings;
+            if (! $actionSettings->eventAction) {
+                EventAction::factory([
                     'type' => $type,
-                ])->for($customActionSettings, 'actionSettings')->create();
+                ])->for($actionSettings, 'actionSettings')->create();
             } else {
-                $customActionSettings->eventAction->type = $type;
-                $customActionSettings->eventAction->save();
+                $actionSettings->eventAction->type = $type;
+                $actionSettings->eventAction->save();
             }
         });
     }
@@ -58,18 +58,18 @@ class ActionScopedSettingsFactory extends Factory
     {
         return $this->afterMaking(function (ActionScopedSettings $actionScopedSettings) {
             if (! $actionScopedSettings->actionSettings) {
-                $actionScopedSettings->actionSettings()->associate(CustomActionSettings::factory()->create());
+                $actionScopedSettings->actionSettings()->associate(ActionSettings::factory()->create());
             }
         })->afterCreating(function (ActionScopedSettings $actionScopedSettings) use ($type) {
-            /** @var CustomActionSettings $customActionSettings */
-            $customActionSettings = $actionScopedSettings->actionSettings;
-            if (! $customActionSettings->manualAction) {
-                CustomEventAction::factory([
+            /** @var ActionSettings $actionSettings */
+            $actionSettings = $actionScopedSettings->actionSettings;
+            if (! $actionSettings->manualAction) {
+                EventAction::factory([
                     'type' => $type,
-                ])->for($customActionSettings, 'actionSettings')->create();
+                ])->for($actionSettings, 'actionSettings')->create();
             } else {
-                $customActionSettings->manualAction->type = $type;
-                $customActionSettings->manualAction->save();
+                $actionSettings->manualAction->type = $type;
+                $actionSettings->manualAction->save();
             }
         });
     }

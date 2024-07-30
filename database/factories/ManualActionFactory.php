@@ -2,21 +2,21 @@
 
 namespace Database\Factories;
 
-use Comhon\CustomAction\Models\CustomActionSettings;
-use Comhon\CustomAction\Models\CustomManualAction;
+use Comhon\CustomAction\Models\ActionSettings;
+use Comhon\CustomAction\Models\ManualAction;
 use Illuminate\Database\Eloquent\Factories\Factory;
 
 /**
- * @extends \Illuminate\Database\Eloquent\Factories\Factory<\Comhon\CustomAction\Models\CustomManualAction>
+ * @extends \Illuminate\Database\Eloquent\Factories\Factory<\Comhon\CustomAction\Models\ManualAction>
  */
-class CustomManualActionFactory extends Factory
+class ManualActionFactory extends Factory
 {
     /**
      * The name of the factory's corresponding model.
      *
      * @var class-string<\Illuminate\Database\Eloquent\Model>
      */
-    protected $model = CustomManualAction::class;
+    protected $model = ManualAction::class;
 
     /**
      * Define the model's default state.
@@ -27,7 +27,7 @@ class CustomManualActionFactory extends Factory
     {
         return [
             'type' => 'send-company-email',
-            'action_settings_id' => CustomActionSettings::factory(),
+            'action_settings_id' => ActionSettings::factory(),
         ];
     }
 
@@ -39,7 +39,7 @@ class CustomManualActionFactory extends Factory
         return $this->state(function (array $attributes) use ($toOtherUserIds, $withScopedSettings, $withAttachement) {
             return [
                 'type' => 'send-company-email',
-                'action_settings_id' => CustomActionSettings::factory()->sendMailRegistrationCompany($toOtherUserIds, $withScopedSettings, $withAttachement),
+                'action_settings_id' => ActionSettings::factory()->sendMailRegistrationCompany($toOtherUserIds, $withScopedSettings, $withAttachement),
             ];
         });
     }

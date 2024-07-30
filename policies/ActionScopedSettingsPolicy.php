@@ -4,7 +4,7 @@ namespace App\Policies\CustomAction;
 
 use App\Models\User;
 use Comhon\CustomAction\Models\ActionScopedSettings;
-use Comhon\CustomAction\Models\CustomActionSettings;
+use Comhon\CustomAction\Models\ActionSettings;
 
 class ActionScopedSettingsPolicy
 {
@@ -19,7 +19,7 @@ class ActionScopedSettingsPolicy
     /**
      * Determine whether the user can create models.
      */
-    public function create(User $user, CustomActionSettings $customActionSettings)
+    public function create(User $user, ActionSettings $actionSettings)
     {
         // TODO put your authorization logic here
     }

@@ -3,13 +3,13 @@
 namespace Comhon\CustomAction\Http\Controllers;
 
 use Comhon\CustomAction\Facades\CustomActionModelResolver;
-use Comhon\CustomAction\Models\CustomEventListener;
+use Comhon\CustomAction\Models\EventListener;
 use Illuminate\Http\Request;
 use Illuminate\Http\Resources\Json\JsonResource;
 use Illuminate\Support\Facades\DB;
 use Symfony\Component\HttpKernel\Exception\NotFoundHttpException;
 
-class CustomEventListenerController extends Controller
+class EventListenerController extends Controller
 {
     /**
      * Store event listener.
@@ -22,11 +22,11 @@ class CustomEventListenerController extends Controller
             throw new NotFoundHttpException('not found');
         }
         $eventClass = CustomActionModelResolver::getClass($eventUniqueName);
-        $this->authorize('create', [CustomEventListener::class, $eventClass]);
+        $this->authorize('create', [EventListener::class, $eventClass]);
 
-        $validated = $this->validateCustomEventListenerRequest($request);
+        $validated = $this->validateEventListenerRequest($request);
 
-        $eventListener = new CustomEventListener($validated);
+        $eventListener = new EventListener($validated);
         $eventListener->event = $eventUniqueName;
         $eventListener->save();
 
@@ -38,11 +38,11 @@ class CustomEventListenerController extends Controller
      *
      * @return \Illuminate\Http\Resources\Json\JsonResource
      */
-    public function update(Request $request, CustomEventListener $eventListener)
+    public function update(Request $request, EventListener $eventListener)
     {
         $this->authorize('update', $eventListener);
 
-        $validated = $this->validateCustomEventListenerRequest($request);
+        $validated = $this->validateEventListenerRequest($request);
         $eventListener->fill($validated);
         $eventListener->save();
 
@@ -54,7 +54,7 @@ class CustomEventListenerController extends Controller
      *
      * @return \Illuminate\Http\Response
      */
-    public function destroy(CustomEventListener $eventListener)
+    public function destroy(EventListener $eventListener)
     {
         $this->authorize('delete', $eventListener);
 
@@ -70,7 +70,7 @@ class CustomEventListenerController extends Controller
      *
      * @return \Illuminate\Http\Resources\Json\AnonymousResourceCollection
      */
-    public function listEventListenerActions(Request $request, CustomEventListener $eventListener)
+    public function listEventListenerActions(Request $request, EventListener $eventListener)
     {
         $this->authorize('view', $eventListener);
 
@@ -84,7 +84,7 @@ class CustomEventListenerController extends Controller
         return JsonResource::collection($query->paginate());
     }
 
-    private function validateCustomEventListenerRequest(Request $request)
+    private function validateEventListenerRequest(Request $request)
     {
         return $request->validate([
             'scope' => 'array|nullable',
