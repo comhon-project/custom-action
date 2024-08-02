@@ -7,7 +7,7 @@ use Comhon\CustomAction\Rules\RuleHelper;
 
 class SendCompanyRegistrationMail extends SendTemplatedMail
 {
-    public function getGlobalBindingSchema(): array
+    public static function getGlobalBindingSchema(): array
     {
         return [
             'company.name' => 'string',

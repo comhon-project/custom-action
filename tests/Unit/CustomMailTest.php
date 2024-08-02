@@ -44,7 +44,7 @@ class CustomMailTest extends TestCase
         unset($mail[$missingProperty]);
 
         $this->expectExceptionMessage("missing required mail $missingProperty");
-        $mailable = new Custom($mail, ['user' => $user]);
+        new Custom($mail, ['user' => $user]);
     }
 
     public static function providerCustomMailMissingRequiredValues()

@@ -37,7 +37,7 @@ class ModelReference
                 'string',
                 function (string $attribute, mixed $valueType, Closure $fail) use ($baseClass, $uniqueName, $prefix, $value) {
                     $valueClass = CustomActionModelResolver::getClass($valueType);
-                    if ($valueClass !== $baseClass && ! is_subclass_of($valueClass, $baseClass)) {
+                    if (! is_a($valueClass, $baseClass, true)) {
                         $fail("The {$prefix}_type is not instance of {$uniqueName}.");
                     }
                     if (! is_subclass_of($valueClass, Model::class)) {

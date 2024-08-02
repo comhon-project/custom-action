@@ -7,12 +7,12 @@ use Illuminate\Support\Facades\Facade;
 /**
  * @method static array find(string $bindingType, array $bindingSchema)
  *
- * @see \Comhon\CustomAction\BindingFinder
+ * @see \Comhon\CustomAction\BindingsFinder
  */
-class BindingFinder extends Facade
+class BindingsFinder extends Facade
 {
     protected static function getFacadeAccessor()
     {
-        return \Comhon\CustomAction\Contracts\BindingFinderInterface::class;
+        return \Comhon\CustomAction\Contracts\BindingsFinderInterface::class;
     }
 }

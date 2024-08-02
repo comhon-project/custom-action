@@ -6,6 +6,7 @@ use App\Actions\SendCompanyRegistrationMail;
 use App\Models\Company;
 use App\Models\User;
 use App\Models\UserWithoutPreference;
+use Comhon\CustomAction\BindingsContainer;
 use Comhon\CustomAction\Facades\CustomActionModelResolver;
 use Comhon\CustomAction\Files\SystemFile;
 use Comhon\CustomAction\Mail\Custom;
@@ -57,7 +58,7 @@ class CustomActionTest extends TestCase
         if (! $success) {
             $this->expectExceptionMessage('localized mail values not found');
         }
-        $this->getActionInstance()->handle($bindings, $user);
+        $this->getActionInstance()->handleManual(new BindingsContainer($bindings), $user);
 
         $mails = [];
         Mail::assertSent(Custom::class, 1);
@@ -68,7 +69,7 @@ class CustomActionTest extends TestCase
         });
         $mails[0]->assertHasTo($user->email);
         $mails[0]->assertHasSubject(
-            "Dear $user->first_name, company $company->name (login: December 12, 2022 at 12:00 AM (UTC) December 12, 2022 at 12:00 AM (UTC))"
+            "Dear $user->first_name, company $company->name  (login: December 12, 2022 at 12:00 AM (UTC) December 12, 2022 at 12:00 AM (UTC))"
         );
         $this->assertTrue($mails[0]->hasAttachment(Attachment::fromPath($this->getAssetPath())));
     }
@@ -101,7 +102,7 @@ class CustomActionTest extends TestCase
         if (! $success) {
             $this->expectExceptionMessage('localized mail values not found');
         }
-        $this->getActionInstance()->handle($bindings, $user);
+        $this->getActionInstance()->handleManual(new BindingsContainer($bindings), $user);
 
         $mails = [];
         Mail::assertSent(Custom::class, 1);
@@ -112,9 +113,94 @@ class CustomActionTest extends TestCase
         });
         $mails[0]->assertHasTo($user->email);
         $mails[0]->assertHasSubject(
-            "Dear $user->first_name, company $company->name (login: December 12, 2022 at 12:00 AM (UTC) December 12, 2022 at 12:00 AM (UTC))"
+            "Dear $user->first_name, company $company->name  (login: December 12, 2022 at 12:00 AM (UTC) December 12, 2022 at 12:00 AM (UTC))"
         );
         $this->assertTrue($mails[0]->hasAttachment(Attachment::fromPath($this->getAssetPath())));
+    }
+
+    /**
+     * @dataProvider providerHandleManualActionUserWithoutPreferencesSuccess
+     */
+    public function testHandleManualActionUserWithBindingsContainerWithSchemaAllValid($appLocale, $fallbackLocale, $success)
+    {
+        App::setLocale($appLocale);
+        App::setFallbackLocale($fallbackLocale);
+        $user = UserWithoutPreference::factory()->create();
+        $company = Company::factory()->create();
+        ManualAction::factory()->sendMailRegistrationCompany(null, false, true)->create();
+
+        $bindings = ['company' => $company, 'logo' => new SystemFile($this->getAssetPath())];
+        $bindingSchema = [
+            'company' => 'is:company',
+            'logo' => 'is:stored-file',
+        ];
+
+        Mail::fake();
+
+        if (! $success) {
+            $this->expectExceptionMessage('localized mail values not found');
+        }
+        $this->getActionInstance()->handleManual(new BindingsContainer($bindings, $bindingSchema), $user);
+
+        $mails = [];
+        Mail::assertSent(Custom::class, 1);
+        Mail::assertSent(Custom::class, function (Custom $mail) use (&$mails) {
+            $mails[] = $mail;
+
+            return true;
+        });
+        $mails[0]->assertHasTo($user->email);
+        $mails[0]->assertHasSubject(
+            "Dear $user->first_name, company $company->name  (login: December 12, 2022 at 12:00 AM (UTC) December 12, 2022 at 12:00 AM (UTC))"
+        );
+        $this->assertTrue($mails[0]->hasAttachment(Attachment::fromPath($this->getAssetPath())));
+    }
+
+    public function testHandleManualActionUserWithBindingsContainerWithSchemaWithInvalid()
+    {
+        $user = UserWithoutPreference::factory()->create();
+        ManualAction::factory()->sendMailRegistrationCompany(null, false, true)->create();
+
+        $bindings = ['company' => $user, 'logo' => new SystemFile($this->getAssetPath())];
+        $bindingSchema = [
+            'company' => 'is:company',
+            'logo' => 'is:stored-file',
+        ];
+
+        $this->expectExceptionMessage('The company is not instance of company.');
+        $this->getActionInstance()->handleManual(new BindingsContainer($bindings, $bindingSchema), $user);
+
+    }
+
+    /**
+     * @dataProvider providerHandleManualActionUserWithoutPreferencesSuccess
+     */
+    public function testHandleManualActionUserWithoutBindingsContainer($appLocale, $fallbackLocale, $success)
+    {
+        App::setLocale($appLocale);
+        App::setFallbackLocale($fallbackLocale);
+        $user = UserWithoutPreference::factory()->create();
+        $company = Company::factory()->create();
+        ManualAction::factory()->sendMailRegistrationCompany(null, false, true)->create();
+
+        Mail::fake();
+
+        if (! $success) {
+            $this->expectExceptionMessage('localized mail values not found');
+        }
+        $this->getActionInstance()->handleManual(null, $user);
+
+        $mails = [];
+        Mail::assertSent(Custom::class, 1);
+        Mail::assertSent(Custom::class, function (Custom $mail) use (&$mails) {
+            $mails[] = $mail;
+
+            return true;
+        });
+        $mails[0]->assertHasTo($user->email);
+        $mails[0]->assertHasSubject(
+            "Dear $user->first_name, company   (login: December 12, 2022 at 12:00 AM (UTC) December 12, 2022 at 12:00 AM (UTC))"
+        );
     }
 
     public static function providerHandleManualActionUserWithoutPreferencesSuccess()
@@ -133,7 +219,7 @@ class CustomActionTest extends TestCase
 
         $bindings = ['company' => $company, 'logo' => new SystemFile($this->getAssetPath())];
         $this->expectExceptionMessage('No query results for model');
-        $this->getActionInstance()->handle($bindings, $user);
+        $this->getActionInstance()->handleManual(new BindingsContainer($bindings), $user);
     }
 
     public function testGetActionsSuccess()
@@ -158,7 +244,7 @@ class CustomActionTest extends TestCase
             ->assertForbidden();
     }
 
-    public function testActionShemaSuccess()
+    public function testGetActionShemaSuccess()
     {
         $user = User::factory()->hasConsumerAbility()->create();
 
@@ -205,7 +291,7 @@ class CustomActionTest extends TestCase
         ]);
     }
 
-    public function testActionShemaWithContextSuccess()
+    public function testGetActionShemaWithContextSuccess()
     {
         $user = User::factory()->hasConsumerAbility()->create();
 
@@ -238,7 +324,22 @@ class CustomActionTest extends TestCase
             ]);
     }
 
-    public function testActionShemaWithInvalidContext()
+    public function testGetActionShemaWithoutBindingsSuccess()
+    {
+        $user = User::factory()->hasConsumerAbility()->create();
+
+        $this->actingAs($user)->getJson('custom/action-types/my-action-without-bindings/schema')
+            ->assertOk()
+            ->assertJson([
+                'data' => [
+                    'binding_schema' => [],
+                    'settings_schema' => [],
+                    'localized_settings_schema' => [],
+                ],
+            ]);
+    }
+
+    public function testGetActionShemaWithInvalidContext()
     {
         $user = User::factory()->hasConsumerAbility()->create();
 
@@ -250,7 +351,7 @@ class CustomActionTest extends TestCase
             ]);
     }
 
-    public function testActionShemaWithInvalidContext2()
+    public function testGetActionShemaWithInvalidContext2()
     {
         $user = User::factory()->hasConsumerAbility()->create();
 
@@ -262,7 +363,7 @@ class CustomActionTest extends TestCase
             ]);
     }
 
-    public function testActionShemaNotFound()
+    public function testGetActionShemaNotFound()
     {
         CustomActionModelResolver::register([], true);
         $user = User::factory()->hasConsumerAbility()->create();
@@ -271,7 +372,7 @@ class CustomActionTest extends TestCase
         $response->assertNotFound();
     }
 
-    public function testActionShemaForbidden()
+    public function testGetActionShemaForbidden()
     {
         $user = User::factory()->create();
         $this->actingAs($user)->getJson('custom/action-types/send-email/schema')

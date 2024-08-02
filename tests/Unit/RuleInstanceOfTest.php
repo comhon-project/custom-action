@@ -9,23 +9,43 @@ use Tests\TestCase;
 
 class RuleInstanceOfTest extends TestCase
 {
-    public function testValidSameClass()
+    public function testValidSameClassInstance()
     {
         CustomActionModelResolver::register([
             'user' => User::class,
         ]);
-        $data = ['foo' => 'user'];
+        $data = ['foo' => new User];
         $validated = Validator::validate($data, ['foo' => 'is:user']);
         $this->assertEquals($data, $validated);
     }
 
-    public function testValidSubClass()
+    public function testValidSubClassInstance()
+    {
+        CustomActionModelResolver::register([
+            'user' => User::class,
+        ]);
+        $data = ['foo' => new User];
+        $validated = Validator::validate($data, ['foo' => 'is:email-receiver']);
+        $this->assertEquals($data, $validated);
+    }
+
+    public function testValidSameClassString()
     {
         CustomActionModelResolver::register([
             'user' => User::class,
         ]);
         $data = ['foo' => 'user'];
-        $validated = Validator::validate($data, ['foo' => 'is:email-receiver']);
+        $validated = Validator::validate($data, ['foo' => 'is:user,true,true']);
+        $this->assertEquals($data, $validated);
+    }
+
+    public function testValidSubClassString()
+    {
+        CustomActionModelResolver::register([
+            'user' => User::class,
+        ]);
+        $data = ['foo' => 'user'];
+        $validated = Validator::validate($data, ['foo' => 'is:email-receiver,true,true']);
         $this->assertEquals($data, $validated);
     }
 
@@ -47,17 +67,16 @@ class RuleInstanceOfTest extends TestCase
         );
     }
 
-    public function testInvalidSameOnlySubclass()
+    public function testInvalidSameClassStringOnlySubClass()
     {
         CustomActionModelResolver::register([
             'user' => User::class,
         ]);
-        $data = [
-            'foo' => 'email-receiver',
-        ];
+        $data = ['foo' => 'user'];
+
         $this->assertEquals(
-            ['foo' => ['The foo is not subclass of email-receiver.']],
-            Validator::make($data, ['foo' => 'is:email-receiver,false'])->errors()->toArray()
+            ['foo' => ['The foo is not subclass of user.']],
+            Validator::make($data, ['foo' => 'is:user,false,true'])->errors()->toArray()
         );
     }
 }

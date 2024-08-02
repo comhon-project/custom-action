@@ -13,7 +13,7 @@ class BindingsTest extends TestCase
         $rules = Bindings::getEventBindingRules(CompanyRegistered::class, ['my.key' => 'string']);
 
         $this->assertEquals([
-            'my.key' => 'string|in:company.name,user.name',
+            'my.key' => 'string|in:company.name,user.name,localized',
         ], $rules);
     }
 
@@ -34,14 +34,14 @@ class BindingsTest extends TestCase
         ]);
 
         $this->assertEquals([
-            'my.key' => 'string|in:company.name,user.name',
+            'my.key' => 'string|in:company.name,user.name,localized',
             'receivers' => 'string|in:user',
         ], $rules);
     }
 
     public function testGetBindingsInvalidEventClass()
     {
-        $this->expectExceptionMessage('first argument must be a subclass of CustomEventInterface');
+        $this->expectExceptionMessage('first argument must be a subclass of HasBindingsInterface');
         Bindings::getEventBindingRules('foo', ['my.key' => 'string']);
 
     }

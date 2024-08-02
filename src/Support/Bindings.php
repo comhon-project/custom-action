@@ -2,8 +2,8 @@
 
 namespace Comhon\CustomAction\Support;
 
-use Comhon\CustomAction\Contracts\CustomEventInterface;
-use Comhon\CustomAction\Facades\BindingFinder;
+use Comhon\CustomAction\Contracts\HasBindingsInterface;
+use Comhon\CustomAction\Facades\BindingsFinder;
 use Illuminate\Support\Arr;
 
 class Bindings
@@ -13,8 +13,8 @@ class Bindings
      */
     public static function getEventBindingRules(string $eventClass, array $types): array
     {
-        if (! is_subclass_of($eventClass, CustomEventInterface::class)) {
-            throw new \InvalidArgumentException('first argument must be a subclass of CustomEventInterface');
+        if (! is_subclass_of($eventClass, HasBindingsInterface::class)) {
+            throw new \InvalidArgumentException('first argument must be a subclass of HasBindingsInterface');
         }
         $bindingRules = [];
         $bindingSchema = $eventClass::getBindingSchema();
@@ -24,7 +24,7 @@ class Bindings
                 $type = substr($type, 6);
                 $asArray = true;
             }
-            $enum = BindingFinder::find($type, $bindingSchema);
+            $enum = BindingsFinder::find($type, $bindingSchema);
             if ($asArray) {
                 $bindingRules[$key] = 'array';
                 $key .= '.*';

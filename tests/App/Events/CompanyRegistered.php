@@ -7,6 +7,7 @@ use App\Models\Company;
 use App\Models\User;
 use Comhon\CustomAction\Actions\SendTemplatedMail;
 use Comhon\CustomAction\Contracts\CustomEventInterface;
+use Comhon\CustomAction\Contracts\HasBindingsInterface;
 use Comhon\CustomAction\Files\SystemFile;
 use Comhon\CustomAction\Rules\RuleHelper;
 use Illuminate\Broadcasting\InteractsWithSockets;
@@ -14,7 +15,7 @@ use Illuminate\Foundation\Events\Dispatchable;
 use Illuminate\Queue\SerializesModels;
 use Tests\Support\Utils;
 
-class CompanyRegistered implements CustomEventInterface
+class CompanyRegistered implements CustomEventInterface, HasBindingsInterface
 {
     use Dispatchable, InteractsWithSockets, SerializesModels;
 
@@ -50,13 +51,14 @@ class CompanyRegistered implements CustomEventInterface
             'responsibles' => 'array',
             'responsibles.*' => 'array',
             'responsibles.*.email' => 'email',
+            'localized' => 'string',
         ];
     }
 
     /**
      * Get event binding values
      */
-    public function getBindingValues(): array
+    public function getBindingValues(?string $locale = null): array
     {
         return [
             'company' => $this->company,
@@ -70,6 +72,7 @@ class CompanyRegistered implements CustomEventInterface
                     'email' => 'responsible_two@gmail.com',
                 ],
             ],
+            'localized' => $locale ?? 'undefined',
         ];
     }
 }

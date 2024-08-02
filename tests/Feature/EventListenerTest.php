@@ -2,7 +2,9 @@
 
 namespace Tests\Feature;
 
+use App\Actions\MyActionWithoutBindings;
 use App\Events\CompanyRegistered;
+use App\Events\MyEventWithoutBindings;
 use App\Models\Company;
 use App\Models\User;
 use Comhon\CustomAction\Mail\Custom;
@@ -15,6 +17,7 @@ use Illuminate\Mail\Mailables\Attachment;
 use Illuminate\Mail\SendQueuedMailable;
 use Illuminate\Support\Facades\Bus;
 use Illuminate\Support\Facades\Mail;
+use Mockery\MockInterface;
 use Tests\SetUpWithModelRegistration;
 use Tests\Support\Utils;
 use Tests\TestCase;
@@ -61,15 +64,15 @@ class EventListenerTest extends TestCase
         $firstActionAttachementPath = Utils::joinPaths(Utils::getTestPath('Data'), 'jc.jpeg');
 
         $mails[0]->assertHasTo($targetUser->email);
-        $mails[0]->assertHasSubject("Dear $targetUser->first_name, company $company->name (login: December 12, 2022 at 12:00 AM (UTC) December 12, 2022 at 12:00 AM (UTC))");
+        $mails[0]->assertHasSubject("Dear $targetUser->first_name, company $company->name en (login: December 12, 2022 at 12:00 AM (UTC) December 12, 2022 at 12:00 AM (UTC))");
         $this->assertTrue($mails[0]->hasAttachment(Attachment::fromPath($firstActionAttachementPath)));
 
         $mails[1]->assertHasTo($otherUserFr->email);
-        $mails[1]->assertHasSubject("Cher·ère $otherUserFr->first_name, la société $company->name (login: 12 décembre 2022 à 00:00 (UTC) 12 décembre 2022 à 00:00 (UTC))");
+        $mails[1]->assertHasSubject("Cher·ère $otherUserFr->first_name, la société $company->name fr (login: 12 décembre 2022 à 00:00 (UTC) 12 décembre 2022 à 00:00 (UTC))");
         $this->assertFalse($mails[1]->hasAttachment(Attachment::fromPath($firstActionAttachementPath)));
 
         $mails[2]->assertHasTo($otherUser->email);
-        $mails[2]->assertHasSubject("Dear $otherUser->first_name, company $company->name (login: December 12, 2022 at 12:00 AM (UTC) December 12, 2022 at 1:00 AM (Europe/Paris))");
+        $mails[2]->assertHasSubject("Dear $otherUser->first_name, company $company->name en (login: December 12, 2022 at 12:00 AM (UTC) December 12, 2022 at 1:00 AM (Europe/Paris))");
         $this->assertFalse($mails[1]->hasAttachment(Attachment::fromPath($firstActionAttachementPath)));
     }
 
@@ -79,6 +82,26 @@ class EventListenerTest extends TestCase
             [false],
             [true],
         ];
+    }
+
+    public function testEventListenerWithEventWithoutBindings()
+    {
+        // create event listener for CompanyRegistered event
+        $settings = ActionSettings::factory()
+            ->withEventActionType('my-action-without-bindings')
+            ->create();
+
+        $eventListener = $settings->eventAction->eventListener;
+        $eventListener->event = 'my-event-without-bindings';
+        $eventListener->save();
+
+        $this->partialMock(MyActionWithoutBindings::class, function (MockInterface $mock) use ($settings) {
+            $mock->shouldReceive('handle')->once()->withArgs(function ($actionSettings, $bindingsContainer) use ($settings) {
+                return $settings->is($actionSettings) && $bindingsContainer === null;
+            });
+        });
+
+        MyEventWithoutBindings::dispatch();
     }
 
     public function testEventListenerWithAllAvailableToProperties()
@@ -93,10 +116,10 @@ class EventListenerTest extends TestCase
         $receiver = User::factory(['preferred_locale' => 'fr'])->create();
         $actionSettings = ActionSettings::factory([
             'settings' => [
-                'to_emails' => ['john.doe@gmail.com'],
                 'to_receivers' => [['receiver_type' => 'user', 'receiver_id' => $receiver->id]],
-                'to_bindings_emails' => ['responsibles.*.email'],
+                'to_emails' => ['john.doe@gmail.com'],
                 'to_bindings_receivers' => ['user'],
+                'to_bindings_emails' => ['responsibles.*.email'],
             ],
         ])->create();
         EventAction::factory()
@@ -122,19 +145,19 @@ class EventListenerTest extends TestCase
         });
 
         $mails[0]->assertHasTo($receiver->email);
-        $mails[0]->assertHasSubject("Cher·ère $receiver->first_name, la société $company->name");
+        $mails[0]->assertHasSubject("Cher·ère $receiver->first_name, la société $company->name fr");
 
         $mails[1]->assertHasTo('john.doe@gmail.com');
-        $mails[1]->assertHasSubject("Dear , company $company->name");
+        $mails[1]->assertHasSubject("Dear , company $company->name en");
 
         $mails[2]->assertHasTo($user->email);
-        $mails[2]->assertHasSubject("Dear $user->first_name, company $company->name");
+        $mails[2]->assertHasSubject("Dear $user->first_name, company $company->name en");
 
         $mails[3]->assertHasTo('responsible_one@gmail.com');
-        $mails[3]->assertHasSubject("Dear , company $company->name");
+        $mails[3]->assertHasSubject("Dear , company $company->name en");
 
         $mails[4]->assertHasTo('responsible_two@gmail.com');
-        $mails[4]->assertHasSubject("Dear , company $company->name");
+        $mails[4]->assertHasSubject("Dear , company $company->name en");
     }
 
     public function testEventListenerScopeNoMatch()
@@ -186,9 +209,9 @@ class EventListenerTest extends TestCase
 
         // there is a scoped settings according company name so mail subject must contain the scoped settings.
         if ($useFr) {
-            $mail->assertHasSubject("Cher·ère $user->first_name, société VIP $company->name (vérifié à: 11 novembre 2022 (UTC))");
+            $mail->assertHasSubject("Cher·ère $user->first_name, société VIP $company->name fr (vérifié à: 11 novembre 2022 (UTC))");
         } else {
-            $mail->assertHasSubject("Dear $user->first_name, VIP company $company->name (verified at: November 11, 2022 (UTC))");
+            $mail->assertHasSubject("Dear $user->first_name, VIP company $company->name en (verified at: November 11, 2022 (UTC))");
         }
     }
 
@@ -517,11 +540,10 @@ class EventListenerTest extends TestCase
         $this->actingAs($user)->postJson("custom/event-listeners/$eventListener->id/actions", $actionValues)
             ->assertUnprocessable()
             ->assertJson([
-                'message' => 'Action bad-action not found. (and 2 more errors)',
+                'message' => 'Action bad-action not found. (and 1 more error)',
                 'errors' => [
                     'type' => [
                         'Action bad-action not found.',
-                        'The action bad-action is not an action triggerable from event.',
                     ],
                     'name' => [
                         'The name field is required.',

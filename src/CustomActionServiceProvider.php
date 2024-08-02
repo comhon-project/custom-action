@@ -3,7 +3,8 @@
 namespace Comhon\CustomAction;
 
 use Comhon\CustomAction\Commands\GenerateActionCommand;
-use Comhon\CustomAction\Contracts\BindingFinderInterface;
+use Comhon\CustomAction\Contracts\BindingsFinderInterface;
+use Comhon\CustomAction\Contracts\BindingsValidatorInterface;
 use Comhon\CustomAction\Contracts\CustomActionInterface;
 use Comhon\CustomAction\Contracts\CustomEventInterface;
 use Comhon\CustomAction\Contracts\EmailReceiverInterface;
@@ -50,8 +51,11 @@ class CustomActionServiceProvider extends PackageServiceProvider
         $this->app->singleton(CustomActionModelResolver::class, function (Application $app) {
             return new CustomActionModelResolver($app->make($app['config']['custom-action.model_resolver']));
         });
-        $this->app->singletonIf(BindingFinderInterface::class, function (Application $app) {
-            return new BindingFinder;
+        $this->app->singletonIf(BindingsFinderInterface::class, function (Application $app) {
+            return new BindingsFinder;
+        });
+        $this->app->singletonIf(BindingsValidatorInterface::class, function (Application $app) {
+            return new BindingsValidator;
         });
     }
 

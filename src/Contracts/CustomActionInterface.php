@@ -2,8 +2,15 @@
 
 namespace Comhon\CustomAction\Contracts;
 
+use Comhon\CustomAction\Models\ActionSettings;
+
 interface CustomActionInterface
 {
+    /**
+     * handle action with given settings and bindings
+     */
+    public function handle(ActionSettings $actionSettings, ?BindingsContainerInterface $bindingsContainer = null);
+
     /**
      * Get action settings schema
      */
@@ -13,9 +20,4 @@ interface CustomActionInterface
      * Get action localized settings schema
      */
     public function getLocalizedSettingsSchema(?string $eventClassContext = null): array;
-
-    /**
-     * Get action binding schema
-     */
-    public function getBindingSchema(): array;
 }

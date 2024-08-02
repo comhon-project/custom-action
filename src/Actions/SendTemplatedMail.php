@@ -2,10 +2,11 @@
 
 namespace Comhon\CustomAction\Actions;
 
+use Comhon\CustomAction\Contracts\BindingsContainerInterface;
 use Comhon\CustomAction\Contracts\CustomActionInterface;
-use Comhon\CustomAction\Contracts\CustomEventInterface;
+use Comhon\CustomAction\Contracts\HasBindingsInterface;
 use Comhon\CustomAction\Contracts\HasTimezonePreferenceInterface;
-use Comhon\CustomAction\Contracts\TriggerableFromEventInterface;
+use Comhon\CustomAction\Facades\BindingsValidator;
 use Comhon\CustomAction\Facades\CustomActionModelResolver;
 use Comhon\CustomAction\Mail\Custom;
 use Comhon\CustomAction\Models\ActionSettings;
@@ -18,7 +19,7 @@ use Illuminate\Foundation\Auth\User;
 use Illuminate\Support\Arr;
 use Illuminate\Support\Facades\Mail;
 
-class SendTemplatedMail implements CustomActionInterface, TriggerableFromEventInterface
+class SendTemplatedMail implements CustomActionInterface, HasBindingsInterface
 {
     /**
      * Indicates if the mail should be queued.
@@ -38,7 +39,7 @@ class SendTemplatedMail implements CustomActionInterface, TriggerableFromEventIn
             'to_emails' => 'array',
             'to_emails.*' => 'email',
         ];
-        if ($eventClassContext) {
+        if ($eventClassContext && is_subclass_of($eventClassContext, HasBindingsInterface::class)) {
             $bindingTypes = [
                 'to_bindings_receivers' => 'array:email-receiver',
                 'to_bindings_emails' => 'array:email',
@@ -67,11 +68,13 @@ class SendTemplatedMail implements CustomActionInterface, TriggerableFromEventIn
      *
      * Global bindings + 'to' binding
      */
-    final public function getBindingSchema($withToBindings = true): array
+    final public static function getBindingSchema(): array
     {
         return [
-            ...$this->getGlobalBindingSchema(),
+            ...static::getGlobalBindingSchema() ?? [],
             'to' => RuleHelper::getRuleName('is').':email-receiver',
+            'default_timezone' => 'string',
+            'preferred_timezone' => 'string',
         ];
     }
 
@@ -80,7 +83,12 @@ class SendTemplatedMail implements CustomActionInterface, TriggerableFromEventIn
      *
      * Global bindings are bindings that are the same for all receivers
      */
-    public function getGlobalBindingSchema(): array
+    public static function getGlobalBindingSchema(): ?array
+    {
+        return [];
+    }
+
+    public function getBindingValues(?string $locale = null): array
     {
         return [];
     }
@@ -96,90 +104,55 @@ class SendTemplatedMail implements CustomActionInterface, TriggerableFromEventIn
             ->filter(fn ($path) => $path != null);
     }
 
-    public function handleFromEvent(CustomEventInterface $event, ActionSettings $actionSettings)
-    {
-        $this->handleFromAction(
-            $actionSettings,
-            $event->getBindingValues(),
-            $event->getBindingSchema()
-        );
-    }
-
     /**
-     * @param  array  $bindings  used to define scope, replacement and attachments
      * @param  \Illuminate\Foundation\Auth\User  $to  used only if 'to' is not defined in action settings
      */
-    public function handle(array $bindings, ?User $to = null)
+    public function handleManual(?BindingsContainerInterface $bindingsContainer = null, ?User $to = null)
     {
         $class = get_class($this);
         $type = CustomActionModelResolver::getUniqueName($class);
         $action = ManualAction::findOrFail($type);
 
-        $this->handleFromAction($action->actionSettings, $bindings, null, $to);
+        $this->handle($action->actionSettings, $bindingsContainer, $to);
     }
 
-    /**
-     * @param \Comhon\CustomAction\Models\ActionSettings action settings
-     * @param  \Illuminate\Foundation\Auth\User  $to  used only if 'to' is not defined in action settings
-     * @param  array  $bindings  used to define scope, replacements and attachments
-     * @param  array  $allowedBindings  add bindings to allowed bindings defined in current action
-     */
-    private function handleFromAction(
+    public function handle(
         ActionSettings $actionSettings,
-        ?array $bindings = null,
-        ?array $allowedBindings = null,
+        ?BindingsContainerInterface $bindingsContainer = null,
         mixed $to = null,
     ) {
-        $localizedMails = [];
-        $settingsContainer = $actionSettings->getSettingsContainer($bindings);
-        $reveivers = $this->getReceivers($settingsContainer, $bindings, $to);
-        $attachments = $this->getAttachments($bindings, $settingsContainer->settings);
-        $bindings = $this->getAuthorizedBindings($bindings, $allowedBindings);
+        $localizedMailInfos = [];
+        $notLocalizedBindings = [
+            ...$bindingsContainer?->getBindingValues() ?? [],
+            ...$this->getBindingValues(),
+        ];
+        $settingsContainer = $actionSettings->getSettingsContainer($notLocalizedBindings);
+        $reveivers = $this->getReceivers($settingsContainer, $notLocalizedBindings, $to);
 
         foreach ($reveivers as $to) {
-            $mail = $this->getMailSettings($settingsContainer, $to, $localizedMails);
-            $mail['attachments'] = $attachments;
+            $preferredLocale = $to instanceof HasLocalePreference ? $to->preferredLocale() : null;
+            $localeKey = $preferredLocale ?? 'undefined';
+            $localizedMailInfos[$localeKey] ??= $this->getLocalizedMailInfos(
+                $settingsContainer,
+                $bindingsContainer,
+                $preferredLocale,
+            );
+            $mailInfos = $localizedMailInfos[$localeKey];
+            $usedLocale = $mailInfos['locale'];
+            if (! isset($localizedMailInfos[$usedLocale])) {
+                $localizedMailInfos[$usedLocale] = $mailInfos;
+            }
 
-            $sendMethod = $this->shouldQueue ? 'queue' : 'send';
+            $mailInfos['bindings']['to'] = $to;
             $preferredTimezone = $to instanceof HasTimezonePreferenceInterface
                 ? $to->preferredTimezone()
                 : null;
 
-            $bindings['to'] = $to;
-
+            $sendMethod = $this->shouldQueue ? 'queue' : 'send';
             Mail::to($to)->$sendMethod(
-                new Custom($mail, $bindings, $mail['__locale__'], null, $preferredTimezone)
+                new Custom($mailInfos['mail'], $mailInfos['bindings'], $usedLocale, null, $preferredTimezone)
             );
         }
-    }
-
-    /**
-     * get authorized bindings to avoid to expose some potential sensitive values
-     *
-     * @param  array  $bindings
-     */
-    private function getAuthorizedBindings($bindings, ?array $allowedBindings = null)
-    {
-        $allowedBindingsFromAction = $this->getGlobalBindingSchema();
-        $allowedBindings = $allowedBindings
-            ? array_merge($allowedBindings, $allowedBindingsFromAction)
-            : $allowedBindingsFromAction;
-
-        $authorizedBindings = [];
-        foreach ($allowedBindings as $key => $value) {
-            $path = explode('.', $key);
-            $leaf = array_pop($path);
-            $currentLevel = &$authorizedBindings;
-            $currentValue = $bindings;
-            foreach ($path as $property) {
-                $currentLevel[$property] ??= [];
-                $currentLevel = &$currentLevel[$property];
-                $currentValue = $currentValue[$property] ?? null;
-            }
-            $currentLevel[$leaf] = $currentValue[$leaf] ?? null;
-        }
-
-        return $authorizedBindings;
     }
 
     private function getReceivers(ActionSettingsContainer $settingsContainer, array $bindings, ?User $to): array
@@ -222,21 +195,37 @@ class SendTemplatedMail implements CustomActionInterface, TriggerableFromEventIn
         return $tos;
     }
 
-    private function getMailSettings(
+    private function getLocalizedMailInfos(
         ActionSettingsContainer $settingsContainer,
-        $to,
-        array &$localizedMails
+        ?BindingsContainerInterface $bindingsContainer,
+        ?string $locale,
     ) {
-        $locale = $to instanceof HasLocalePreference
-            ? $to->preferredLocale()
-            : null;
-
-        $localeKey = $locale ?? 'undefined';
-        $localizedMails[$localeKey] ??= $settingsContainer->getMergedSettings($locale);
-        if (! isset($localizedMails[$localeKey]['__locale__'])) {
+        $localizedSettings = $settingsContainer->getLocalizedSettings($locale);
+        if (! $localizedSettings) {
             throw new \Exception('localized mail values not found');
         }
+        $usedLocale = $localizedSettings->locale;
 
-        return $localizedMails[$localeKey];
+        $bindingsFromContainer = $bindingsContainer?->getBindingValues($usedLocale) ?? [];
+        $schemaFromContainer = $bindingsContainer?->getBindingSchema();
+        $bindingsFromContainer = $schemaFromContainer !== null
+            ? BindingsValidator::getValidatedBindings($bindingsFromContainer, $schemaFromContainer)
+            : $bindingsFromContainer;
+
+        $bindingsFromAction = $this->getBindingValues($usedLocale);
+        $schemaFromAction = $this->getGlobalBindingSchema();
+        $bindingsFromAction = $schemaFromAction !== null
+            ? BindingsValidator::getValidatedBindings($bindingsFromAction, $schemaFromAction) : $bindingsFromAction;
+
+        $bindings = [...$bindingsFromContainer ?? [], ...$bindingsFromAction ?? []];
+
+        return [
+            'locale' => $usedLocale,
+            'bindings' => $bindings,
+            'mail' => [
+                ...$localizedSettings->settings,
+                'attachments' => $this->getAttachments($bindings, $settingsContainer->settings),
+            ],
+        ];
     }
 }

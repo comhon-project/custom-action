@@ -36,7 +36,7 @@ class ActionSettingsFactory extends Factory
     public function withEventActionType(string $type): Factory
     {
         return $this->afterCreating(function (ActionSettings $actionSettings) use ($type) {
-            if (! $actionSettings->eventAction) {
+            if (! $actionSettings->eventAction()->exists()) {
                 EventAction::factory([
                     'type' => $type,
                 ])->for($actionSettings, 'actionSettings')->create();
@@ -97,7 +97,7 @@ class ActionSettingsFactory extends Factory
                 $localizedSettings->localizable()->associate($scopedSettings);
                 $localizedSettings->locale = 'en';
                 $localizedSettings->settings = [
-                    'subject' => 'Dear {{ to.first_name }}, VIP company {{ company.name }} (verified at: {{ to.verified_at|format_datetime(\'long\', \'none\') }} ({{preferred_timezone}}))',
+                    'subject' => 'Dear {{ to.first_name }}, VIP company {{ company.name }} {{ localized }} (verified at: {{ to.verified_at|format_datetime(\'long\', \'none\') }} ({{preferred_timezone}}))',
                     'body' => 'the VIP company <strong>{{ company.name }}</strong> has been registered !!!',
                 ];
                 $localizedSettings->save();
@@ -106,7 +106,7 @@ class ActionSettingsFactory extends Factory
                 $localizedSettings->localizable()->associate($scopedSettings);
                 $localizedSettings->locale = 'fr';
                 $localizedSettings->settings = [
-                    'subject' => 'Cher·ère {{ to.first_name }}, société VIP {{ company.name }} (vérifié à: {{ to.verified_at|format_datetime(\'long\', \'none\') }} ({{preferred_timezone}}))',
+                    'subject' => 'Cher·ère {{ to.first_name }}, société VIP {{ company.name }} {{ localized }} (vérifié à: {{ to.verified_at|format_datetime(\'long\', \'none\') }} ({{preferred_timezone}}))',
                     'body' => 'la société VIP <strong>{{ company.name }}</strong> à été inscrite !!!',
                 ];
                 $localizedSettings->save();

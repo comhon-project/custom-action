@@ -2,7 +2,7 @@
 
 namespace Comhon\CustomAction\Contracts;
 
-interface BindingFinderInterface
+interface BindingsFinderInterface
 {
     public function find(string $bindingType, array $bindingSchema): array;
 }

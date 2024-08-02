@@ -3,6 +3,7 @@
 namespace Comhon\CustomAction\Http\Controllers;
 
 use Comhon\CustomAction\Contracts\CustomActionInterface;
+use Comhon\CustomAction\Contracts\HasBindingsInterface;
 use Comhon\CustomAction\Facades\CustomActionModelResolver;
 use Comhon\CustomAction\Rules\RuleHelper;
 use Illuminate\Http\Request;
@@ -43,6 +44,7 @@ class ActionTypeController extends Controller
         if (! CustomActionModelResolver::isAllowedAction($actionType)) {
             throw new NotFoundHttpException('not found');
         }
+        /** @var CustomActionInterface $action */
         $action = app(CustomActionModelResolver::getClass($actionType));
 
         $this->authorize('view', $action);
@@ -51,7 +53,7 @@ class ActionTypeController extends Controller
             'event_context' => [
                 'nullable',
                 'string',
-                RuleHelper::getRuleName('is').':custom-event,false',
+                RuleHelper::getRuleName('is').':custom-event,false,true',
             ],
         ]);
         $eventClassContext = isset($validated['event_context'])
@@ -59,15 +61,12 @@ class ActionTypeController extends Controller
             : null;
 
         $actionSchema = [
-            'binding_schema' => [],
-            'settings_schema' => [],
-            'localized_settings_schema' => [],
+            'settings_schema' => $action->getSettingsSchema($eventClassContext),
+            'localized_settings_schema' => $action->getLocalizedSettingsSchema($eventClassContext),
+            'binding_schema' => $action instanceof HasBindingsInterface
+                ? $action->getBindingSchema()
+                : [],
         ];
-        if ($action instanceof CustomActionInterface) {
-            $actionSchema['settings_schema'] = $action->getSettingsSchema($eventClassContext);
-            $actionSchema['localized_settings_schema'] = $action->getLocalizedSettingsSchema($eventClassContext);
-            $actionSchema['binding_schema'] = $action->getBindingSchema();
-        }
 
         return new JsonResource($actionSchema);
     }

@@ -64,7 +64,24 @@ class CustomEventTest extends TestCase
             ]);
     }
 
-    public function testEventShemaNotFound()
+    public function testGetEventShemaWithoutBindingsSuccess()
+    {
+        $user = User::factory()->hasConsumerAbility()->create();
+        $this->actingAs($user)->getJson('custom/events/my-event-without-bindings/schema')
+            ->assertOk()
+            ->assertJson([
+                'data' => [
+                    'binding_schema' => [],
+                    'allowed_actions' => [
+                        [
+                            'type' => 'my-action-without-bindings',
+                        ],
+                    ],
+                ],
+            ]);
+    }
+
+    public function testGetEventShemaNotFound()
     {
         CustomActionModelResolver::register([], true);
         $user = User::factory()->hasConsumerAbility()->create();
@@ -72,7 +89,7 @@ class CustomEventTest extends TestCase
         $response->assertNotFound();
     }
 
-    public function testEventShemaForbidden()
+    public function testGetEventShemaForbidden()
     {
         $user = User::factory()->create();
         $this->actingAs($user)->getJson('custom/events/company-registered/schema')

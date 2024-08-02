@@ -2,8 +2,9 @@
 
 namespace Comhon\CustomAction;
 
+use Comhon\CustomAction\Contracts\CustomActionInterface;
 use Comhon\CustomAction\Contracts\CustomEventInterface;
-use Comhon\CustomAction\Contracts\TriggerableFromEventInterface;
+use Comhon\CustomAction\Contracts\HasBindingsInterface;
 use Comhon\CustomAction\Facades\CustomActionModelResolver;
 use Comhon\CustomAction\Models\EventListener;
 
@@ -21,17 +22,21 @@ class EventActionDispatcher
         $eventUniqueName = CustomActionModelResolver::getUniqueName(get_class($event));
         $listeners = EventListener::with('eventActions.actionSettings')
             ->where('event', $eventUniqueName)->whereHas('eventActions')->get();
-        $bindings = $event->getBindingValues();
+
+        $bindingsContainer = $event instanceof HasBindingsInterface ?
+            new BindingsContainer(\Closure::fromCallable([$event, 'getBindingValues']), $event->getBindingSchema())
+            : null;
+        $bindings = $bindingsContainer?->getBindingValues() ?? [];
 
         foreach ($listeners as $listener) {
             if (! $listener->scope || $this->matchScope($listener->scope, $bindings)) {
                 foreach ($listener->eventActions as $eventAction) {
                     $actionSettings = $eventAction->actionSettings;
                     $action = app(CustomActionModelResolver::getClass($eventAction->type));
-                    if (! ($action instanceof TriggerableFromEventInterface)) {
+                    if (! ($action instanceof CustomActionInterface)) {
                         throw new \Exception('invalid type '.$eventAction->type);
                     }
-                    $action->handleFromEvent($event, $actionSettings);
+                    $action->handle($actionSettings, $bindingsContainer);
                 }
             }
         }

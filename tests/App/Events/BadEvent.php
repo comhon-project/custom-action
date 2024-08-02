@@ -4,11 +4,15 @@ namespace App\Events;
 
 use App\Actions\BadAction;
 use Comhon\CustomAction\Contracts\CustomEventInterface;
+use Comhon\CustomAction\Contracts\HasBindingsInterface;
 use Illuminate\Broadcasting\InteractsWithSockets;
 use Illuminate\Foundation\Events\Dispatchable;
 use Illuminate\Queue\SerializesModels;
 
-class BadEvent implements CustomEventInterface
+/**
+ * event that has an action that doesn't implement CustomAction interface
+ */
+class BadEvent implements CustomEventInterface, HasBindingsInterface
 {
     use Dispatchable, InteractsWithSockets, SerializesModels;
 
@@ -42,7 +46,7 @@ class BadEvent implements CustomEventInterface
     /**
      * Get event binding values
      */
-    public function getBindingValues(): array
+    public function getBindingValues(?string $locale = null): array
     {
         return [
             'company' => 'bad',

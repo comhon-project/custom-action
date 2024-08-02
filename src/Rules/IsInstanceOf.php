@@ -13,15 +13,19 @@ class IsInstanceOf
             throw new \Exception('must have one parameter');
         }
         $uniqueName = $parameters[0];
-        $isInstanceOf = $uniqueName === $value;
         $mustBeSubclass = isset($parameters[1]) && ($parameters[1] == 'false' || $parameters[1] == '0');
+        $allowString = isset($parameters[2]) && ($parameters[2] == 'true' || $parameters[2] == '1');
+        $baseClass = CustomActionModelResolver::getClass($uniqueName);
+        $isInstanceOf = false;
 
-        if (! $isInstanceOf) {
-            $baseClass = CustomActionModelResolver::getClass($uniqueName);
-            $valueClass = is_string($value) ? CustomActionModelResolver::getClass($value) : $value;
-            $isInstanceOf = $baseClass && $valueClass && is_subclass_of($valueClass, $baseClass);
-        } elseif ($mustBeSubclass) {
-            $isInstanceOf = false;
+        if ($allowString && is_string($value)) {
+            $value = CustomActionModelResolver::getClass($value);
+        }
+
+        if ($baseClass && $value) {
+            $isInstanceOf = $mustBeSubclass
+                ? is_subclass_of($value, $baseClass, $allowString)
+                : is_a($value, $baseClass, $allowString);
         }
 
         if (! $isInstanceOf) {

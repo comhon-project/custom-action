@@ -2,11 +2,11 @@
 
 namespace Comhon\CustomAction;
 
-use Comhon\CustomAction\Contracts\BindingFinderInterface;
+use Comhon\CustomAction\Contracts\BindingsFinderInterface;
 use Comhon\CustomAction\Facades\CustomActionModelResolver;
 use Comhon\CustomAction\Rules\RuleHelper;
 
-class BindingFinder implements BindingFinderInterface
+class BindingsFinder implements BindingsFinderInterface
 {
     public function find(string $bindingType, array $bindingSchema): array
     {
@@ -19,7 +19,7 @@ class BindingFinder implements BindingFinderInterface
             }
             if (is_array($value)) {
                 foreach ($value as $rule) {
-                    if (is_string($rule) && ($rule == $bindingType || $this->isSubclassOf($rule, $bindingClass))) {
+                    if (is_string($rule) && ($rule == $bindingType || $this->isA($rule, $bindingClass))) {
                         $founds[] = $key;
                     }
                 }
@@ -29,7 +29,7 @@ class BindingFinder implements BindingFinderInterface
         return $founds;
     }
 
-    private function isSubclassOf(string $rule, ?string $bindingClass): bool
+    private function isA(string $rule, ?string $bindingClass): bool
     {
         if (! $bindingClass) {
             return false;
@@ -38,8 +38,10 @@ class BindingFinder implements BindingFinderInterface
         if (strpos($rule, $ruleIsPrefix) !== 0) {
             return false;
         }
-        $class = CustomActionModelResolver::getClass(substr($rule, strlen($ruleIsPrefix)));
+        $class = CustomActionModelResolver::getClass(
+            explode(',', substr($rule, strlen($ruleIsPrefix)))[0]
+        );
 
-        return $class == $bindingClass || is_subclass_of($class, $bindingClass);
+        return is_a($class, $bindingClass, true);
     }
 }

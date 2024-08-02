@@ -3,7 +3,6 @@
 namespace Comhon\CustomAction\Http\Controllers;
 
 use Comhon\CustomAction\Contracts\CustomActionInterface;
-use Comhon\CustomAction\Contracts\TriggerableFromEventInterface;
 use Comhon\CustomAction\Facades\CustomActionModelResolver;
 use Comhon\CustomAction\Models\ActionSettings;
 use Comhon\CustomAction\Models\EventAction;
@@ -100,9 +99,6 @@ class EventActionController extends Controller
                     $action = $actionClass ? app($actionClass) : null;
                     if (! $action instanceof CustomActionInterface) {
                         $fail("Action {$type} not found.");
-                    }
-                    if (! $action instanceof TriggerableFromEventInterface) {
-                        $fail("The action {$type} is not an action triggerable from event.");
                     }
                 },
             ],

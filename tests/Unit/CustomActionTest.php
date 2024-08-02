@@ -4,6 +4,7 @@ namespace Tests\Unit;
 
 use App\Actions\SendCompanyRegistrationMail;
 use Comhon\CustomAction\Actions\SendTemplatedMail;
+use Comhon\CustomAction\BindingsContainer;
 use Comhon\CustomAction\Models\ManualAction;
 use Tests\SetUpWithModelRegistration;
 use Tests\TestCase;
@@ -25,7 +26,7 @@ class CustomActionTest extends TestCase
     public function testHandleFromNotManualAction()
     {
         $this->expectExceptionMessage('No query results for model');
-        $this->getSendMailAction()->handle([]);
+        $this->getSendMailAction()->handleManual(new BindingsContainer([]));
     }
 
     public function testHandleWithoutReceiver()
@@ -33,6 +34,14 @@ class CustomActionTest extends TestCase
         ManualAction::factory()->sendMailRegistrationCompany([], false, false)->create();
 
         $this->expectExceptionMessage('there is no mail receiver defined');
-        $this->getSendMailManualAction()->handle([]);
+        $this->getSendMailManualAction()->handleManual(new BindingsContainer([]));
+    }
+
+    public function testHandleWithoutBindingsContainer()
+    {
+        ManualAction::factory()->sendMailRegistrationCompany([], false, false)->create();
+
+        $this->expectExceptionMessage('there is no mail receiver defined');
+        $this->getSendMailManualAction()->handleManual();
     }
 }

@@ -44,7 +44,6 @@ class EventListenerFactory extends Factory
 
         return $this->state(function (array $attributes) use ($companyNameScope) {
             return [
-                'event' => 'company-registered',
                 'scope' => $companyNameScope ? ['company' => ['name' => $companyNameScope]] : null,
             ];
         })->afterCreating(function (EventListener $listener) use ($toOtherUserId, $shoudQueue, $withAttachement) {

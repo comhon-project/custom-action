@@ -3,6 +3,7 @@
 namespace Comhon\CustomAction\Http\Controllers;
 
 use Comhon\CustomAction\Contracts\CustomEventInterface;
+use Comhon\CustomAction\Contracts\HasBindingsInterface;
 use Comhon\CustomAction\Facades\CustomActionModelResolver;
 use Comhon\CustomAction\Models\EventListener;
 use Illuminate\Http\Request;
@@ -47,15 +48,19 @@ class EventController extends Controller
 
         $this->authorize('view', [CustomEventInterface::class, $eventClass]);
 
-        $schema = ['binding_schema' => $eventClass::getBindingSchema()];
-        $schema['allowed_actions'] = collect($eventClass::getAllowedActions())->map(function ($class) {
-            $uniqueName = CustomActionModelResolver::getUniqueName($class);
+        $schema = [
+            'binding_schema' => is_subclass_of($eventClass, HasBindingsInterface::class)
+                ? $eventClass::getBindingSchema()
+                : [],
+            'allowed_actions' => collect($eventClass::getAllowedActions())->map(function ($class) {
+                $uniqueName = CustomActionModelResolver::getUniqueName($class);
 
-            return [
-                'type' => $uniqueName,
-                'name' => trans('custom-action::messages.actions.'.$uniqueName),
-            ];
-        })->values();
+                return [
+                    'type' => $uniqueName,
+                    'name' => trans('custom-action::messages.actions.'.$uniqueName),
+                ];
+            })->values(),
+        ];
 
         return new JsonResource($schema);
     }
