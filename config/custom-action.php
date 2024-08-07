@@ -33,13 +33,6 @@ return [
     'rule_prefix' => '',
 
     /*
-     | the model resolver.
-     | it must be instance of Comhon\ModelResolverContract\ModelResolverInterface.
-     | it must be registered as singleton
-     */
-    'model_resolver' => Comhon\CustomAction\Resolver\ModelResolver::class,
-
-    /*
      | actions that may be defined as manual actions.
      | each element must a class that implements CustomActionInterface.
      */

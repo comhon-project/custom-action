@@ -16,11 +16,13 @@ use Comhon\CustomAction\Models\ActionSettings;
 use Comhon\CustomAction\Models\EventAction;
 use Comhon\CustomAction\Models\EventListener;
 use Comhon\CustomAction\Resolver\CustomActionModelResolver;
+use Comhon\CustomAction\Resolver\ModelResolver;
 use Comhon\CustomAction\Rules\HtmlTemplate;
 use Comhon\CustomAction\Rules\IsInstanceOf;
 use Comhon\CustomAction\Rules\ModelReference;
 use Comhon\CustomAction\Rules\RuleHelper;
 use Comhon\CustomAction\Rules\TextTemplate;
+use Comhon\ModelResolverContract\ModelResolverInterface;
 use Illuminate\Contracts\Foundation\Application;
 use Illuminate\Support\Facades\Event;
 use Illuminate\Support\Facades\Gate;
@@ -48,8 +50,9 @@ class CustomActionServiceProvider extends PackageServiceProvider
 
     public function packageRegistered()
     {
-        $this->app->singleton(CustomActionModelResolver::class, function (Application $app) {
-            return new CustomActionModelResolver($app->make($app['config']['custom-action.model_resolver']));
+        $this->app->singleton(CustomActionModelResolver::class);
+        $this->app->singletonIf(ModelResolverInterface::class, function (Application $app) {
+            return new ModelResolver;
         });
         $this->app->singletonIf(BindingsFinderInterface::class, function (Application $app) {
             return new BindingsFinder;
