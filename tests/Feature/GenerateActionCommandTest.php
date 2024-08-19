@@ -14,7 +14,7 @@ class GenerateActionCommandTest extends TestCase
     /**
      * @dataProvider providerGenerateActionFileSuccess
      */
-    public function testGenerateActionFileSuccess($dirShouldExists, $extends, $expectContent)
+    public function testGenerateActionFileSuccess($dirShouldExists, $extends, $manual, $expectContent)
     {
         CustomActionModelResolver::bind('bad-action', BadAction::class);
         $dir = Utils::joinPaths(Utils::getTestPath('Actions'), 'CustomActions');
@@ -27,7 +27,7 @@ class GenerateActionCommandTest extends TestCase
         app()->useAppPath(Utils::getTestPath());
         artisan($this, 'custom-action:generate', [
             'name' => 'TestGenericSendEmail',
-            ...($extends ? ['--extends' => $extends] : []),
+            ...($extends ? ['--extends' => $extends, '--manual' => $manual] : ['--manual' => $manual]),
         ]);
 
         $path = Utils::joinPaths(Utils::getTestPath('Actions'), 'CustomActions', 'TestGenericSendEmail.php');
@@ -45,6 +45,7 @@ class GenerateActionCommandTest extends TestCase
             [
                 true,
                 null,
+                false,
                 <<<EOT
 <?php
 
@@ -101,6 +102,7 @@ EOT
             [
                 false,
                 'send-email',
+                false,
                 <<<EOT
 <?php
 
@@ -142,6 +144,7 @@ EOT
             [
                 false,
                 'bad-action',
+                false,
                 <<<EOT
 <?php
 
@@ -182,6 +185,51 @@ class TestGenericSendEmail extends BadAction implements CustomActionInterface
     public static function getLocalizedSettingsSchema(?string \$eventClassContext = null): array
     {
         return [];
+    }
+
+
+    /**
+     * execute action
+     */
+    public function handle(): void
+    {
+        //
+    }
+}
+
+EOT
+            ],
+            [
+                false,
+                'send-email',
+                true,
+                <<<EOT
+<?php
+
+namespace App\Actions\CustomActions;
+
+use Comhon\CustomAction\Actions\HandleManualAction;
+use Comhon\CustomAction\Actions\SendTemplatedMail;
+use Illuminate\Contracts\Queue\ShouldQueue;
+
+class TestGenericSendEmail extends SendTemplatedMail
+{
+    use HandleManualAction;
+
+    /**
+     * Get action settings schema
+     */
+    public static function getSettingsSchema(?string \$eventClassContext = null): array
+    {
+        return parent::getSettingsSchema(\$eventClassContext);
+    }
+
+    /**
+     * Get action localized settings schema
+     */
+    public static function getLocalizedSettingsSchema(?string \$eventClassContext = null): array
+    {
+        return parent::getLocalizedSettingsSchema(\$eventClassContext);
     }
 
 

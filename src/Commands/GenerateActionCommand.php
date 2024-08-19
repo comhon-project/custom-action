@@ -2,6 +2,7 @@
 
 namespace Comhon\CustomAction\Commands;
 
+use Comhon\CustomAction\Actions\HandleManualAction;
 use Comhon\CustomAction\Contracts\BindingsContainerInterface;
 use Comhon\CustomAction\Contracts\CustomActionInterface;
 use Comhon\CustomAction\Facades\CustomActionModelResolver;
@@ -15,7 +16,7 @@ use Illuminate\Queue\SerializesModels;
 
 class GenerateActionCommand extends Command
 {
-    public $signature = 'custom-action:generate {name} {--extends=}';
+    public $signature = 'custom-action:generate {name} {--extends=} {--manual}';
 
     public $description = 'generate a custom action class';
 
@@ -65,6 +66,9 @@ class GenerateActionCommand extends Command
             InteractsWithQueue::class,
             SerializesModels::class,
         ];
+        if ($this->option('manual')) {
+            $actionTraits[] = HandleManualAction::class;
+        }
         foreach ($actionTraits as $actionTrait) {
             if (! $extendsClass || ! in_array($actionTrait, $traits)) {
                 $imports[] = $actionTrait;
