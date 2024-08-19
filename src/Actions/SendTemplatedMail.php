@@ -11,7 +11,6 @@ use Comhon\CustomAction\Facades\CustomActionModelResolver;
 use Comhon\CustomAction\Mail\Custom;
 use Comhon\CustomAction\Models\ActionSettings;
 use Comhon\CustomAction\Models\ActionSettingsContainer;
-use Comhon\CustomAction\Models\ManualAction;
 use Comhon\CustomAction\Rules\RuleHelper;
 use Comhon\CustomAction\Support\Bindings;
 use Illuminate\Contracts\Translation\HasLocalePreference;
@@ -115,14 +114,6 @@ class SendTemplatedMail implements CustomActionInterface, HasBindingsInterface
         return collect($settings['attachments'])
             ->map(fn ($property) => Arr::get($bindings, $property))
             ->filter(fn ($path) => $path != null);
-    }
-
-    public static function handleManual(?BindingsContainerInterface $bindingsContainer = null, ...$args)
-    {
-        $type = CustomActionModelResolver::getUniqueName(static::class);
-        $action = ManualAction::findOrFail($type);
-
-        static::dispatch($action->actionSettings, $bindingsContainer, ...$args);
     }
 
     public function handle()

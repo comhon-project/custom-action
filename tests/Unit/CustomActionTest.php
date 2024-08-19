@@ -3,7 +3,6 @@
 namespace Tests\Unit;
 
 use App\Actions\SendCompanyRegistrationMail;
-use Comhon\CustomAction\Actions\SendTemplatedMail;
 use Comhon\CustomAction\BindingsContainer;
 use Comhon\CustomAction\Models\ManualAction;
 use Tests\SetUpWithModelRegistration;
@@ -12,12 +11,6 @@ use Tests\TestCase;
 class CustomActionTest extends TestCase
 {
     use SetUpWithModelRegistration;
-
-    public function testHandleFromNotManualAction()
-    {
-        $this->expectExceptionMessage('No query results for model');
-        SendTemplatedMail::handleManual(new BindingsContainer([]));
-    }
 
     public function testHandleWithoutReceiver()
     {
