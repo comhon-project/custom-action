@@ -14,8 +14,8 @@ use Comhon\CustomAction\Models\EventAction;
 use Comhon\CustomAction\Models\EventListener;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Mail\Mailables\Attachment;
-use Illuminate\Support\Facades\Bus;
 use Illuminate\Support\Facades\Mail;
+use Illuminate\Support\Facades\Queue;
 use Mockery\MockInterface;
 use Tests\SetUpWithModelRegistration;
 use Tests\Support\Caller;
@@ -48,8 +48,12 @@ class EventListenerTest extends TestCase
             true
         )->create();
 
+        Queue::fake();
         Mail::fake();
+
         CompanyRegistered::dispatch($company, $targetUser);
+
+        Queue::assertNothingPushed();
 
         $mails = [];
         Mail::assertSent(Custom::class, 3);
@@ -127,8 +131,12 @@ class EventListenerTest extends TestCase
         ActionLocalizedSettings::factory()->for($actionSettings, 'localizable')->emailSettings('en')->create();
         ActionLocalizedSettings::factory()->for($actionSettings, 'localizable')->emailSettings('fr')->create();
 
+        Queue::fake();
         Mail::fake();
+
         CompanyRegistered::dispatch($company, $user);
+
+        Queue::assertNothingPushed();
 
         $mails = [];
         Mail::assertSent(Custom::class, 5);
@@ -226,10 +234,10 @@ class EventListenerTest extends TestCase
         // create event listener for CompanyRegistered event
         EventListener::factory()->genericRegistrationCompany($otherUsers->pluck('id')->all(), null, true)->create();
 
-        Bus::fake();
+        Queue::fake();
         CompanyRegistered::dispatch($company, $targetUser);
 
-        Bus::assertDispatched(QueueTemplatedMail::class, 2);
+        Queue::assertPushed(QueueTemplatedMail::class, 2);
     }
 
     public function testGetEventListeners()
