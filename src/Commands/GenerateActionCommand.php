@@ -6,9 +6,12 @@ use Comhon\CustomAction\Contracts\BindingsContainerInterface;
 use Comhon\CustomAction\Contracts\CustomActionInterface;
 use Comhon\CustomAction\Facades\CustomActionModelResolver;
 use Comhon\CustomAction\Models\ActionSettings;
+use Illuminate\Bus\Queueable;
 use Illuminate\Console\Command;
 use Illuminate\Contracts\Queue\ShouldQueue;
-use Illuminate\Foundation\Queue\Queueable;
+use Illuminate\Foundation\Bus\Dispatchable;
+use Illuminate\Queue\InteractsWithQueue;
+use Illuminate\Queue\SerializesModels;
 
 class GenerateActionCommand extends Command
 {
@@ -55,10 +58,19 @@ class GenerateActionCommand extends Command
             $imports[] = ShouldQueue::class;
         }
 
-        if (! $extendsClass || ! in_array(Queueable::class, class_uses_recursive($extendsClass))) {
-            $imports[] = Queueable::class;
-            $explode = explode('\\', Queueable::class);
-            $uses[] = $explode[count($explode) - 1];
+        $traits = $extendsClass ? class_uses_recursive($extendsClass) : [];
+        $actionTraits = [
+            Dispatchable::class,
+            Queueable::class,
+            InteractsWithQueue::class,
+            SerializesModels::class,
+        ];
+        foreach ($actionTraits as $actionTrait) {
+            if (! $extendsClass || ! in_array($actionTrait, $traits)) {
+                $imports[] = $actionTrait;
+                $explode = explode('\\', $actionTrait);
+                $uses[] = $explode[count($explode) - 1];
+            }
         }
 
         if (! $extendsClass || ! method_exists($extendsClass, '__construct')) {

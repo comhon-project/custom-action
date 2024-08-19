@@ -13,14 +13,17 @@ use Comhon\CustomAction\Models\ActionSettings;
 use Comhon\CustomAction\Models\ActionSettingsContainer;
 use Comhon\CustomAction\Rules\RuleHelper;
 use Comhon\CustomAction\Support\Bindings;
+use Illuminate\Bus\Queueable;
 use Illuminate\Contracts\Translation\HasLocalePreference;
-use Illuminate\Foundation\Queue\Queueable;
+use Illuminate\Foundation\Bus\Dispatchable;
+use Illuminate\Queue\InteractsWithQueue;
+use Illuminate\Queue\SerializesModels;
 use Illuminate\Support\Arr;
 use Illuminate\Support\Facades\Mail;
 
 class SendTemplatedMail implements CustomActionInterface, HasBindingsInterface
 {
-    use Queueable;
+    use Dispatchable, InteractsWithQueue, Queueable, SerializesModels;
 
     /**
      * @param  mixed  $to  force the email receiver(s) and ignore receivers defined in settings.
