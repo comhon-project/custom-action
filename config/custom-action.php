@@ -19,11 +19,6 @@ return [
     'use_policies' => false,
 
     /*
-     | your app user model
-     */
-    'user_model' => App\Models\User::class,
-
-    /*
      | custom action library come up with some built in validation rules.
      | theses function are registered in the laravel validator as string,
      | so they may conflict with your rules if you have also set any.
