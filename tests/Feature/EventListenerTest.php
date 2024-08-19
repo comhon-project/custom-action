@@ -2,11 +2,11 @@
 
 namespace Tests\Feature;
 
-use App\Actions\MyActionWithoutBindings;
 use App\Events\CompanyRegistered;
 use App\Events\MyEventWithoutBindings;
 use App\Models\Company;
 use App\Models\User;
+use Comhon\CustomAction\Actions\QueueTemplatedMail;
 use Comhon\CustomAction\Mail\Custom;
 use Comhon\CustomAction\Models\ActionLocalizedSettings;
 use Comhon\CustomAction\Models\ActionSettings;
@@ -14,11 +14,11 @@ use Comhon\CustomAction\Models\EventAction;
 use Comhon\CustomAction\Models\EventListener;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Mail\Mailables\Attachment;
-use Illuminate\Mail\SendQueuedMailable;
 use Illuminate\Support\Facades\Bus;
 use Illuminate\Support\Facades\Mail;
 use Mockery\MockInterface;
 use Tests\SetUpWithModelRegistration;
+use Tests\Support\Caller;
 use Tests\Support\Utils;
 use Tests\TestCase;
 
@@ -48,11 +48,8 @@ class EventListenerTest extends TestCase
             true
         )->create();
 
-        Bus::fake();
         Mail::fake();
         CompanyRegistered::dispatch($company, $targetUser);
-
-        Bus::assertNothingDispatched();
 
         $mails = [];
         Mail::assertSent(Custom::class, 3);
@@ -95,8 +92,8 @@ class EventListenerTest extends TestCase
         $eventListener->event = 'my-event-without-bindings';
         $eventListener->save();
 
-        $this->partialMock(MyActionWithoutBindings::class, function (MockInterface $mock) use ($settings) {
-            $mock->shouldReceive('handle')->once()->withArgs(function ($actionSettings, $bindingsContainer) use ($settings) {
+        $this->partialMock(Caller::class, function (MockInterface $mock) use ($settings) {
+            $mock->shouldReceive('call')->once()->withArgs(function ($actionSettings, $bindingsContainer) use ($settings) {
                 return $settings->is($actionSettings) && $bindingsContainer === null;
             });
         });
@@ -130,11 +127,8 @@ class EventListenerTest extends TestCase
         ActionLocalizedSettings::factory()->for($actionSettings, 'localizable')->emailSettings('en')->create();
         ActionLocalizedSettings::factory()->for($actionSettings, 'localizable')->emailSettings('fr')->create();
 
-        Bus::fake();
         Mail::fake();
         CompanyRegistered::dispatch($company, $user);
-
-        Bus::assertNothingDispatched();
 
         $mails = [];
         Mail::assertSent(Custom::class, 5);
@@ -235,7 +229,7 @@ class EventListenerTest extends TestCase
         Bus::fake();
         CompanyRegistered::dispatch($company, $targetUser);
 
-        Bus::assertDispatched(SendQueuedMailable::class, 3);
+        Bus::assertDispatched(QueueTemplatedMail::class, 2);
     }
 
     public function testGetEventListeners()

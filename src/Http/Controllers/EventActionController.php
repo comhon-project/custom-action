@@ -96,8 +96,7 @@ class EventActionController extends Controller
                 'in:'.$allowedTypes->implode(','),
                 function (string $attribute, $type, $fail) {
                     $actionClass = CustomActionModelResolver::getClass($type);
-                    $action = $actionClass ? app($actionClass) : null;
-                    if (! $action instanceof CustomActionInterface) {
+                    if (! is_subclass_of($actionClass, CustomActionInterface::class)) {
                         $fail("Action {$type} not found.");
                     }
                 },
@@ -106,8 +105,7 @@ class EventActionController extends Controller
         ]);
 
         $actionClass = CustomActionModelResolver::getClass($validated['type']);
-        $action = app($actionClass);
-        $settingsRules = RuleHelper::getSettingsRules($action->getSettingsSchema($eventClass));
+        $settingsRules = RuleHelper::getSettingsRules($actionClass::getSettingsSchema($eventClass));
 
         return [
             ...$validated,

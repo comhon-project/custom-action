@@ -44,10 +44,9 @@ class ActionTypeController extends Controller
         if (! CustomActionModelResolver::isAllowedAction($actionType)) {
             throw new NotFoundHttpException('not found');
         }
-        /** @var CustomActionInterface $action */
-        $action = app(CustomActionModelResolver::getClass($actionType));
+        $actionClass = CustomActionModelResolver::getClass($actionType);
 
-        $this->authorize('view', $action);
+        $this->authorize('view', [CustomActionInterface::class, $actionClass]);
 
         $validated = $request->validate([
             'event_context' => [
@@ -61,10 +60,10 @@ class ActionTypeController extends Controller
             : null;
 
         $actionSchema = [
-            'settings_schema' => $action->getSettingsSchema($eventClassContext),
-            'localized_settings_schema' => $action->getLocalizedSettingsSchema($eventClassContext),
-            'binding_schema' => $action instanceof HasBindingsInterface
-                ? $action->getBindingSchema()
+            'settings_schema' => $actionClass::getSettingsSchema($eventClassContext),
+            'localized_settings_schema' => $actionClass::getLocalizedSettingsSchema($eventClassContext),
+            'binding_schema' => is_subclass_of($actionClass, HasBindingsInterface::class)
+                ? $actionClass::getBindingSchema()
                 : [],
         ];
 

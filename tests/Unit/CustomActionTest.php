@@ -13,20 +13,10 @@ class CustomActionTest extends TestCase
 {
     use SetUpWithModelRegistration;
 
-    private function getSendMailAction(): SendTemplatedMail
-    {
-        return app(SendTemplatedMail::class);
-    }
-
-    private function getSendMailManualAction(): SendCompanyRegistrationMail
-    {
-        return app(SendCompanyRegistrationMail::class);
-    }
-
     public function testHandleFromNotManualAction()
     {
         $this->expectExceptionMessage('No query results for model');
-        $this->getSendMailAction()->handleManual(new BindingsContainer([]));
+        SendTemplatedMail::handleManual(new BindingsContainer([]));
     }
 
     public function testHandleWithoutReceiver()
@@ -34,7 +24,7 @@ class CustomActionTest extends TestCase
         ManualAction::factory()->sendMailRegistrationCompany([], false, false)->create();
 
         $this->expectExceptionMessage('there is no mail receiver defined');
-        $this->getSendMailManualAction()->handleManual(new BindingsContainer([]));
+        SendCompanyRegistrationMail::handleManual(new BindingsContainer([]));
     }
 
     public function testHandleWithoutBindingsContainer()
@@ -42,6 +32,6 @@ class CustomActionTest extends TestCase
         ManualAction::factory()->sendMailRegistrationCompany([], false, false)->create();
 
         $this->expectExceptionMessage('there is no mail receiver defined');
-        $this->getSendMailManualAction()->handleManual();
+        SendCompanyRegistrationMail::handleManual();
     }
 }

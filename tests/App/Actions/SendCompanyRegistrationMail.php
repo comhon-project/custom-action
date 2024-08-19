@@ -15,7 +15,7 @@ class SendCompanyRegistrationMail extends SendTemplatedMail
         ];
     }
 
-    public function getSettingsSchema(?string $eventClassContext = null): array
+    public static function getSettingsSchema(?string $eventClassContext = null): array
     {
         return [
             ...parent::getSettingsSchema(),
@@ -26,7 +26,7 @@ class SendCompanyRegistrationMail extends SendTemplatedMail
     /**
      * Get action localized settings schema
      */
-    public function getLocalizedSettingsSchema(?string $eventClassContext = null): array
+    public static function getLocalizedSettingsSchema(?string $eventClassContext = null): array
     {
         return [
             ...parent::getLocalizedSettingsSchema(),

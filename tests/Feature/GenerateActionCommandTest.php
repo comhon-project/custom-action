@@ -2,7 +2,7 @@
 
 namespace Tests\Feature;
 
-use App\Models\User;
+use App\Actions\BadAction;
 use Comhon\CustomAction\Facades\CustomActionModelResolver;
 use Tests\Support\Utils;
 use Tests\TestCase;
@@ -16,7 +16,7 @@ class GenerateActionCommandTest extends TestCase
      */
     public function testGenerateActionFileSuccess($dirShouldExists, $extends, $expectContent)
     {
-        CustomActionModelResolver::bind('user', User::class);
+        CustomActionModelResolver::bind('bad-action', BadAction::class);
         $dir = Utils::joinPaths(Utils::getTestPath('Actions'), 'CustomActions');
         if (file_exists($dir)) {
             rmdir($dir);
@@ -50,11 +50,47 @@ class GenerateActionCommandTest extends TestCase
 
 namespace App\Actions\CustomActions;
 
+use Comhon\CustomAction\Contracts\BindingsContainerInterface;
 use Comhon\CustomAction\Contracts\CustomActionInterface;
+use Comhon\CustomAction\Models\ActionSettings;
+use Illuminate\Contracts\Queue\ShouldQueue;
+use Illuminate\Foundation\Queue\Queueable;
 
 class TestGenericSendEmail implements CustomActionInterface
 {
+    use Queueable;
 
+    public function __construct(
+        private ActionSettings \$actionSettings,
+        private ?BindingsContainerInterface \$bindingsContainer = null,
+    ) {
+        //
+    }
+
+    /**
+     * Get action settings schema
+     */
+    public static function getSettingsSchema(?string \$eventClassContext = null): array
+    {
+        return [];
+    }
+
+    /**
+     * Get action localized settings schema
+     */
+    public static function getLocalizedSettingsSchema(?string \$eventClassContext = null): array
+    {
+        return [];
+    }
+
+
+    /**
+     * execute action
+     */
+    public function handle(): void
+    {
+        //
+    }
 }
 
 EOT
@@ -68,28 +104,88 @@ EOT
 namespace App\Actions\CustomActions;
 
 use Comhon\CustomAction\Actions\SendTemplatedMail;
+use Illuminate\Contracts\Queue\ShouldQueue;
 
 class TestGenericSendEmail extends SendTemplatedMail
 {
+    /**
+     * Get action settings schema
+     */
+    public static function getSettingsSchema(?string \$eventClassContext = null): array
+    {
+        return parent::getSettingsSchema(\$eventClassContext);
+    }
 
+    /**
+     * Get action localized settings schema
+     */
+    public static function getLocalizedSettingsSchema(?string \$eventClassContext = null): array
+    {
+        return parent::getLocalizedSettingsSchema(\$eventClassContext);
+    }
+
+
+    /**
+     * execute action
+     */
+    public function handle(): void
+    {
+        //
+    }
 }
 
 EOT
             ],
             [
                 false,
-                'user',
+                'bad-action',
                 <<<EOT
 <?php
 
 namespace App\Actions\CustomActions;
 
-use App\Models\User;
+use App\Actions\BadAction;
+use Comhon\CustomAction\Contracts\BindingsContainerInterface;
 use Comhon\CustomAction\Contracts\CustomActionInterface;
+use Comhon\CustomAction\Models\ActionSettings;
+use Illuminate\Contracts\Queue\ShouldQueue;
+use Illuminate\Foundation\Queue\Queueable;
 
-class TestGenericSendEmail extends User implements CustomActionInterface
+class TestGenericSendEmail extends BadAction implements CustomActionInterface
 {
+    use Queueable;
 
+    public function __construct(
+        private ActionSettings \$actionSettings,
+        private ?BindingsContainerInterface \$bindingsContainer = null,
+    ) {
+        //
+    }
+
+    /**
+     * Get action settings schema
+     */
+    public static function getSettingsSchema(?string \$eventClassContext = null): array
+    {
+        return [];
+    }
+
+    /**
+     * Get action localized settings schema
+     */
+    public static function getLocalizedSettingsSchema(?string \$eventClassContext = null): array
+    {
+        return [];
+    }
+
+
+    /**
+     * execute action
+     */
+    public function handle(): void
+    {
+        //
+    }
 }
 
 EOT

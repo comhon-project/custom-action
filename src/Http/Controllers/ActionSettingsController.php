@@ -41,8 +41,8 @@ class ActionSettingsController extends Controller
             : null;
 
         /** @var CustomActionInterface $action */
-        $action = app(CustomActionModelResolver::getClass($actionSettings->getAction()->type));
-        $rules = RuleHelper::getSettingsRules($action->getSettingsSchema($eventContext));
+        $actionClass = CustomActionModelResolver::getClass($actionSettings->getAction()->type);
+        $rules = RuleHelper::getSettingsRules($actionClass::getSettingsSchema($eventContext));
 
         $validated = $request->validate($rules);
         $actionSettings->settings = $validated['settings'] ?? [];

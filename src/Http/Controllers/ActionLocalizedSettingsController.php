@@ -41,8 +41,8 @@ class ActionLocalizedSettingsController extends Controller
             ? CustomActionModelResolver::getClass($eventListener->event)
             : null;
 
-        $action = app(CustomActionModelResolver::getClass($actionSettings->getAction()->type));
-        $rules = RuleHelper::getSettingsRules($action->getLocalizedSettingsSchema($eventContext));
+        $actionClass = CustomActionModelResolver::getClass($actionSettings->getAction()->type);
+        $rules = RuleHelper::getSettingsRules($actionClass::getLocalizedSettingsSchema($eventContext));
         $rules['locale'] = 'string';
         $validated = $request->validate($rules);
 

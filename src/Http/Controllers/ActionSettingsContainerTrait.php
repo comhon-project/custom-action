@@ -29,8 +29,8 @@ trait ActionSettingsContainerTrait
             : null;
 
         /** @var CustomActionInterface $action */
-        $action = app(CustomActionModelResolver::getClass($actionSettings->getAction()->type));
-        $rules = RuleHelper::getSettingsRules($action->getLocalizedSettingsSchema($eventContext));
+        $actionClass = CustomActionModelResolver::getClass($actionSettings->getAction()->type);
+        $rules = RuleHelper::getSettingsRules($actionClass::getLocalizedSettingsSchema($eventContext));
         $rules['locale'] = 'required|string';
         $validated = $request->validate($rules);
 

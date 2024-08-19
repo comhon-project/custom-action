@@ -2,6 +2,7 @@
 
 namespace Comhon\CustomAction\Http\Controllers;
 
+use Comhon\CustomAction\Contracts\CustomActionInterface;
 use Comhon\CustomAction\Facades\CustomActionModelResolver;
 use Comhon\CustomAction\Models\ActionSettings;
 use Comhon\CustomAction\Models\ManualAction;
@@ -21,8 +22,8 @@ class ManualActionController extends Controller
         if (! CustomActionModelResolver::isAllowedAction($actionType)) {
             throw new NotFoundHttpException('not found');
         }
-        $action = app(CustomActionModelResolver::getClass($actionType));
-        $this->authorize('view', $action);
+        $actionClass = CustomActionModelResolver::getClass($actionType);
+        $this->authorize('view', [CustomActionInterface::class, $actionClass]);
 
         $manualAction = ManualAction::with('actionSettings')->find($actionType);
         if (! $manualAction) {

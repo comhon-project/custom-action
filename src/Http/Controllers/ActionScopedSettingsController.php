@@ -115,8 +115,8 @@ class ActionScopedSettingsController extends Controller
     private function validateRequest(Request $request, string $type, ?string $eventContext)
     {
         /** @var CustomActionInterface $action */
-        $action = app(CustomActionModelResolver::getClass($type));
-        $rules = RuleHelper::getSettingsRules($action->getSettingsSchema($eventContext));
+        $actionClass = CustomActionModelResolver::getClass($type);
+        $rules = RuleHelper::getSettingsRules($actionClass::getSettingsSchema($eventContext));
         $rules['scope'] = 'required|array';
         $rules['name'] = 'required|string|max:63';
 

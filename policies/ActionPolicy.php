@@ -3,7 +3,6 @@
 namespace App\Policies\CustomAction;
 
 use App\Models\User;
-use Comhon\CustomAction\Contracts\CustomActionInterface;
 
 class ActionPolicy
 {
@@ -16,9 +15,9 @@ class ActionPolicy
     }
 
     /**
-     * Determine whether the user can view the model.
+     * Determine whether the user can view the action.
      */
-    public function view(User $user, CustomActionInterface $model)
+    public function view(User $user, string $actionClass)
     {
         // TODO put your authorization logic here
     }

@@ -32,11 +32,11 @@ class EventActionDispatcher
             if (! $listener->scope || $this->matchScope($listener->scope, $bindings)) {
                 foreach ($listener->eventActions as $eventAction) {
                     $actionSettings = $eventAction->actionSettings;
-                    $action = app(CustomActionModelResolver::getClass($eventAction->type));
-                    if (! ($action instanceof CustomActionInterface)) {
-                        throw new \Exception('invalid type '.$eventAction->type);
+                    $actionClass = CustomActionModelResolver::getClass($eventAction->type);
+                    if (! is_subclass_of($actionClass, CustomActionInterface::class)) {
+                        throw new \Exception("invalid type {$eventAction->type}, must be an action instance of CustomActionInterface");
                     }
-                    $action->handle($actionSettings, $bindingsContainer);
+                    $actionClass::dispatch($actionSettings, $bindingsContainer);
                 }
             }
         }

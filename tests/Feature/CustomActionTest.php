@@ -35,11 +35,6 @@ class CustomActionTest extends TestCase
         return Utils::joinPaths(Utils::getTestPath('Data'), 'jc.jpeg');
     }
 
-    private function getActionInstance(): SendCompanyRegistrationMail
-    {
-        return app(SendCompanyRegistrationMail::class);
-    }
-
     /**
      * @dataProvider providerHandleManualActionSuccess
      */
@@ -58,7 +53,7 @@ class CustomActionTest extends TestCase
         if (! $success) {
             $this->expectExceptionMessage('localized mail values not found');
         }
-        $this->getActionInstance()->handleManual(new BindingsContainer($bindings), $user);
+        SendCompanyRegistrationMail::handleManual(new BindingsContainer($bindings), $user);
 
         $mails = [];
         Mail::assertSent(Custom::class, 1);
@@ -102,7 +97,7 @@ class CustomActionTest extends TestCase
         if (! $success) {
             $this->expectExceptionMessage('localized mail values not found');
         }
-        $this->getActionInstance()->handleManual(new BindingsContainer($bindings), $user);
+        SendCompanyRegistrationMail::handleManual(new BindingsContainer($bindings), $user);
 
         $mails = [];
         Mail::assertSent(Custom::class, 1);
@@ -140,7 +135,7 @@ class CustomActionTest extends TestCase
         if (! $success) {
             $this->expectExceptionMessage('localized mail values not found');
         }
-        $this->getActionInstance()->handleManual(new BindingsContainer($bindings, $bindingSchema), $user);
+        SendCompanyRegistrationMail::handleManual(new BindingsContainer($bindings, $bindingSchema), $user);
 
         $mails = [];
         Mail::assertSent(Custom::class, 1);
@@ -168,7 +163,7 @@ class CustomActionTest extends TestCase
         ];
 
         $this->expectExceptionMessage('The company is not instance of company.');
-        $this->getActionInstance()->handleManual(new BindingsContainer($bindings, $bindingSchema), $user);
+        SendCompanyRegistrationMail::handleManual(new BindingsContainer($bindings, $bindingSchema), $user);
 
     }
 
@@ -188,7 +183,7 @@ class CustomActionTest extends TestCase
         if (! $success) {
             $this->expectExceptionMessage('localized mail values not found');
         }
-        $this->getActionInstance()->handleManual(null, $user);
+        SendCompanyRegistrationMail::handleManual(null, $user);
 
         $mails = [];
         Mail::assertSent(Custom::class, 1);
@@ -219,7 +214,7 @@ class CustomActionTest extends TestCase
 
         $bindings = ['company' => $company, 'logo' => new SystemFile($this->getAssetPath())];
         $this->expectExceptionMessage('No query results for model');
-        $this->getActionInstance()->handleManual(new BindingsContainer($bindings), $user);
+        SendCompanyRegistrationMail::handleManual(new BindingsContainer($bindings), $user);
     }
 
     public function testGetActionsSuccess()
