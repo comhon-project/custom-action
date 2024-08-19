@@ -28,6 +28,29 @@ return [
     'rule_prefix' => '',
 
     /*
+     | event action dispatcher config
+     */
+    'event_action_dispatcher' => [
+
+        /*
+        | determine if the event action dispatcher is queued
+        */
+        'should_queue' => false,
+
+        /*
+        | if the event action dispatcher is queued, determine the queue connection.
+        | if not set, the default connection is used.
+        */
+        'queue_connection' => null,
+
+        /*
+        | if the event action dispatcher is queued, determine the queue to use.
+        | if not set, the default queue of the defined connection is used.
+        */
+        'queue_name' => null,
+    ],
+
+    /*
      | actions that may be defined as manual actions.
      | each element must a class that implements CustomActionInterface.
      */

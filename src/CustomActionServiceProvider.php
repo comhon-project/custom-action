@@ -10,6 +10,8 @@ use Comhon\CustomAction\Contracts\CustomEventInterface;
 use Comhon\CustomAction\Contracts\EmailReceiverInterface;
 use Comhon\CustomAction\Facades\CustomActionModelResolver as FacadesCustomActionModelResolver;
 use Comhon\CustomAction\Files\StoredFile;
+use Comhon\CustomAction\Listeners\EventActionDispatcher;
+use Comhon\CustomAction\Listeners\QueuedEventActionDispatcher;
 use Comhon\CustomAction\Models\ActionLocalizedSettings;
 use Comhon\CustomAction\Models\ActionScopedSettings;
 use Comhon\CustomAction\Models\ActionSettings;
@@ -64,10 +66,11 @@ class CustomActionServiceProvider extends PackageServiceProvider
 
     public function packageBooted()
     {
-        Event::listen(
-            CustomEventInterface::class,
-            [EventActionDispatcher::class, 'handle']
-        );
+        $eventActionDispatcher = config('custom-action.event_action_dispatcher.should_queue')
+            ? QueuedEventActionDispatcher::class
+            : EventActionDispatcher::class;
+        Event::listen(CustomEventInterface::class, [$eventActionDispatcher, 'handle']);
+
         $this->registerPolicies();
         $this->registerRules();
         $this->bindModels();

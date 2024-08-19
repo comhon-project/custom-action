@@ -1,7 +1,8 @@
 <?php
 
-namespace Comhon\CustomAction;
+namespace Comhon\CustomAction\Listeners;
 
+use Comhon\CustomAction\BindingsContainer;
 use Comhon\CustomAction\Contracts\CustomActionInterface;
 use Comhon\CustomAction\Contracts\CustomEventInterface;
 use Comhon\CustomAction\Contracts\HasBindingsInterface;
@@ -10,8 +11,6 @@ use Comhon\CustomAction\Models\EventListener;
 
 class EventActionDispatcher
 {
-    public $afterCommit = true;
-
     /**
      * Handle the event.
      *

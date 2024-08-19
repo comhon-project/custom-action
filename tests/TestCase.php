@@ -31,9 +31,13 @@ class TestCase extends Orchestra
 
     public function defineEnvironment($app)
     {
+        // Warning! set a specific config for only one test
+        $shoudQueueDispatcher = $this->name() == 'testShouldQueueDispatcher';
+
         $cacheDirectory = $app->useStoragePath(Utils::getBasePath('storage'))->storagePath('custom-action');
 
-        tap($app['config'], function (Repository $config) {
+        tap($app['config'], function (Repository $config) use ($shoudQueueDispatcher) {
+            $config->set('custom-action.event_action_dispatcher.should_queue', $shoudQueueDispatcher);
             $config->set('custom-action.use_policies', true);
             $config->set('custom-action.middleware', ['api']);
             $config->set('database.default', 'testing');
