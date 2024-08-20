@@ -9,7 +9,6 @@ use Comhon\CustomAction\Contracts\HasTimezonePreferenceInterface;
 use Comhon\CustomAction\Facades\BindingsValidator;
 use Comhon\CustomAction\Facades\CustomActionModelResolver;
 use Comhon\CustomAction\Mail\Custom;
-use Comhon\CustomAction\Models\ActionSettings;
 use Comhon\CustomAction\Models\ActionSettingsContainer;
 use Comhon\CustomAction\Rules\RuleHelper;
 use Comhon\CustomAction\Support\Bindings;
@@ -29,7 +28,7 @@ class SendTemplatedMail implements CustomActionInterface, HasBindingsInterface
      * @param  mixed  $to  force the email receiver(s) and ignore receivers defined in settings.
      */
     public function __construct(
-        private ActionSettings $actionSettings,
+        private ActionSettingsContainer $settingsContainer,
         private ?BindingsContainerInterface $bindingsContainer = null,
         private mixed $to = null,
     ) {
@@ -126,16 +125,12 @@ class SendTemplatedMail implements CustomActionInterface, HasBindingsInterface
             ...$this->bindingsContainer?->getBindingValues() ?? [],
             ...$this->getBindingValues(),
         ];
-        $settingsContainer = $this->actionSettings->getSettingsContainer($notLocalizedBindings);
-        $reveivers = $this->getReceivers($settingsContainer, $notLocalizedBindings);
+        $reveivers = $this->getReceivers($notLocalizedBindings);
 
         foreach ($reveivers as $to) {
             $preferredLocale = $to instanceof HasLocalePreference ? $to->preferredLocale() : null;
             $localeKey = $preferredLocale ?? 'undefined';
-            $localizedMailInfos[$localeKey] ??= $this->getLocalizedMailInfos(
-                $settingsContainer,
-                $preferredLocale,
-            );
+            $localizedMailInfos[$localeKey] ??= $this->getLocalizedMailInfos($preferredLocale);
             $mailInfos = $localizedMailInfos[$localeKey];
             $usedLocale = $mailInfos['locale'];
             if (! isset($localizedMailInfos[$usedLocale])) {
@@ -154,14 +149,14 @@ class SendTemplatedMail implements CustomActionInterface, HasBindingsInterface
         }
     }
 
-    private function getReceivers(ActionSettingsContainer $settingsContainer, array $bindings): array
+    private function getReceivers(array $bindings): array
     {
         if ($this->to) {
             return is_array($this->to) ? $this->to : [$this->to];
         }
         $tos = [];
-        if (isset($settingsContainer->settings['to_receivers'])) {
-            $toReceivers = collect($settingsContainer->settings['to_receivers'])->groupBy('receiver_type');
+        if (isset($this->settingsContainer->settings['to_receivers'])) {
+            $toReceivers = collect($this->settingsContainer->settings['to_receivers'])->groupBy('receiver_type');
             foreach ($toReceivers as $uniqueName => $modelReceivers) {
                 $class = CustomActionModelResolver::getClass($uniqueName);
                 $receivers = $class::find(collect($modelReceivers)->pluck('receiver_id'));
@@ -170,14 +165,14 @@ class SendTemplatedMail implements CustomActionInterface, HasBindingsInterface
                 }
             }
         }
-        if (isset($settingsContainer->settings['to_emails'])) {
-            foreach ($settingsContainer->settings['to_emails'] as $email) {
+        if (isset($this->settingsContainer->settings['to_emails'])) {
+            foreach ($this->settingsContainer->settings['to_emails'] as $email) {
                 $tos[] = ['email' => $email];
             }
         }
         foreach (['to_bindings_receivers', 'to_bindings_emails'] as $key) {
-            if (isset($settingsContainer->settings[$key])) {
-                $toBindings = $settingsContainer->settings[$key];
+            if (isset($this->settingsContainer->settings[$key])) {
+                $toBindings = $this->settingsContainer->settings[$key];
                 foreach ($toBindings as $toBinding) {
                     foreach (Bindings::getBindingValues($bindings, $toBinding) as $to) {
                         if ($to) {
@@ -194,11 +189,9 @@ class SendTemplatedMail implements CustomActionInterface, HasBindingsInterface
         return $tos;
     }
 
-    private function getLocalizedMailInfos(
-        ActionSettingsContainer $settingsContainer,
-        ?string $locale,
-    ) {
-        $localizedSettings = $settingsContainer->getLocalizedSettings($locale);
+    private function getLocalizedMailInfos(?string $locale)
+    {
+        $localizedSettings = $this->settingsContainer->getLocalizedSettings($locale);
         if (! $localizedSettings) {
             throw new \Exception('localized mail values not found');
         }
@@ -222,7 +215,7 @@ class SendTemplatedMail implements CustomActionInterface, HasBindingsInterface
             'bindings' => $bindings,
             'mail' => [
                 ...$localizedSettings->settings,
-                'attachments' => $this->getAttachments($bindings, $settingsContainer->settings),
+                'attachments' => $this->getAttachments($bindings, $this->settingsContainer->settings),
             ],
         ];
     }

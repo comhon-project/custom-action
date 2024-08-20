@@ -35,7 +35,8 @@ class EventActionDispatcher
                     if (! is_subclass_of($actionClass, CustomActionInterface::class)) {
                         throw new \Exception("invalid type {$eventAction->type}, must be an action instance of CustomActionInterface");
                     }
-                    $actionClass::dispatch($actionSettings, $bindingsContainer);
+                    $settingsContainer = $actionSettings->getSettingsContainer($bindings);
+                    $actionClass::dispatch($settingsContainer, $bindingsContainer);
                 }
             }
         }

@@ -13,6 +13,9 @@ trait HandleManualAction
         $type = CustomActionModelResolver::getUniqueName(static::class);
         $action = ManualAction::findOrFail($type);
 
-        static::dispatch($action->actionSettings, $bindingsContainer, ...$args);
+        $bindings = $bindingsContainer?->getBindingValues() ?? [];
+        $settingsContainer = $action->actionSettings->getSettingsContainer($bindings);
+
+        static::dispatch($settingsContainer, $bindingsContainer, ...$args);
     }
 }
