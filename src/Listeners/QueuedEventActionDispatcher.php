@@ -2,10 +2,12 @@
 
 namespace Comhon\CustomAction\Listeners;
 
-use Illuminate\Contracts\Queue\ShouldQueueAfterCommit;
+use Illuminate\Contracts\Queue\ShouldQueue;
 
-class QueuedEventActionDispatcher extends EventActionDispatcher implements ShouldQueueAfterCommit
+class QueuedEventActionDispatcher extends EventActionDispatcher implements ShouldQueue
 {
+    public $afterCommit = true;
+
     /**
      * Get the name of the listener's queue connection.
      */
