@@ -7,7 +7,7 @@ use Illuminate\Support\Facades\Facade;
 /**
  * @method static array find(string $bindingType, array $bindingSchema)
  *
- * @see \Comhon\CustomAction\BindingsFinder
+ * @see \Comhon\CustomAction\Bindings\BindingsFinder
  */
 class BindingsFinder extends Facade
 {

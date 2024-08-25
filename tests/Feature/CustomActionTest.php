@@ -6,7 +6,7 @@ use App\Actions\SendCompanyRegistrationMail;
 use App\Models\Company;
 use App\Models\User;
 use App\Models\UserWithoutPreference;
-use Comhon\CustomAction\BindingsContainer;
+use Comhon\CustomAction\Bindings\BindingsContainer;
 use Comhon\CustomAction\Facades\CustomActionModelResolver;
 use Comhon\CustomAction\Files\SystemFile;
 use Comhon\CustomAction\Mail\Custom;

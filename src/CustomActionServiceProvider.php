@@ -2,7 +2,11 @@
 
 namespace Comhon\CustomAction;
 
+use Comhon\CustomAction\Bindings\BindingsContainer;
+use Comhon\CustomAction\Bindings\BindingsFinder;
+use Comhon\CustomAction\Bindings\BindingsValidator;
 use Comhon\CustomAction\Commands\GenerateActionCommand;
+use Comhon\CustomAction\Contracts\BindingsContainerInterface;
 use Comhon\CustomAction\Contracts\BindingsFinderInterface;
 use Comhon\CustomAction\Contracts\BindingsValidatorInterface;
 use Comhon\CustomAction\Contracts\CustomActionInterface;
@@ -25,7 +29,6 @@ use Comhon\CustomAction\Rules\ModelReference;
 use Comhon\CustomAction\Rules\RuleHelper;
 use Comhon\CustomAction\Rules\TextTemplate;
 use Comhon\ModelResolverContract\ModelResolverInterface;
-use Illuminate\Contracts\Foundation\Application;
 use Illuminate\Support\Facades\Event;
 use Illuminate\Support\Facades\Gate;
 use Illuminate\Support\Facades\Validator;
@@ -53,15 +56,10 @@ class CustomActionServiceProvider extends PackageServiceProvider
     public function packageRegistered()
     {
         $this->app->singleton(CustomActionModelResolver::class);
-        $this->app->singletonIf(ModelResolverInterface::class, function (Application $app) {
-            return new ModelResolver;
-        });
-        $this->app->singletonIf(BindingsFinderInterface::class, function (Application $app) {
-            return new BindingsFinder;
-        });
-        $this->app->singletonIf(BindingsValidatorInterface::class, function (Application $app) {
-            return new BindingsValidator;
-        });
+        $this->app->singletonIf(ModelResolverInterface::class, ModelResolver::class);
+        $this->app->singletonIf(BindingsFinderInterface::class, BindingsFinder::class);
+        $this->app->singletonIf(BindingsValidatorInterface::class, BindingsValidator::class);
+        $this->app->bind(BindingsContainerInterface::class, BindingsContainer::class);
     }
 
     public function packageBooted()

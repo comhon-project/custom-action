@@ -1,12 +1,12 @@
 <?php
 
-namespace Comhon\CustomAction\Support;
+namespace Comhon\CustomAction\Bindings;
 
 use Comhon\CustomAction\Contracts\HasBindingsInterface;
 use Comhon\CustomAction\Facades\BindingsFinder;
 use Illuminate\Support\Arr;
 
-class Bindings
+class BindingsHelper
 {
     /**
      * get all bindings keys from given event that have given types.

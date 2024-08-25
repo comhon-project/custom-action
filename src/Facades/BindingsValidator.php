@@ -7,7 +7,7 @@ use Illuminate\Support\Facades\Facade;
 /**
  * @method static array getValidatedBindings(array $bindings, array $schemaBindings)
  *
- * @see \Comhon\CustomAction\BindingsValidator
+ * @see \Comhon\CustomAction\Bindings\BindingsValidator
  */
 class BindingsValidator extends Facade
 {

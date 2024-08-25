@@ -2,6 +2,7 @@
 
 namespace Comhon\CustomAction\Actions;
 
+use Comhon\CustomAction\Bindings\BindingsHelper;
 use Comhon\CustomAction\Contracts\BindingsContainerInterface;
 use Comhon\CustomAction\Contracts\CustomActionInterface;
 use Comhon\CustomAction\Contracts\HasBindingsInterface;
@@ -11,7 +12,6 @@ use Comhon\CustomAction\Facades\CustomActionModelResolver;
 use Comhon\CustomAction\Mail\Custom;
 use Comhon\CustomAction\Models\ActionSettingsContainer;
 use Comhon\CustomAction\Rules\RuleHelper;
-use Comhon\CustomAction\Support\Bindings;
 use Illuminate\Bus\Queueable;
 use Illuminate\Contracts\Translation\HasLocalePreference;
 use Illuminate\Foundation\Bus\Dispatchable;
@@ -59,7 +59,7 @@ class SendTemplatedMail implements CustomActionInterface, HasBindingsInterface
                 'to_bindings_emails' => 'array:email',
                 'attachments' => 'array:stored-file',
             ];
-            $rules = Bindings::getEventBindingRules($eventClassContext, $bindingTypes);
+            $rules = BindingsHelper::getEventBindingRules($eventClassContext, $bindingTypes);
             $schema = array_merge($schema, $rules);
         }
 
@@ -174,7 +174,7 @@ class SendTemplatedMail implements CustomActionInterface, HasBindingsInterface
             if (isset($this->settingsContainer->settings[$key])) {
                 $toBindings = $this->settingsContainer->settings[$key];
                 foreach ($toBindings as $toBinding) {
-                    foreach (Bindings::getBindingValues($bindings, $toBinding) as $to) {
+                    foreach (BindingsHelper::getBindingValues($bindings, $toBinding) as $to) {
                         if ($to) {
                             $tos[] = is_string($to) ? ['email' => $to] : $to;
                         }

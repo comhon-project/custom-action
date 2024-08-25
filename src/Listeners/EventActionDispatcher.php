@@ -2,7 +2,7 @@
 
 namespace Comhon\CustomAction\Listeners;
 
-use Comhon\CustomAction\BindingsContainer;
+use Comhon\CustomAction\Contracts\BindingsContainerInterface;
 use Comhon\CustomAction\Contracts\CustomActionInterface;
 use Comhon\CustomAction\Contracts\CustomEventInterface;
 use Comhon\CustomAction\Contracts\HasBindingsInterface;
@@ -22,13 +22,13 @@ class EventActionDispatcher
         $listeners = EventListener::with('eventActions.actionSettings')
             ->where('event', $eventUniqueName)->whereHas('eventActions')->get();
 
-        $bindingsContainer = $event instanceof HasBindingsInterface ?
-            new BindingsContainer(\Closure::fromCallable([$event, 'getBindingValues']), $event->getBindingSchema())
+        $bindingsContainer = $event instanceof HasBindingsInterface
+            ? $this->instanciateBindingsContainer($event)
             : null;
         $bindings = $bindingsContainer?->getBindingValues() ?? [];
 
         foreach ($listeners as $listener) {
-            if (! $listener->scope || $this->matchScope($listener->scope, $bindings)) {
+            if (! $listener->scope || ! $bindingsContainer || $this->matchScope($listener->scope, $bindings)) {
                 foreach ($listener->eventActions as $eventAction) {
                     $actionSettings = $eventAction->actionSettings;
                     $actionClass = CustomActionModelResolver::getClass($eventAction->type);
@@ -42,7 +42,7 @@ class EventActionDispatcher
         }
     }
 
-    public function matchScope(array $scope, array $bindings)
+    private function matchScope(array $scope, array $bindings)
     {
         $match = true;
         foreach ($scope as $model => $values) {
@@ -55,5 +55,17 @@ class EventActionDispatcher
         }
 
         return $match;
+    }
+
+    private function instanciateBindingsContainer(HasBindingsInterface $event): BindingsContainerInterface
+    {
+        return app(
+            BindingsContainerInterface::class,
+            [
+                'bindingValues' => \Closure::fromCallable([$event, 'getBindingValues']),
+                'bindingSchema' => $event->getBindingSchema(),
+                'event' => $event,
+            ]
+        );
     }
 }

@@ -3,7 +3,7 @@
 namespace Tests\Unit;
 
 use App\Actions\SendCompanyRegistrationMail;
-use Comhon\CustomAction\BindingsContainer;
+use Comhon\CustomAction\Bindings\BindingsContainer;
 use Comhon\CustomAction\Models\ManualAction;
 use Tests\SetUpWithModelRegistration;
 use Tests\TestCase;

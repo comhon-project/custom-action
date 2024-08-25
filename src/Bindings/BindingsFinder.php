@@ -1,6 +1,6 @@
 <?php
 
-namespace Comhon\CustomAction;
+namespace Comhon\CustomAction\Bindings;
 
 use Comhon\CustomAction\Contracts\BindingsFinderInterface;
 use Comhon\CustomAction\Facades\CustomActionModelResolver;

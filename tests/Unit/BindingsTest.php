@@ -3,14 +3,14 @@
 namespace Tests\Unit;
 
 use App\Events\CompanyRegistered;
-use Comhon\CustomAction\Support\Bindings;
+use Comhon\CustomAction\Bindings\BindingsHelper;
 use Tests\TestCase;
 
 class BindingsTest extends TestCase
 {
     public function testGetBindingsString()
     {
-        $rules = Bindings::getEventBindingRules(CompanyRegistered::class, ['my.key' => 'string']);
+        $rules = BindingsHelper::getEventBindingRules(CompanyRegistered::class, ['my.key' => 'string']);
 
         $this->assertEquals([
             'my.key' => 'string|in:company.name,user.name,localized',
@@ -19,7 +19,7 @@ class BindingsTest extends TestCase
 
     public function testGetBindingsEmailReceiver()
     {
-        $rules = Bindings::getEventBindingRules(CompanyRegistered::class, ['receivers' => 'email-receiver']);
+        $rules = BindingsHelper::getEventBindingRules(CompanyRegistered::class, ['receivers' => 'email-receiver']);
 
         $this->assertEquals([
             'receivers' => 'string|in:user',
@@ -28,7 +28,7 @@ class BindingsTest extends TestCase
 
     public function testGetBindingsSeveralTypes()
     {
-        $rules = Bindings::getEventBindingRules(CompanyRegistered::class, [
+        $rules = BindingsHelper::getEventBindingRules(CompanyRegistered::class, [
             'receivers' => 'email-receiver',
             'my.key' => 'string',
         ]);
@@ -42,7 +42,7 @@ class BindingsTest extends TestCase
     public function testGetBindingsInvalidEventClass()
     {
         $this->expectExceptionMessage('first argument must be a subclass of HasBindingsInterface');
-        Bindings::getEventBindingRules('foo', ['my.key' => 'string']);
+        BindingsHelper::getEventBindingRules('foo', ['my.key' => 'string']);
 
     }
 
@@ -57,7 +57,7 @@ class BindingsTest extends TestCase
         ];
         $this->assertEquals(
             [12],
-            Bindings::getBindingValues($bindings, 'my.sub.value')
+            BindingsHelper::getBindingValues($bindings, 'my.sub.value')
         );
     }
 
@@ -68,7 +68,7 @@ class BindingsTest extends TestCase
         ];
         $this->assertEquals(
             [null],
-            Bindings::getBindingValues($bindings, 'my.sub.value')
+            BindingsHelper::getBindingValues($bindings, 'my.sub.value')
         );
     }
 
@@ -79,7 +79,7 @@ class BindingsTest extends TestCase
         ];
         $this->assertEquals(
             [],
-            Bindings::getBindingValues($bindings, 'my.*.value')
+            BindingsHelper::getBindingValues($bindings, 'my.*.value')
         );
     }
 
@@ -90,7 +90,7 @@ class BindingsTest extends TestCase
         ];
         $this->assertEquals(
             [12, 13],
-            Bindings::getBindingValues($bindings, '*')
+            BindingsHelper::getBindingValues($bindings, '*')
         );
     }
 
@@ -113,7 +113,7 @@ class BindingsTest extends TestCase
         ];
         $this->assertEquals(
             [14, 15, 16],
-            Bindings::getBindingValues($bindings, 'my.*.subs.*.value')
+            BindingsHelper::getBindingValues($bindings, 'my.*.subs.*.value')
         );
     }
 
@@ -131,7 +131,7 @@ class BindingsTest extends TestCase
         ];
         $this->assertEquals(
             [20, 21, 22],
-            Bindings::getBindingValues($bindings, 'my.*.values.*')
+            BindingsHelper::getBindingValues($bindings, 'my.*.values.*')
         );
     }
 }
