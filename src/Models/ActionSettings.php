@@ -66,30 +66,4 @@ class ActionSettings extends ActionSettingsContainer
     {
         return $this->eventAction ?? $this->manualAction;
     }
-
-    /**
-     * get settings container according scope and given values
-     */
-    public function getSettingsContainer(array $values): ActionSettingsContainer
-    {
-        $model = $this;
-        foreach ($this->scopedSettings as $scopedSettings) {
-            $match = true;
-            foreach ($scopedSettings->scope as $modelName => $filter) {
-                foreach ($filter as $property => $value) {
-                    if (($values[$modelName][$property] ?? null) != $value) {
-                        $match = false;
-
-                        break 2;
-                    }
-                }
-            }
-            if ($match) {
-                $model = $scopedSettings;
-                break;
-            }
-        }
-
-        return $model;
-    }
 }
