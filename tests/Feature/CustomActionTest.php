@@ -217,6 +217,19 @@ class CustomActionTest extends TestCase
         SendCompanyRegistrationMail::handleManual(new BindingsContainer($bindings), $user);
     }
 
+    public function testHandleManualActionWithScopedSettingsConflicts()
+    {
+        $user = User::factory()->create();
+        $company = Company::factory(['name' => 'My VIP company'])->create();
+
+        $action = ManualAction::factory()->sendMailRegistrationCompany(null, true)->create();
+        $action->actionSettings->scopedSettings->first()->replicate()->save();
+
+        $this->expectExceptionMessage('cannot resolve conflict between several action scoped settings');
+        SendCompanyRegistrationMail::handleManual(new BindingsContainer(['company' => $company]), $user);
+
+    }
+
     public function testGetActionsSuccess()
     {
         config(['custom-action.manual_actions' => [SendCompanyRegistrationMail::class]]);

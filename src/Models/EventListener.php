@@ -2,6 +2,8 @@
 
 namespace Comhon\CustomAction\Models;
 
+use Comhon\CustomAction\Exceptions\InvalidEventTypeException;
+use Comhon\CustomAction\Facades\CustomActionModelResolver;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\HasMany;
@@ -50,5 +52,11 @@ class EventListener extends Model
     public function eventActions(): HasMany
     {
         return $this->hasMany(EventAction::class, 'event_listener_id');
+    }
+
+    public function getEventClass(): string
+    {
+        return CustomActionModelResolver::getClass($this->event)
+            ?? throw new InvalidEventTypeException("Invalid event $this->event");
     }
 }

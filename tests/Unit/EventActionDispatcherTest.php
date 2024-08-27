@@ -56,16 +56,29 @@ class EventActionDispatcherTest extends TestCase
         $this->assertEquals('bar', $this->queuedDispatcher()->viaQueue());
     }
 
-    public function testHandleWithBadEventInstance()
+    public function testHandleEventWithNotExistingAction()
     {
         $listener = EventListener::factory()->genericRegistrationCompany()->create();
         $event = new CompanyRegistered(Company::factory()->create(), User::factory()->create());
         foreach ($listener->eventActions as $action) {
-            $action->type = Company::class;
+            $action->type = 'foo';
             $action->save();
         }
 
-        $this->expectExceptionMessage('invalid type App\Models\Company');
+        $this->expectExceptionMessage('Invalid action type foo');
+        $this->dispatcher()->handle($event);
+    }
+
+    public function testHandleEventWithActionWrongClass()
+    {
+        $listener = EventListener::factory()->genericRegistrationCompany()->create();
+        $event = new CompanyRegistered(Company::factory()->create(), User::factory()->create());
+        foreach ($listener->eventActions as $action) {
+            $action->type = 'company';
+            $action->save();
+        }
+
+        $this->expectExceptionMessage('invalid action company, must be an action instance of CustomActionInterface');
         $this->dispatcher()->handle($event);
     }
 

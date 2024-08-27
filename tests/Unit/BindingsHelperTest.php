@@ -6,7 +6,7 @@ use App\Events\CompanyRegistered;
 use Comhon\CustomAction\Bindings\BindingsHelper;
 use Tests\TestCase;
 
-class BindingsTest extends TestCase
+class BindingsHelperTest extends TestCase
 {
     public function testGetBindingsString()
     {

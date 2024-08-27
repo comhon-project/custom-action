@@ -3,7 +3,6 @@
 namespace Comhon\CustomAction\Contracts;
 
 use Comhon\CustomAction\Models\ActionSettings;
-use Comhon\CustomAction\Models\ActionSettingsContainer;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Support\Collection;
 
@@ -18,11 +17,7 @@ interface BindingsScoperInterface
     public function getEventListeners(Builder $query, array $bindings): Collection|array;
 
     /**
-     * get settings container according given action settings and given bindings.
-     *
-     * the settings container may be either
-     * - a scoped action settings (that belongs to given action settings)
-     * - the given action settings if no scoped action settings is found
+     * get action scoped settings according given action settings and given bindings.
      */
-    public function getSettingsContainer(ActionSettings $actionSettings, array $bindings): ActionSettingsContainer;
+    public function getActionScopedSettings(ActionSettings $actionSettings, array $bindings): Collection|array;
 }

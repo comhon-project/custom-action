@@ -2,11 +2,13 @@
 
 namespace Comhon\CustomAction;
 
+use Comhon\CustomAction\ActionSettings\ActionScopedSettingsResolver;
 use Comhon\CustomAction\Bindings\BindingsContainer;
 use Comhon\CustomAction\Bindings\BindingsFinder;
 use Comhon\CustomAction\Bindings\BindingsScoper;
 use Comhon\CustomAction\Bindings\BindingsValidator;
 use Comhon\CustomAction\Commands\GenerateActionCommand;
+use Comhon\CustomAction\Contracts\ActionScopedSettingsResolverInterface;
 use Comhon\CustomAction\Contracts\BindingsContainerInterface;
 use Comhon\CustomAction\Contracts\BindingsFinderInterface;
 use Comhon\CustomAction\Contracts\BindingsScoperInterface;
@@ -62,6 +64,7 @@ class CustomActionServiceProvider extends PackageServiceProvider
         $this->app->singletonIf(BindingsFinderInterface::class, BindingsFinder::class);
         $this->app->singletonIf(BindingsValidatorInterface::class, BindingsValidator::class);
         $this->app->singletonIf(BindingsScoperInterface::class, BindingsScoper::class);
+        $this->app->singletonIf(ActionScopedSettingsResolverInterface::class, ActionScopedSettingsResolver::class);
         $this->app->bind(BindingsContainerInterface::class, BindingsContainer::class);
     }
 

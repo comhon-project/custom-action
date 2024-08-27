@@ -62,7 +62,7 @@ class ActionSettings extends ActionSettingsContainer
         return $this->hasOne(ManualAction::class, 'action_settings_id');
     }
 
-    public function getAction(): ManualAction|EventAction
+    public function getAction(): Action
     {
         return $this->eventAction ?? $this->manualAction;
     }

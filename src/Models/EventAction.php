@@ -3,11 +3,10 @@
 namespace Comhon\CustomAction\Models;
 
 use Illuminate\Database\Eloquent\Factories\HasFactory;
-use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\SoftDeletes;
 
-class EventAction extends Model
+class EventAction extends Action
 {
     use HasFactory;
     use SoftDeletes;
@@ -22,11 +21,6 @@ class EventAction extends Model
     public function eventListener(): BelongsTo
     {
         return $this->belongsTo(EventListener::class);
-    }
-
-    public function actionSettings(): BelongsTo
-    {
-        return $this->belongsTo(ActionSettings::class);
     }
 
     protected static function booted()

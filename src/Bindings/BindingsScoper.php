@@ -4,7 +4,6 @@ namespace Comhon\CustomAction\Bindings;
 
 use Comhon\CustomAction\Contracts\BindingsScoperInterface;
 use Comhon\CustomAction\Models\ActionSettings;
-use Comhon\CustomAction\Models\ActionSettingsContainer;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Support\Collection;
 
@@ -22,15 +21,16 @@ class BindingsScoper implements BindingsScoperInterface
         return $listeners;
     }
 
-    public function getSettingsContainer(ActionSettings $actionSettings, array $bindings): ActionSettingsContainer
+    public function getActionScopedSettings(ActionSettings $actionSettings, array $bindings): Collection|array
     {
+        $possibleSettings = [];
         foreach ($actionSettings->scopedSettings as $scopedSettings) {
             if ($this->match($scopedSettings, $bindings)) {
-                return $scopedSettings;
+                $possibleSettings[] = $scopedSettings;
             }
         }
 
-        return $actionSettings;
+        return $possibleSettings;
     }
 
     private function match(object $container, array $bindings): bool

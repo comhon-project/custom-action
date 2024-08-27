@@ -2,8 +2,6 @@
 
 namespace Comhon\CustomAction\Http\Controllers;
 
-use Comhon\CustomAction\Contracts\CustomActionInterface;
-use Comhon\CustomAction\Facades\CustomActionModelResolver;
 use Comhon\CustomAction\Models\ActionScopedSettings;
 use Comhon\CustomAction\Models\ActionSettings;
 use Comhon\CustomAction\Rules\RuleHelper;
@@ -35,12 +33,12 @@ class ActionScopedSettingsController extends Controller
     public function store(Request $request, ActionSettings $actionSettings)
     {
         $this->authorize('create', [ActionScopedSettings::class, $actionSettings]);
-        $eventListener = $actionSettings->eventAction?->eventListener;
-        $eventContext = $eventListener
-            ? CustomActionModelResolver::getClass($eventListener->event)
-            : null;
 
-        $validated = $this->validateRequest($request, $actionSettings->getAction()->type, $eventContext);
+        /** @var \Comhon\CustomAction\Models\EventListener $eventListener */
+        $eventListener = $actionSettings->eventAction?->eventListener;
+        $eventContext = $eventListener ? $eventListener->getEventClass() : null;
+
+        $validated = $this->validateRequest($request, $actionSettings->getAction()->getActionClass(), $eventContext);
 
         $scopedSettings = new ActionScopedSettings($validated);
         $scopedSettings->actionSettings()->associate($actionSettings->id);
@@ -59,12 +57,14 @@ class ActionScopedSettingsController extends Controller
         $scopedSettings = $scopedSetting;
         $this->authorize('update', $scopedSettings);
 
-        $eventListener = $scopedSettings->actionSettings->eventAction?->eventListener;
-        $eventContext = $eventListener
-            ? CustomActionModelResolver::getClass($eventListener->event)
-            : null;
+        /** @var ActionSettings $actionSettings */
+        $actionSettings = $scopedSettings->actionSettings;
 
-        $validated = $this->validateRequest($request, $scopedSettings->actionSettings->getAction()->type, $eventContext);
+        /** @var \Comhon\CustomAction\Models\EventListener $eventListener */
+        $eventListener = $actionSettings->eventAction?->eventListener;
+        $eventContext = $eventListener ? $eventListener->getEventClass() : null;
+
+        $validated = $this->validateRequest($request, $actionSettings->getAction()->getActionClass(), $eventContext);
         $scopedSettings->fill($validated);
         $scopedSettings->save();
 
@@ -112,10 +112,8 @@ class ActionScopedSettingsController extends Controller
         return JsonResource::collection($paginator);
     }
 
-    private function validateRequest(Request $request, string $type, ?string $eventContext)
+    private function validateRequest(Request $request, string $actionClass, ?string $eventContext)
     {
-        /** @var CustomActionInterface $action */
-        $actionClass = CustomActionModelResolver::getClass($type);
         $rules = RuleHelper::getSettingsRules($actionClass::getSettingsSchema($eventContext));
         $rules['scope'] = 'required|array';
         $rules['name'] = 'required|string|max:63';

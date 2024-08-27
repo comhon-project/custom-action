@@ -2,6 +2,7 @@
 
 namespace Comhon\CustomAction\Listeners;
 
+use Comhon\CustomAction\ActionSettings\SettingsContainerSelector;
 use Comhon\CustomAction\Contracts\BindingsContainerInterface;
 use Comhon\CustomAction\Contracts\CustomActionInterface;
 use Comhon\CustomAction\Contracts\CustomEventInterface;
@@ -33,15 +34,13 @@ class EventActionDispatcher
             : $query->lazy();
 
         foreach ($listeners as $listener) {
+            /** @var \Comhon\CustomAction\Models\EventAction $eventAction */
             foreach ($listener->eventActions as $eventAction) {
-                $actionSettings = $eventAction->actionSettings;
-                $actionClass = CustomActionModelResolver::getClass($eventAction->type);
+                $actionClass = $eventAction->getActionClass();
                 if (! is_subclass_of($actionClass, CustomActionInterface::class)) {
-                    throw new \Exception("invalid type {$eventAction->type}, must be an action instance of CustomActionInterface");
+                    throw new \Exception("invalid action {$eventAction->type}, must be an action instance of CustomActionInterface");
                 }
-                $settingsContainer = $bindings !== null
-                    ? BindingsScoper::getSettingsContainer($actionSettings, $bindings)
-                    : $actionSettings;
+                $settingsContainer = SettingsContainerSelector::select($eventAction, $bindings);
 
                 $actionClass::dispatch($settingsContainer, $bindingsContainer);
             }

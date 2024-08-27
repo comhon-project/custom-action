@@ -84,7 +84,7 @@ class EventActionController extends Controller
 
     private function validateStoreRequest(Request $request, EventListener $eventListener)
     {
-        $eventClass = CustomActionModelResolver::getClass($eventListener->event);
+        $eventClass = $eventListener->getEventClass();
         $allowedTypes = collect($eventClass::getAllowedActions())
             ->map(fn ($class) => CustomActionModelResolver::getUniqueName($class))
             ->filter(fn ($key) => $key !== null);

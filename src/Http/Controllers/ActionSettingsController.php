@@ -2,8 +2,6 @@
 
 namespace Comhon\CustomAction\Http\Controllers;
 
-use Comhon\CustomAction\Contracts\CustomActionInterface;
-use Comhon\CustomAction\Facades\CustomActionModelResolver;
 use Comhon\CustomAction\Models\ActionSettings;
 use Comhon\CustomAction\Rules\RuleHelper;
 use Illuminate\Http\Request;
@@ -35,13 +33,11 @@ class ActionSettingsController extends Controller
         $actionSettings = $actionSetting;
         $this->authorize('update', $actionSettings);
 
+        /** @var \Comhon\CustomAction\Models\EventListener $eventListener */
         $eventListener = $actionSettings->eventAction?->eventListener;
-        $eventContext = $eventListener
-            ? CustomActionModelResolver::getClass($eventListener->event)
-            : null;
+        $eventContext = $eventListener ? $eventListener->getEventClass() : null;
 
-        /** @var CustomActionInterface $action */
-        $actionClass = CustomActionModelResolver::getClass($actionSettings->getAction()->type);
+        $actionClass = $actionSettings->getAction()->getActionClass();
         $rules = RuleHelper::getSettingsRules($actionClass::getSettingsSchema($eventContext));
 
         $validated = $request->validate($rules);

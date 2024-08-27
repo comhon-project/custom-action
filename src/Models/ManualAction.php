@@ -3,11 +3,9 @@
 namespace Comhon\CustomAction\Models;
 
 use Illuminate\Database\Eloquent\Factories\HasFactory;
-use Illuminate\Database\Eloquent\Model;
-use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\SoftDeletes;
 
-class ManualAction extends Model
+class ManualAction extends Action
 {
     use HasFactory;
     use SoftDeletes;
@@ -39,9 +37,4 @@ class ManualAction extends Model
      * @var bool
      */
     public $incrementing = false;
-
-    public function actionSettings(): BelongsTo
-    {
-        return $this->belongsTo(ActionSettings::class);
-    }
 }
