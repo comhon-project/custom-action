@@ -9,7 +9,7 @@ use Illuminate\Foundation\Testing\RefreshDatabase;
 use Tests\SetUpWithModelRegistration;
 use Tests\TestCase;
 
-class CustomEventTest extends TestCase
+class EventDefinitionTest extends TestCase
 {
     use RefreshDatabase;
     use SetUpWithModelRegistration;
@@ -17,6 +17,7 @@ class CustomEventTest extends TestCase
     public function testGetEventsSuccess()
     {
         config(['custom-action.events' => [CompanyRegistered::class]]);
+        /** @var User $user */
         $user = User::factory()->hasConsumerAbility()->create();
         $response = $this->actingAs($user)->getJson('custom/events');
         $response->assertJson([
@@ -31,6 +32,7 @@ class CustomEventTest extends TestCase
 
     public function testGetEventsForbidden()
     {
+        /** @var User $user */
         $user = User::factory()->create();
         $this->actingAs($user)->getJson('custom/events')
             ->assertForbidden();
@@ -38,6 +40,7 @@ class CustomEventTest extends TestCase
 
     public function testEventShemaSuccess()
     {
+        /** @var User $user */
         $user = User::factory()->hasConsumerAbility()->create();
         $this->actingAs($user)->getJson('custom/events/company-registered/schema')
             ->assertOk()
@@ -66,6 +69,7 @@ class CustomEventTest extends TestCase
 
     public function testGetEventShemaWithoutBindingsSuccess()
     {
+        /** @var User $user */
         $user = User::factory()->hasConsumerAbility()->create();
         $this->actingAs($user)->getJson('custom/events/my-event-without-bindings/schema')
             ->assertOk()
@@ -84,6 +88,7 @@ class CustomEventTest extends TestCase
     public function testGetEventShemaNotFound()
     {
         CustomActionModelResolver::register([], true);
+        /** @var User $user */
         $user = User::factory()->hasConsumerAbility()->create();
         $response = $this->actingAs($user)->getJson('custom/events/company-registered/schema');
         $response->assertNotFound();
@@ -91,6 +96,7 @@ class CustomEventTest extends TestCase
 
     public function testGetEventShemaForbidden()
     {
+        /** @var User $user */
         $user = User::factory()->create();
         $this->actingAs($user)->getJson('custom/events/company-registered/schema')
             ->assertForbidden();
