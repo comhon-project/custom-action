@@ -62,8 +62,8 @@ class ActionLocalizedSettingsFactory extends Factory
                 ];
             if ($withLastLogin) {
                 $settings['subject'] .= ' (login:'
-                .' {{ to.last_login_at|format_datetime(\'long\', \'short\') }} ({{default_timezone}})'
-                .' {{ to.last_login_at|format_datetime(\'long\', \'short\', timezone=preferred_timezone) }} ({{preferred_timezone}}))';
+                .' {{ to.last_login_at|format_datetime(\'long\', \'short\')|replace({\' \': " "}) }} ({{default_timezone}})'
+                .' {{ to.last_login_at|format_datetime(\'long\', \'short\', timezone=preferred_timezone)|replace({\' \': " "}) }} ({{preferred_timezone}}))';
             }
 
             return [
