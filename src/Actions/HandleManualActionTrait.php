@@ -7,7 +7,7 @@ use Comhon\CustomAction\Contracts\BindingsContainerInterface;
 use Comhon\CustomAction\Facades\CustomActionModelResolver;
 use Comhon\CustomAction\Models\ManualAction;
 
-trait HandleManualAction
+trait HandleManualActionTrait
 {
     public static function handleManual(?BindingsContainerInterface $bindingsContainer = null, ...$args)
     {

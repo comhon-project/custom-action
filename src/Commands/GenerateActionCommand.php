@@ -2,7 +2,9 @@
 
 namespace Comhon\CustomAction\Commands;
 
-use Comhon\CustomAction\Actions\HandleManualAction;
+use Comhon\CustomAction\Actions\HandleManualActionTrait;
+use Comhon\CustomAction\Actions\InteractWithBindingsTrait;
+use Comhon\CustomAction\Actions\InteractWithLocalizedSettingsTrait;
 use Comhon\CustomAction\Contracts\BindingsContainerInterface;
 use Comhon\CustomAction\Contracts\CustomActionInterface;
 use Comhon\CustomAction\Facades\CustomActionModelResolver;
@@ -65,9 +67,11 @@ class GenerateActionCommand extends Command
             Queueable::class,
             InteractsWithQueue::class,
             SerializesModels::class,
+            InteractWithBindingsTrait::class,
+            InteractWithLocalizedSettingsTrait::class,
         ];
         if ($this->option('manual')) {
-            $actionTraits[] = HandleManualAction::class;
+            $actionTraits[] = HandleManualActionTrait::class;
         }
         foreach ($actionTraits as $actionTrait) {
             if (! $extendsClass || ! in_array($actionTrait, $traits)) {
@@ -95,7 +99,7 @@ EOT;
 
         $imports = collect($imports)->sort()->map(fn ($import) => "use $import;")->implode(PHP_EOL);
         $uses = ! empty($uses)
-            ? '    use '.collect($uses)->sort()->implode(', ').';'.PHP_EOL.PHP_EOL
+            ? '    use '.collect($uses)->implode(','.PHP_EOL.'        ').';'.PHP_EOL.PHP_EOL
             : '';
 
         $fileContent = <<<EOT

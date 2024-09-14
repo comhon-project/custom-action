@@ -53,4 +53,9 @@ class User extends Authenticatable implements EmailReceiverInterface, HasLocaleP
     {
         return $this->preferred_timezone;
     }
+
+    public function getExposableValues(): array
+    {
+        return $this->getAttributes();
+    }
 }

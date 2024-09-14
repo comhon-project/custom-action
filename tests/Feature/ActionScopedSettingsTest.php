@@ -7,13 +7,13 @@ use Comhon\CustomAction\Models\ActionScopedSettings;
 use Comhon\CustomAction\Models\ActionSettings;
 use Comhon\CustomAction\Models\EventAction;
 use Illuminate\Foundation\Testing\RefreshDatabase;
-use Tests\SetUpWithModelRegistration;
+use Tests\SetUpWithModelRegistrationTrait;
 use Tests\TestCase;
 
 class ActionScopedSettingsTest extends TestCase
 {
     use RefreshDatabase;
-    use SetUpWithModelRegistration;
+    use SetUpWithModelRegistrationTrait;
 
     /**
      * @dataProvider providerActionScopedSettings

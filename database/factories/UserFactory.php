@@ -3,6 +3,7 @@
 namespace Database\Factories;
 
 use App\Models\User;
+use Carbon\Carbon;
 use Illuminate\Database\Eloquent\Factories\Factory;
 
 /**
@@ -30,7 +31,7 @@ class UserFactory extends Factory
             'email' => $this->faker->unique()->safeEmail,
             'preferred_locale' => 'en',
             'preferred_timezone' => 'UTC',
-            'last_login_at' => '2022-12-12T00:00:00Z',
+            'last_login_at' => Carbon::parse('2022-12-12T00:00:00Z'),
             'verified_at' => '2022-11-11',
         ];
     }

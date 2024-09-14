@@ -7,13 +7,13 @@ use App\Models\User;
 use Comhon\CustomAction\Facades\CustomActionModelResolver;
 use Comhon\CustomAction\Rules\RuleHelper;
 use Illuminate\Foundation\Testing\RefreshDatabase;
-use Tests\SetUpWithModelRegistration;
+use Tests\SetUpWithModelRegistrationTrait;
 use Tests\TestCase;
 
 class ActionDefinitionTest extends TestCase
 {
     use RefreshDatabase;
-    use SetUpWithModelRegistration;
+    use SetUpWithModelRegistrationTrait;
 
     public function testGetActionsSuccess()
     {

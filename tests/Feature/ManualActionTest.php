@@ -6,13 +6,13 @@ use App\Models\User;
 use Comhon\CustomAction\Facades\CustomActionModelResolver;
 use Comhon\CustomAction\Models\ManualAction;
 use Illuminate\Foundation\Testing\RefreshDatabase;
-use Tests\SetUpWithModelRegistration;
+use Tests\SetUpWithModelRegistrationTrait;
 use Tests\TestCase;
 
 class ManualActionTest extends TestCase
 {
     use RefreshDatabase;
-    use SetUpWithModelRegistration;
+    use SetUpWithModelRegistrationTrait;
 
     public function testGetManualActionNotCreated()
     {

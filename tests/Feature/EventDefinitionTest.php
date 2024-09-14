@@ -6,13 +6,13 @@ use App\Events\CompanyRegistered;
 use App\Models\User;
 use Comhon\CustomAction\Facades\CustomActionModelResolver;
 use Illuminate\Foundation\Testing\RefreshDatabase;
-use Tests\SetUpWithModelRegistration;
+use Tests\SetUpWithModelRegistrationTrait;
 use Tests\TestCase;
 
 class EventDefinitionTest extends TestCase
 {
     use RefreshDatabase;
-    use SetUpWithModelRegistration;
+    use SetUpWithModelRegistrationTrait;
 
     public function testGetEventsSuccess()
     {

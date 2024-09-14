@@ -51,6 +51,8 @@ class GenerateActionCommandTest extends TestCase
 
 namespace App\Actions\CustomActions;
 
+use Comhon\CustomAction\Actions\InteractWithBindingsTrait;
+use Comhon\CustomAction\Actions\InteractWithLocalizedSettingsTrait;
 use Comhon\CustomAction\Contracts\BindingsContainerInterface;
 use Comhon\CustomAction\Contracts\CustomActionInterface;
 use Comhon\CustomAction\Models\ActionSettings;
@@ -62,7 +64,12 @@ use Illuminate\Queue\SerializesModels;
 
 class TestGenericSendEmail implements CustomActionInterface
 {
-    use Dispatchable, InteractsWithQueue, Queueable, SerializesModels;
+    use Dispatchable,
+        Queueable,
+        InteractsWithQueue,
+        SerializesModels,
+        InteractWithBindingsTrait,
+        InteractWithLocalizedSettingsTrait;
 
     public function __construct(
         private ActionSettings \$actionSettings,
@@ -151,6 +158,8 @@ EOT
 namespace App\Actions\CustomActions;
 
 use App\Actions\BadAction;
+use Comhon\CustomAction\Actions\InteractWithBindingsTrait;
+use Comhon\CustomAction\Actions\InteractWithLocalizedSettingsTrait;
 use Comhon\CustomAction\Contracts\BindingsContainerInterface;
 use Comhon\CustomAction\Contracts\CustomActionInterface;
 use Comhon\CustomAction\Models\ActionSettings;
@@ -162,7 +171,12 @@ use Illuminate\Queue\SerializesModels;
 
 class TestGenericSendEmail extends BadAction implements CustomActionInterface
 {
-    use Dispatchable, InteractsWithQueue, Queueable, SerializesModels;
+    use Dispatchable,
+        Queueable,
+        InteractsWithQueue,
+        SerializesModels,
+        InteractWithBindingsTrait,
+        InteractWithLocalizedSettingsTrait;
 
     public function __construct(
         private ActionSettings \$actionSettings,
@@ -208,13 +222,13 @@ EOT
 
 namespace App\Actions\CustomActions;
 
-use Comhon\CustomAction\Actions\HandleManualAction;
+use Comhon\CustomAction\Actions\HandleManualActionTrait;
 use Comhon\CustomAction\Actions\SendTemplatedMail;
 use Illuminate\Contracts\Queue\ShouldQueue;
 
 class TestGenericSendEmail extends SendTemplatedMail
 {
-    use HandleManualAction;
+    use HandleManualActionTrait;
 
     /**
      * Get action settings schema

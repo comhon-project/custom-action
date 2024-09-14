@@ -14,7 +14,7 @@ use Comhon\CustomAction\Actions\QueueTemplatedMail;
 use Comhon\CustomAction\Actions\SendTemplatedMail;
 use Comhon\CustomAction\Facades\CustomActionModelResolver;
 
-trait SetUpWithModelRegistration
+trait SetUpWithModelRegistrationTrait
 {
     public function setUp(): void
     {

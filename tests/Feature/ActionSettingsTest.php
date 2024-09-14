@@ -6,13 +6,13 @@ use App\Models\User;
 use Comhon\CustomAction\Models\ActionSettings;
 use Comhon\CustomAction\Models\ManualAction;
 use Illuminate\Foundation\Testing\RefreshDatabase;
-use Tests\SetUpWithModelRegistration;
+use Tests\SetUpWithModelRegistrationTrait;
 use Tests\TestCase;
 
 class ActionSettingsTest extends TestCase
 {
     use RefreshDatabase;
-    use SetUpWithModelRegistration;
+    use SetUpWithModelRegistrationTrait;
 
     public function testGetActionSettingsSuccess()
     {

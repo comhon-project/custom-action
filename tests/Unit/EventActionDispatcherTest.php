@@ -11,12 +11,12 @@ use Comhon\CustomAction\Listeners\QueuedEventActionDispatcher;
 use Comhon\CustomAction\Models\EventListener;
 use Illuminate\Events\CallQueuedListener;
 use Illuminate\Support\Facades\Queue;
-use Tests\SetUpWithModelRegistration;
+use Tests\SetUpWithModelRegistrationTrait;
 use Tests\TestCase;
 
 class EventActionDispatcherTest extends TestCase
 {
-    use SetUpWithModelRegistration;
+    use SetUpWithModelRegistrationTrait;
 
     public function dispatcher(): EventActionDispatcher
     {

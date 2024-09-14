@@ -17,7 +17,7 @@ use Illuminate\Mail\Mailables\Attachment;
 use Illuminate\Support\Facades\Mail;
 use Illuminate\Support\Facades\Queue;
 use Mockery\MockInterface;
-use Tests\SetUpWithModelRegistration;
+use Tests\SetUpWithModelRegistrationTrait;
 use Tests\Support\Caller;
 use Tests\Support\Utils;
 use Tests\TestCase;
@@ -25,14 +25,14 @@ use Tests\TestCase;
 class EventDispatchTest extends TestCase
 {
     use RefreshDatabase;
-    use SetUpWithModelRegistration;
+    use SetUpWithModelRegistrationTrait;
 
     /**
      * @dataProvider providerEventListener
      *
      * @return void
      */
-    public function testEventListener($addCompanyScope)
+    public function testEventListenerSuccess($addCompanyScope)
     {
         $targetUser = User::factory()->create();
         $otherUserFr = User::factory(['preferred_locale' => 'fr'])->create();

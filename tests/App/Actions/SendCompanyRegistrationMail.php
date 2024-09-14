@@ -2,15 +2,15 @@
 
 namespace App\Actions;
 
-use Comhon\CustomAction\Actions\HandleManualAction;
+use Comhon\CustomAction\Actions\HandleManualActionTrait;
 use Comhon\CustomAction\Actions\SendTemplatedMail;
 use Comhon\CustomAction\Rules\RuleHelper;
 
 class SendCompanyRegistrationMail extends SendTemplatedMail
 {
-    use HandleManualAction;
+    use HandleManualActionTrait;
 
-    public static function getGlobalBindingSchema(): array
+    protected static function getCommonBindingSchema(): array
     {
         return [
             'company.name' => 'string',

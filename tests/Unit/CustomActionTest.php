@@ -5,12 +5,12 @@ namespace Tests\Unit;
 use App\Actions\SendCompanyRegistrationMail;
 use Comhon\CustomAction\Bindings\BindingsContainer;
 use Comhon\CustomAction\Models\ManualAction;
-use Tests\SetUpWithModelRegistration;
+use Tests\SetUpWithModelRegistrationTrait;
 use Tests\TestCase;
 
 class CustomActionTest extends TestCase
 {
-    use SetUpWithModelRegistration;
+    use SetUpWithModelRegistrationTrait;
 
     public function testHandleWithoutReceiver()
     {

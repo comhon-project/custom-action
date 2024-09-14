@@ -14,14 +14,14 @@ use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Mail\Mailables\Attachment;
 use Illuminate\Support\Facades\App;
 use Illuminate\Support\Facades\Mail;
-use Tests\SetUpWithModelRegistration;
+use Tests\SetUpWithModelRegistrationTrait;
 use Tests\Support\Utils;
 use Tests\TestCase;
 
 class ManualActionHandleTest extends TestCase
 {
     use RefreshDatabase;
-    use SetUpWithModelRegistration;
+    use SetUpWithModelRegistrationTrait;
 
     private function getAssetPath(): string
     {
@@ -44,7 +44,7 @@ class ManualActionHandleTest extends TestCase
         Mail::fake();
 
         if (! $success) {
-            $this->expectExceptionMessage('localized mail values not found');
+            $this->expectExceptionMessage('Action localized settings not found');
         }
         SendCompanyRegistrationMail::handleManual(new BindingsContainer($bindings), $user);
 
@@ -88,7 +88,7 @@ class ManualActionHandleTest extends TestCase
         Mail::fake();
 
         if (! $success) {
-            $this->expectExceptionMessage('localized mail values not found');
+            $this->expectExceptionMessage('Action localized settings not found');
         }
         SendCompanyRegistrationMail::handleManual(new BindingsContainer($bindings), $user);
 
@@ -126,7 +126,7 @@ class ManualActionHandleTest extends TestCase
         Mail::fake();
 
         if (! $success) {
-            $this->expectExceptionMessage('localized mail values not found');
+            $this->expectExceptionMessage('Action localized settings not found');
         }
         SendCompanyRegistrationMail::handleManual(new BindingsContainer($bindings, $bindingSchema), $user);
 
@@ -174,7 +174,7 @@ class ManualActionHandleTest extends TestCase
         Mail::fake();
 
         if (! $success) {
-            $this->expectExceptionMessage('localized mail values not found');
+            $this->expectExceptionMessage('Action localized settings not found');
         }
         SendCompanyRegistrationMail::handleManual(null, $user);
 
