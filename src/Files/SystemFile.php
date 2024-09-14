@@ -4,7 +4,7 @@ namespace Comhon\CustomAction\Files;
 
 use Illuminate\Mail\Mailables\Attachment;
 
-class SystemFile implements StoredFile
+class SystemFile implements StoredFileInterface
 {
     public function __construct(private string $path)
     {

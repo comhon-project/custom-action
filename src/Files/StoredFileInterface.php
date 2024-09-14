@@ -4,7 +4,7 @@ namespace Comhon\CustomAction\Files;
 
 use Illuminate\Mail\Mailables\Attachment;
 
-interface StoredFile
+interface StoredFileInterface
 {
     public function getAttachmentInstance(): Attachment;
 }

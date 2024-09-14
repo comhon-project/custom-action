@@ -17,7 +17,7 @@ use Comhon\CustomAction\Contracts\CustomActionInterface;
 use Comhon\CustomAction\Contracts\CustomEventInterface;
 use Comhon\CustomAction\Contracts\EmailReceiverInterface;
 use Comhon\CustomAction\Facades\CustomActionModelResolver as FacadesCustomActionModelResolver;
-use Comhon\CustomAction\Files\StoredFile;
+use Comhon\CustomAction\Files\StoredFileInterface;
 use Comhon\CustomAction\Listeners\EventActionDispatcher;
 use Comhon\CustomAction\Listeners\QueuedEventActionDispatcher;
 use Comhon\CustomAction\Models\ActionLocalizedSettings;
@@ -132,7 +132,7 @@ class CustomActionServiceProvider extends PackageServiceProvider
 
     public function bindModels()
     {
-        FacadesCustomActionModelResolver::bind('stored-file', StoredFile::class);
+        FacadesCustomActionModelResolver::bind('stored-file', StoredFileInterface::class);
         FacadesCustomActionModelResolver::bind('email-receiver', EmailReceiverInterface::class);
         FacadesCustomActionModelResolver::bind('custom-event', CustomEventInterface::class);
     }
