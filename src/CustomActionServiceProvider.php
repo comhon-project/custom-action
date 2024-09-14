@@ -25,6 +25,7 @@ use Comhon\CustomAction\Models\ActionScopedSettings;
 use Comhon\CustomAction\Models\ActionSettings;
 use Comhon\CustomAction\Models\EventAction;
 use Comhon\CustomAction\Models\EventListener;
+use Comhon\CustomAction\Models\ManualAction;
 use Comhon\CustomAction\Resolver\CustomActionModelResolver;
 use Comhon\CustomAction\Resolver\ModelResolver;
 use Comhon\CustomAction\Rules\HtmlTemplate;
@@ -33,6 +34,7 @@ use Comhon\CustomAction\Rules\ModelReference;
 use Comhon\CustomAction\Rules\RuleHelper;
 use Comhon\CustomAction\Rules\TextTemplate;
 use Comhon\ModelResolverContract\ModelResolverInterface;
+use Illuminate\Database\Eloquent\Relations\Relation;
 use Illuminate\Support\Facades\Event;
 use Illuminate\Support\Facades\Gate;
 use Illuminate\Support\Facades\Validator;
@@ -77,6 +79,7 @@ class CustomActionServiceProvider extends PackageServiceProvider
 
         $this->registerPolicies();
         $this->registerRules();
+        $this->registerMorphMapModels();
         $this->bindModels();
         $this->publishFiles();
     }
@@ -115,6 +118,16 @@ class CustomActionServiceProvider extends PackageServiceProvider
         Validator::extend(RuleHelper::getRuleName('is'), IsInstanceOf::class);
         Validator::extend(RuleHelper::getRuleName('text_template'), TextTemplate::class);
         Validator::extend(RuleHelper::getRuleName('html_template'), HtmlTemplate::class);
+    }
+
+    public function registerMorphMapModels()
+    {
+        Relation::morphMap([
+            'action-settings' => ActionSettings::class,
+            'action-scoped-settings' => ActionScopedSettings::class,
+            'event-action' => EventAction::class,
+            'manual-action' => ManualAction::class,
+        ]);
     }
 
     public function bindModels()
