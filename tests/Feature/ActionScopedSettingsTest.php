@@ -20,12 +20,12 @@ class ActionScopedSettingsTest extends TestCase
      */
     public function testStoreActionScopedSettings($fromEventAction)
     {
-        $withActionType = $fromEventAction ? 'withEventActionType' : 'withManualActionType';
+        $withAction = $fromEventAction ? 'withEventAction' : 'withManualAction';
 
         /** @var ActionSettings $actionSettings */
         $actionSettings = ActionSettings::factory([
             'settings' => [],
-        ])->{$withActionType}('send-email')->create();
+        ])->{$withAction}('send-email')->create();
         $settingsScope1 = [
             'to_receivers' => [
                 ['receiver_id' => User::factory()->create()->id, 'receiver_type' => 'user'],
@@ -114,7 +114,7 @@ class ActionScopedSettingsTest extends TestCase
     public function testListScopedActionsWithFilter()
     {
         /** @var ActionSettings $actionSettings */
-        $actionSettings = ActionSettings::factory()->withManualActionType()->create();
+        $actionSettings = ActionSettings::factory()->withManualAction()->create();
         $scopedSettings = ActionScopedSettings::factory([
             'name' => 'my one',
         ])->for($actionSettings, 'actionSettings')->create();
@@ -142,7 +142,7 @@ class ActionScopedSettingsTest extends TestCase
         /** @var ActionSettings $actionSettings */
         $actionSettings = ActionSettings::factory([
             'settings' => [],
-        ])->withEventActionType('send-email')->create();
+        ])->withEventAction('send-email')->create();
         $settingsScope1 = [
             'to_bindings_receivers' => ['user'],
         ];
@@ -177,10 +177,10 @@ class ActionScopedSettingsTest extends TestCase
      */
     public function testStoreActionScopedSettingsForbidden($fromEventAction)
     {
-        $withActionType = $fromEventAction ? 'withEventActionType' : 'withManualActionType';
+        $withAction = $fromEventAction ? 'withEventAction' : 'withManualAction';
 
         /** @var ActionSettings $actionSettings */
-        $actionSettings = ActionSettings::factory()->{$withActionType}('send-email')->create();
+        $actionSettings = ActionSettings::factory()->{$withAction}('send-email')->create();
 
         /** @var User $user */
         $user = User::factory()->create();
@@ -193,10 +193,10 @@ class ActionScopedSettingsTest extends TestCase
      */
     public function testUpdateActionScopedSettingsSuccess($fromEventAction)
     {
-        $withActionType = $fromEventAction ? 'withEventActionType' : 'withManualActionType';
+        $withAction = $fromEventAction ? 'withEventAction' : 'withManualAction';
 
         /** @var ActionSettings $actionSettings */
-        $actionSettings = ActionSettings::factory()->{$withActionType}('send-email')->create();
+        $actionSettings = ActionSettings::factory()->{$withAction}('send-email')->create();
         $scopedSettings = ActionScopedSettings::factory([
             'settings' => [
                 'to_receivers' => [
@@ -299,9 +299,9 @@ class ActionScopedSettingsTest extends TestCase
      */
     public function testUpdateActionScopedSettingsForbidden($fromEventAction)
     {
-        $withActionType = $fromEventAction ? 'withEventActionType' : 'withManualActionType';
+        $withAction = $fromEventAction ? 'withEventAction' : 'withManualAction';
 
-        $scopedSettings = ActionScopedSettings::factory()->{$withActionType}('send-email')->create();
+        $scopedSettings = ActionScopedSettings::factory()->{$withAction}('send-email')->create();
 
         /** @var User $user */
         $user = User::factory()->create();
@@ -314,10 +314,10 @@ class ActionScopedSettingsTest extends TestCase
      */
     public function testDeleteActionScopedSettings($fromEventAction)
     {
-        $withActionType = $fromEventAction ? 'withEventActionType' : 'withManualActionType';
+        $withAction = $fromEventAction ? 'withEventAction' : 'withManualAction';
 
         /** @var ActionSettings $actionSettings */
-        $actionSettings = ActionSettings::factory()->{$withActionType}('send-email')->create();
+        $actionSettings = ActionSettings::factory()->{$withAction}('send-email')->create();
 
         $scopedSettings = ActionScopedSettings::factory([
             'settings' => [],
@@ -341,10 +341,10 @@ class ActionScopedSettingsTest extends TestCase
      */
     public function testDeleteActionScopedSettingsForbidden($fromEventAction)
     {
-        $withActionType = $fromEventAction ? 'withEventActionType' : 'withManualActionType';
+        $withAction = $fromEventAction ? 'withEventAction' : 'withManualAction';
 
         /** @var ActionSettings $actionSettings */
-        $scopedSettings = ActionScopedSettings::factory()->{$withActionType}('send-email')->create();
+        $scopedSettings = ActionScopedSettings::factory()->{$withAction}('send-email')->create();
 
         /** @var User $user */
         $user = User::factory()->create();
@@ -367,7 +367,7 @@ class ActionScopedSettingsTest extends TestCase
     {
         $actionSettings = ActionSettings::factory([
             'settings' => [],
-        ])->withEventActionType('send-email')->create();
+        ])->withEventAction('send-email')->create();
 
         /** @var User $user */
         $user = User::factory()->hasConsumerAbility()->create();

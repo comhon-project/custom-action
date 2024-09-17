@@ -34,7 +34,7 @@ class ActionSettingsFactory extends Factory
         ];
     }
 
-    public function withEventActionType(?string $type = null, ?string $event = null): Factory
+    public function withEventAction(?string $type = null, ?string $event = null): Factory
     {
         return $this->afterMaking(function (ActionSettings $actionSettings) use ($type, $event) {
             $stateAction = $type ? ['type' => $type] : [];
@@ -46,7 +46,7 @@ class ActionSettingsFactory extends Factory
         });
     }
 
-    public function withManualActionType(?string $type = null): Factory
+    public function withManualAction(?string $type = null): Factory
     {
         return $this->afterMaking(function (ActionSettings $actionSettings) use ($type) {
             $state = $type ? ['type' => $type] : [];

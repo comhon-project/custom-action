@@ -88,7 +88,7 @@ class EventDispatchTest extends TestCase
     {
         // create event listener for CompanyRegistered event
         $settings = ActionSettings::factory()
-            ->withEventActionType('my-action-without-bindings')
+            ->withEventAction('my-action-without-bindings')
             ->create();
 
         $eventListener = $settings->action->eventListener;
@@ -119,7 +119,7 @@ class EventDispatchTest extends TestCase
                 'to_bindings_receivers' => ['user'],
                 'to_bindings_emails' => ['responsibles.*.email'],
             ],
-        ])->withEventActionType(null, 'company-registered')->create();
+        ])->withEventAction(null, 'company-registered')->create();
 
         ActionLocalizedSettings::factory()->for($actionSettings, 'localizable')->emailSettings('en')->create();
         ActionLocalizedSettings::factory()->for($actionSettings, 'localizable')->emailSettings('fr')->create();

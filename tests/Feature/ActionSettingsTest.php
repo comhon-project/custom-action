@@ -20,7 +20,7 @@ class ActionSettingsTest extends TestCase
             'settings' => [
                 'subject' => 'the subject',
             ],
-        ])->withManualActionType()->create();
+        ])->withManualAction()->create();
 
         /** @var User $consumer */
         $consumer = User::factory()->hasConsumerAbility()->create();
@@ -38,7 +38,7 @@ class ActionSettingsTest extends TestCase
 
     public function testGetActionSettingsForbidden()
     {
-        $actionSettings = ActionSettings::factory()->withManualActionType()->create();
+        $actionSettings = ActionSettings::factory()->withManualAction()->create();
         /** @var User $consumer */
         $consumer = User::factory()->create();
         $this->actingAs($consumer)->getJson("custom/action-settings/{$actionSettings->id}")
@@ -49,7 +49,7 @@ class ActionSettingsTest extends TestCase
     {
         $actionSettings = ActionSettings::factory([
             'settings' => [],
-        ])->withEventActionType('send-email')->create();
+        ])->withEventAction('send-email')->create();
         $newSettings = [
             'to_receivers' => [
                 ['receiver_id' => User::factory()->create()->id, 'receiver_type' => 'user'],
@@ -135,7 +135,7 @@ class ActionSettingsTest extends TestCase
     {
         $actionSettings = ActionSettings::factory([
             'settings' => [],
-        ])->withEventActionType('send-email')->create();
+        ])->withEventAction('send-email')->create();
         $newSettings = [
             'to_bindings_receivers' => ['user'],
         ];
@@ -159,7 +159,7 @@ class ActionSettingsTest extends TestCase
     {
         $actionSettings = ActionSettings::factory([
             'settings' => [],
-        ])->withEventActionType('send-email')->create();
+        ])->withEventAction('send-email')->create();
 
         /** @var User $user */
         $user = User::factory()->create();

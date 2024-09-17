@@ -32,20 +32,20 @@ class ActionScopedSettingsFactory extends Factory
         ];
     }
 
-    public function withEventActionType(string $type, ?string $event = null): Factory
+    public function withEventAction(?string $type = null, ?string $event = null): Factory
     {
         return $this->afterMaking(function (ActionScopedSettings $actionScopedSettings) use ($type, $event) {
             $actionScopedSettings->actionSettings()->associate(
-                ActionSettings::factory()->withEventActionType($type, $event)->create()
+                ActionSettings::factory()->withEventAction($type, $event)->create()
             );
         });
     }
 
-    public function withManualActionType(string $type): Factory
+    public function withManualAction(?string $type = null): Factory
     {
         return $this->afterMaking(function (ActionScopedSettings $actionScopedSettings) use ($type) {
             $actionScopedSettings->actionSettings()->associate(
-                ActionSettings::factory()->withManualActionType($type)->create()
+                ActionSettings::factory()->withManualAction($type)->create()
             );
         });
     }

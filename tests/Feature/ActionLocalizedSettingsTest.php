@@ -21,12 +21,12 @@ class ActionLocalizedSettingsTest extends TestCase
     public function testStoreActionLocalizedSettings($settingsContainerClass, $fromEventAction)
     {
         $resource = $settingsContainerClass == ActionSettings::class ? 'action-settings' : 'scoped-settings';
-        $withActionType = $fromEventAction ? 'withEventActionType' : 'withManualActionType';
+        $withAction = $fromEventAction ? 'withEventAction' : 'withManualAction';
 
         /** @var ActionSettingsContainer $settingsContainer */
         $settingsContainer = $settingsContainerClass::factory([
             'settings' => [],
-        ])->{$withActionType}('send-email')->create();
+        ])->{$withAction}('send-email')->create();
         $originalSettingsEn = [
             'subject' => 'original subject',
             'body' => 'original body',
@@ -97,12 +97,12 @@ class ActionLocalizedSettingsTest extends TestCase
     public function testStoreActionLocalizedSettingsMissingRequired($settingsContainerClass, $fromEventAction)
     {
         $resource = $settingsContainerClass == ActionSettings::class ? 'action-settings' : 'scoped-settings';
-        $withActionType = $fromEventAction ? 'withEventActionType' : 'withManualActionType';
+        $withAction = $fromEventAction ? 'withEventAction' : 'withManualAction';
 
         /** @var ActionSettingsContainer $settingsContainer */
         $settingsContainer = $settingsContainerClass::factory([
             'settings' => [],
-        ])->{$withActionType}('send-email')->create();
+        ])->{$withAction}('send-email')->create();
         /** @var User $user */
         $user = User::factory()->hasConsumerAbility()->create();
 
@@ -129,11 +129,11 @@ class ActionLocalizedSettingsTest extends TestCase
     public function testStoreActionLocalizedSettingsWithLocalizedSettings($settingsContainerClass, $fromEventAction)
     {
         $resource = $settingsContainerClass == ActionSettings::class ? 'action-settings' : 'scoped-settings';
-        $withActionType = $fromEventAction ? 'withEventActionType' : 'withManualActionType';
+        $withAction = $fromEventAction ? 'withEventAction' : 'withManualAction';
 
         /** @var ActionSettingsContainer $settingsContainer */
         $settingsContainer = $settingsContainerClass::factory()
-            ->{$withActionType}('send-company-email')
+            ->{$withAction}('send-company-email')
             ->create();
         $originalSettingsEn = [
             'subject' => 'original subject',
@@ -167,11 +167,11 @@ class ActionLocalizedSettingsTest extends TestCase
     public function testStoreActionLocalizedSettingsForbidden($settingsContainerClass, $fromEventAction)
     {
         $resource = $settingsContainerClass == ActionSettings::class ? 'action-settings' : 'scoped-settings';
-        $withActionType = $fromEventAction ? 'withEventActionType' : 'withManualActionType';
+        $withAction = $fromEventAction ? 'withEventAction' : 'withManualAction';
 
         /** @var ActionSettingsContainer $settingsContainer */
         $settingsContainer = $settingsContainerClass::factory()
-            ->{$withActionType}('send-company-email')->create();
+            ->{$withAction}('send-company-email')->create();
 
         /** @var User $user */
         $user = User::factory()->create();
@@ -184,11 +184,11 @@ class ActionLocalizedSettingsTest extends TestCase
      */
     public function testUpdateActionLocalizedSettings($settingsContainerClass, $fromEventAction)
     {
-        $withActionType = $fromEventAction ? 'withEventActionType' : 'withManualActionType';
+        $withAction = $fromEventAction ? 'withEventAction' : 'withManualAction';
 
         /** @var ActionSettingsContainer $settingsContainer */
         $settingsContainer = $settingsContainerClass::factory()
-            ->{$withActionType}('send-email')
+            ->{$withAction}('send-email')
             ->create();
 
         $localizedSettings = new ActionLocalizedSettings;
@@ -227,11 +227,11 @@ class ActionLocalizedSettingsTest extends TestCase
      */
     public function testUpdateActionLocalizedSettingsWithActionLocalizedSetting($settingsContainerClass, $fromEventAction)
     {
-        $withActionType = $fromEventAction ? 'withEventActionType' : 'withManualActionType';
+        $withAction = $fromEventAction ? 'withEventAction' : 'withManualAction';
 
         /** @var ActionSettingsContainer $settingsContainer */
         $settingsContainer = $settingsContainerClass::factory()
-            ->{$withActionType}('send-company-email')
+            ->{$withAction}('send-company-email')
             ->create();
         $localizedSettings = new ActionLocalizedSettings;
         $localizedSettings->settings = [
@@ -271,10 +271,10 @@ class ActionLocalizedSettingsTest extends TestCase
      */
     public function testUpdateActionLocalizedSettingsForbidden($settingsContainerClass, $fromEventAction)
     {
-        $withActionType = $fromEventAction ? 'withEventActionType' : 'withManualActionType';
+        $withAction = $fromEventAction ? 'withEventAction' : 'withManualAction';
 
         /** @var ActionSettingsContainer $settingsContainer */
-        $settingsContainer = $settingsContainerClass::factory()->{$withActionType}('send-email')->create();
+        $settingsContainer = $settingsContainerClass::factory()->{$withAction}('send-email')->create();
         $localizedSettings = new ActionLocalizedSettings;
         $localizedSettings->settings = [
             'subject' => 'original subject',
@@ -295,10 +295,10 @@ class ActionLocalizedSettingsTest extends TestCase
      */
     public function testDeleteActionLocalizedSettings($settingsContainerClass, $fromEventAction)
     {
-        $withActionType = $fromEventAction ? 'withEventActionType' : 'withManualActionType';
+        $withAction = $fromEventAction ? 'withEventAction' : 'withManualAction';
 
         /** @var ActionSettingsContainer $settingsContainer */
-        $settingsContainer = $settingsContainerClass::factory()->{$withActionType}('send-email')->create();
+        $settingsContainer = $settingsContainerClass::factory()->{$withAction}('send-email')->create();
         $localizedSettings = new ActionLocalizedSettings;
         $localizedSettings->settings = [];
         $localizedSettings->locale = 'en';
@@ -321,10 +321,10 @@ class ActionLocalizedSettingsTest extends TestCase
      */
     public function testDeleteActionLocalizedSettingsForbidden($settingsContainerClass, $fromEventAction)
     {
-        $withActionType = $fromEventAction ? 'withEventActionType' : 'withManualActionType';
+        $withAction = $fromEventAction ? 'withEventAction' : 'withManualAction';
 
         /** @var ActionSettingsContainer $settingsContainer */
-        $settingsContainer = $settingsContainerClass::factory()->$withActionType('send-email')->create();
+        $settingsContainer = $settingsContainerClass::factory()->$withAction('send-email')->create();
         $localizedSettings = new ActionLocalizedSettings;
         $localizedSettings->settings = [];
         $localizedSettings->locale = 'en';
