@@ -15,7 +15,7 @@ class EventActionTest extends TestCase
     use RefreshDatabase;
     use SetUpWithModelRegistrationTrait;
 
-    public function testGetEventListenerActions()
+    public function testListEventListenerActions()
     {
         $toUser = User::factory()->create();
 
@@ -34,16 +34,22 @@ class EventActionTest extends TestCase
                 [
                     'id' => $actions[0]->id,
                     'type' => 'send-email',
+                    'action_settings' => [
+                        'id' => $actions[0]->actionSettings->id,
+                    ],
                 ],
                 [
                     'id' => $actions[1]->id,
                     'type' => 'send-email',
+                    'action_settings' => [
+                        'id' => $actions[1]->actionSettings->id,
+                    ],
                 ],
             ],
         ]);
     }
 
-    public function testGetEventListenerActionsWithFilter()
+    public function testListEventListenerActionsWithFilter()
     {
         // create event listener for CompanyRegistered event
         $eventListener = EventListener::factory([
@@ -71,7 +77,7 @@ class EventActionTest extends TestCase
             ]);
     }
 
-    public function testGetEventListenerActionsForbidden()
+    public function testListEventListenerActionsForbidden()
     {
         $toUser = User::factory()->create();
 
@@ -181,7 +187,9 @@ class EventActionTest extends TestCase
                     'id' => $action->id,
                     'name' => $action->name,
                     'event_listener_id' => $action->event_listener_id,
-                    'action_settings_id' => $action->action_settings_id,
+                    'action_settings' => [
+                        'id' => $action->actionSettings->id,
+                    ],
                 ],
             ]);
     }

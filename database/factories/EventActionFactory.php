@@ -30,7 +30,6 @@ class EventActionFactory extends Factory
             'name' => 'My Custom Event Action',
             'type' => 'send-email',
             'event_listener_id' => EventListener::factory(),
-            'action_settings_id' => ActionSettings::factory(),
         ];
     }
 
@@ -39,13 +38,12 @@ class EventActionFactory extends Factory
      */
     public function sendMailRegistrationCompany(?array $toOtherUserIds = null, $withScopedSettings = false, $shoudQueue = false, $withAttachement = false): Factory
     {
-        return $this->state(function (array $attributes) use ($toOtherUserIds, $withScopedSettings, $shoudQueue, $withAttachement) {
-            $type = $shoudQueue ? 'queue-email' : 'send-email';
-
-            return [
-                'type' => $type,
-                'action_settings_id' => ActionSettings::factory()->sendMailRegistrationCompany($toOtherUserIds, $withScopedSettings, $withAttachement),
-            ];
+        return $this->aftermaking(function (EventAction $eventAction) use ($shoudQueue) {
+            $eventAction->type = $shoudQueue ? 'queue-email' : 'send-email';
+        })->afterCreating(function (EventAction $eventAction) use ($toOtherUserIds, $withScopedSettings, $withAttachement) {
+            ActionSettings::factory()->for($eventAction, 'action')
+                ->sendMailRegistrationCompany($toOtherUserIds, $withScopedSettings, $withAttachement)
+                ->create();
         });
     }
 }

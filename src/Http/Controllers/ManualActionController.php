@@ -31,11 +31,17 @@ class ManualActionController extends Controller
             $manualAction->type = $actionType;
 
             DB::transaction(function () use ($manualAction) {
-                $settings = new ActionSettings;
-                $settings->settings = [];
-                $settings->save();
-                $manualAction->actionSettings()->associate($settings);
                 $manualAction->save();
+
+                $actionSettings = new ActionSettings;
+                $actionSettings->settings = [];
+                $actionSettings->action()->associate($manualAction);
+                $actionSettings->save();
+
+                // to avoid infinite loop
+                $actionSettings->unsetRelation('action');
+
+                $manualAction->setRelation('actionSettings', $actionSettings);
             });
         }
 

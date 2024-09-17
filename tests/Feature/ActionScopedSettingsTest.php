@@ -114,7 +114,7 @@ class ActionScopedSettingsTest extends TestCase
     public function testListScopedActionsWithFilter()
     {
         /** @var ActionSettings $actionSettings */
-        $actionSettings = ActionSettings::factory()->create();
+        $actionSettings = ActionSettings::factory()->withManualActionType()->create();
         $scopedSettings = ActionScopedSettings::factory([
             'name' => 'my one',
         ])->for($actionSettings, 'actionSettings')->create();

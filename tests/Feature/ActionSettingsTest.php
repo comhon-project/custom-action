@@ -20,7 +20,7 @@ class ActionSettingsTest extends TestCase
             'settings' => [
                 'subject' => 'the subject',
             ],
-        ])->create();
+        ])->withManualActionType()->create();
 
         /** @var User $consumer */
         $consumer = User::factory()->hasConsumerAbility()->create();
@@ -38,7 +38,7 @@ class ActionSettingsTest extends TestCase
 
     public function testGetActionSettingsForbidden()
     {
-        $actionSettings = ActionSettings::factory()->create();
+        $actionSettings = ActionSettings::factory()->withManualActionType()->create();
         /** @var User $consumer */
         $consumer = User::factory()->create();
         $this->actingAs($consumer)->getJson("custom/action-settings/{$actionSettings->id}")

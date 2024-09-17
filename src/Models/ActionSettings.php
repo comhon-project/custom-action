@@ -4,7 +4,7 @@ namespace Comhon\CustomAction\Models;
 
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Relations\HasMany;
-use Illuminate\Database\Eloquent\Relations\HasOne;
+use Illuminate\Database\Eloquent\Relations\MorphTo;
 use Illuminate\Database\Eloquent\SoftDeletes;
 
 class ActionSettings extends ActionSettingsContainer
@@ -52,18 +52,8 @@ class ActionSettings extends ActionSettingsContainer
         return $this->hasMany(ActionScopedSettings::class, 'action_settings_id');
     }
 
-    public function eventAction(): HasOne
+    public function action(): MorphTo
     {
-        return $this->hasOne(EventAction::class, 'action_settings_id');
-    }
-
-    public function manualAction(): HasOne
-    {
-        return $this->hasOne(ManualAction::class, 'action_settings_id');
-    }
-
-    public function getAction(): Action
-    {
-        return $this->eventAction ?? $this->manualAction;
+        return $this->morphTo();
     }
 }

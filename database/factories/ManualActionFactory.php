@@ -27,7 +27,6 @@ class ManualActionFactory extends Factory
     {
         return [
             'type' => 'send-company-email',
-            'action_settings_id' => ActionSettings::factory(),
         ];
     }
 
@@ -36,11 +35,10 @@ class ManualActionFactory extends Factory
      */
     public function sendMailRegistrationCompany(?array $toOtherUserIds = null, $withScopedSettings = false, $withAttachement = false): Factory
     {
-        return $this->state(function (array $attributes) use ($toOtherUserIds, $withScopedSettings, $withAttachement) {
-            return [
-                'type' => 'send-company-email',
-                'action_settings_id' => ActionSettings::factory()->sendMailRegistrationCompany($toOtherUserIds, $withScopedSettings, $withAttachement),
-            ];
+        return $this->afterCreating(function (ManualAction $manualAction) use ($toOtherUserIds, $withScopedSettings, $withAttachement) {
+            ActionSettings::factory()->for($manualAction, 'action')
+                ->sendMailRegistrationCompany($toOtherUserIds, $withScopedSettings, $withAttachement)
+                ->create();
         });
     }
 }

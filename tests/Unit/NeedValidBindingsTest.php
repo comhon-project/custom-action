@@ -17,7 +17,7 @@ class NeedValidBindingsTest extends TestCase
         });
 
         return new TestActionCache(
-            ActionSettings::factory()->create(),
+            ActionSettings::factory()->withManualActionType()->create(),
             $bindingsContainer
         );
     }

@@ -6,6 +6,7 @@ use Comhon\CustomAction\Models\ActionLocalizedSettings;
 use Comhon\CustomAction\Models\ActionScopedSettings;
 use Comhon\CustomAction\Models\ActionSettings;
 use Comhon\CustomAction\Models\EventAction;
+use Comhon\CustomAction\Models\EventListener;
 use Comhon\CustomAction\Models\ManualAction;
 use Illuminate\Database\Eloquent\Factories\Factory;
 
@@ -33,31 +34,23 @@ class ActionSettingsFactory extends Factory
         ];
     }
 
-    public function withEventActionType(string $type): Factory
+    public function withEventActionType(?string $type = null, ?string $event = null): Factory
     {
-        return $this->afterCreating(function (ActionSettings $actionSettings) use ($type) {
-            if (! $actionSettings->eventAction()->exists()) {
-                EventAction::factory([
-                    'type' => $type,
-                ])->for($actionSettings, 'actionSettings')->create();
-            } else {
-                $actionSettings->eventAction->type = $type;
-                $actionSettings->eventAction->save();
-            }
+        return $this->afterMaking(function (ActionSettings $actionSettings) use ($type, $event) {
+            $stateAction = $type ? ['type' => $type] : [];
+            $stateEvent = $event ? ['event' => $event] : [];
+            $eventAction = EventAction::factory($stateAction)
+                ->for(EventListener::factory($stateEvent), 'eventListener')
+                ->create();
+            $actionSettings->action()->associate($eventAction);
         });
     }
 
-    public function withManualActionType(string $type): Factory
+    public function withManualActionType(?string $type = null): Factory
     {
-        return $this->afterCreating(function (ActionSettings $actionSettings) use ($type) {
-            if (! $actionSettings->manualAction) {
-                ManualAction::factory([
-                    'type' => $type,
-                ])->for($actionSettings, 'actionSettings')->create();
-            } else {
-                $actionSettings->manualAction->type = $type;
-                $actionSettings->manualAction->save();
-            }
+        return $this->afterMaking(function (ActionSettings $actionSettings) use ($type) {
+            $state = $type ? ['type' => $type] : [];
+            $actionSettings->action()->associate(ManualAction::factory($state)->create());
         });
     }
 

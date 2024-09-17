@@ -11,6 +11,9 @@ class SettingsContainerSelector
 {
     public static function select(Action $action, ?array $bindings): ActionSettingsContainer
     {
+        if (! $action->actionSettings) {
+            throw new \Exception('missing action settings');
+        }
         if ($bindings === null) {
             return $action->actionSettings;
         }

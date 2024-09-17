@@ -10,7 +10,6 @@ use Comhon\CustomAction\Actions\QueueTemplatedMail;
 use Comhon\CustomAction\Mail\Custom;
 use Comhon\CustomAction\Models\ActionLocalizedSettings;
 use Comhon\CustomAction\Models\ActionSettings;
-use Comhon\CustomAction\Models\EventAction;
 use Comhon\CustomAction\Models\EventListener;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Mail\Mailables\Attachment;
@@ -92,7 +91,7 @@ class EventDispatchTest extends TestCase
             ->withEventActionType('my-action-without-bindings')
             ->create();
 
-        $eventListener = $settings->eventAction->eventListener;
+        $eventListener = $settings->action->eventListener;
         $eventListener->event = 'my-event-without-bindings';
         $eventListener->save();
 
@@ -112,9 +111,6 @@ class EventDispatchTest extends TestCase
         $companyName = 'my company';
         $company = Company::factory(['name' => $companyName])->create();
 
-        $listener = EventListener::factory(['event' => 'company-registered'])
-            ->create();
-
         $receiver = User::factory(['preferred_locale' => 'fr'])->create();
         $actionSettings = ActionSettings::factory([
             'settings' => [
@@ -123,11 +119,7 @@ class EventDispatchTest extends TestCase
                 'to_bindings_receivers' => ['user'],
                 'to_bindings_emails' => ['responsibles.*.email'],
             ],
-        ])->create();
-        EventAction::factory()
-            ->for($listener, 'eventListener')
-            ->for($actionSettings, 'actionSettings')
-            ->create();
+        ])->withEventActionType(null, 'company-registered')->create();
 
         ActionLocalizedSettings::factory()->for($actionSettings, 'localizable')->emailSettings('en')->create();
         ActionLocalizedSettings::factory()->for($actionSettings, 'localizable')->emailSettings('fr')->create();

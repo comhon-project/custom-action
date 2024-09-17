@@ -31,12 +31,17 @@ class EventActionController extends Controller
         $eventAction->name = $validated['name'];
 
         DB::transaction(function () use ($eventAction, $validated) {
+            $eventAction->save();
+
             $actionSettings = new ActionSettings;
             $actionSettings->settings = $validated['settings'] ?? [];
+            $actionSettings->action()->associate($eventAction);
             $actionSettings->save();
 
-            $eventAction->actionSettings()->associate($actionSettings);
-            $eventAction->save();
+            // to avoid infinite loop
+            $actionSettings->unsetRelation('action');
+
+            $eventAction->setRelation('actionSettings', $actionSettings);
         });
 
         return new JsonResource($eventAction);
@@ -49,7 +54,7 @@ class EventActionController extends Controller
     {
         $this->authorize('view', $eventAction);
 
-        return new JsonResource($eventAction);
+        return new JsonResource($eventAction->load('actionSettings'));
     }
 
     /**

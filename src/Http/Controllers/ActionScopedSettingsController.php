@@ -4,6 +4,7 @@ namespace Comhon\CustomAction\Http\Controllers;
 
 use Comhon\CustomAction\Models\ActionScopedSettings;
 use Comhon\CustomAction\Models\ActionSettings;
+use Comhon\CustomAction\Models\EventAction;
 use Comhon\CustomAction\Rules\RuleHelper;
 use Illuminate\Http\Request;
 use Illuminate\Http\Resources\Json\JsonResource;
@@ -34,11 +35,11 @@ class ActionScopedSettingsController extends Controller
     {
         $this->authorize('create', [ActionScopedSettings::class, $actionSettings]);
 
-        /** @var \Comhon\CustomAction\Models\EventListener $eventListener */
-        $eventListener = $actionSettings->eventAction?->eventListener;
-        $eventContext = $eventListener ? $eventListener->getEventClass() : null;
+        $eventContext = $actionSettings->action instanceof EventAction
+            ? $actionSettings->action->eventListener->getEventClass()
+            : null;
 
-        $validated = $this->validateRequest($request, $actionSettings->getAction()->getActionClass(), $eventContext);
+        $validated = $this->validateRequest($request, $actionSettings->action->getActionClass(), $eventContext);
 
         $scopedSettings = new ActionScopedSettings($validated);
         $scopedSettings->actionSettings()->associate($actionSettings->id);
@@ -60,11 +61,11 @@ class ActionScopedSettingsController extends Controller
         /** @var ActionSettings $actionSettings */
         $actionSettings = $scopedSettings->actionSettings;
 
-        /** @var \Comhon\CustomAction\Models\EventListener $eventListener */
-        $eventListener = $actionSettings->eventAction?->eventListener;
-        $eventContext = $eventListener ? $eventListener->getEventClass() : null;
+        $eventContext = $actionSettings->action instanceof EventAction
+            ? $actionSettings->action->eventListener->getEventClass()
+            : null;
 
-        $validated = $this->validateRequest($request, $actionSettings->getAction()->getActionClass(), $eventContext);
+        $validated = $this->validateRequest($request, $actionSettings->action->getActionClass(), $eventContext);
         $scopedSettings->fill($validated);
         $scopedSettings->save();
 

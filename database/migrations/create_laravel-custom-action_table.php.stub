@@ -24,56 +24,53 @@ return new class extends Migration
         });
         Schema::create('custom_action_settings', function (Blueprint $table) {
             $table->id();
+            $table->string('action_type', 31);
+            $table->unsignedBigInteger('action_id');
             $table->json('settings');
 
             $table->timestamps();
             $table->softDeletes();
+
+            $table->index(['action_type', 'action_id']);
         });
         Schema::create('custom_action_scoped_settings', function (Blueprint $table) {
             $table->id();
-            $table->unsignedBigInteger('action_settings_id');
+            $table->foreignId('action_settings_id')->constrained('custom_action_settings');
             $table->string('name', 63);
             $table->json('settings');
             $table->json('scope')->nullable(true);
 
             $table->timestamps();
             $table->softDeletes();
-
-            $table->foreign('action_settings_id')->references('id')->on('custom_action_settings');
         });
         Schema::create('custom_action_localized_settings', function (Blueprint $table) {
             $table->id();
-            $table->morphs('localizable');
+            $table->string('localizable_type', 31);
+            $table->unsignedBigInteger('localizable_id');
             $table->string('locale', 7);
             $table->json('settings');
 
             $table->timestamps();
             $table->softDeletes();
 
-            $table->unique(['locale', 'localizable_id', 'localizable_type'], 'custom_action_localized_settings_uk');
+            $table->unique(['localizable_id', 'localizable_type', 'locale'], 'custom_action_localized_settings_uk');
         });
         Schema::create('custom_event_actions', function (Blueprint $table) {
             $table->id();
             $table->string('type', 63);
             $table->string('name', 63);
-            $table->unsignedBigInteger('event_listener_id');
-            $table->unsignedBigInteger('action_settings_id')->unique();
+            $table->foreignId('event_listener_id')->constrained('custom_event_listeners');
 
             $table->timestamps();
             $table->softDeletes();
-
-            $table->foreign('event_listener_id', 'event_listener_id_fk')->references('id')->on('custom_event_listeners');
-            $table->foreign('action_settings_id', 'action_settings_id_fk')->references('id')->on('custom_action_settings');
         });
         Schema::create('custom_manual_actions', function (Blueprint $table) {
             $table->string('type', 63);
-            $table->unsignedBigInteger('action_settings_id')->unique();
 
             $table->timestamps();
             $table->softDeletes();
 
             $table->primary('type');
-            $table->foreign('action_settings_id')->references('id')->on('custom_action_settings');
         });
     }
 
