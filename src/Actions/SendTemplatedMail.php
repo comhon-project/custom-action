@@ -129,26 +129,30 @@ class SendTemplatedMail implements CustomActionInterface, HasBindingsInterface
 
         $validatedReceivers = $this->getReceivers($this->getValidatedBindings());
 
-        // we retrieve recievers with not validated bindings to keep original object instances
+        // we retrieve receivers with not validated bindings to keep original object instances
         $receivers = $this->getReceivers([
             ...$this->bindingsContainer?->getBindingValues() ?? [],
             ...$this->getBindingValues(),
         ]);
 
-        foreach ($receivers as $index => $to) {
-            $localizedSettings = $this->findActionLocalizedSettingsOrFail($to, true);
+        foreach ($receivers as $index => $receiver) {
+            $localizedSettings = $this->findActionLocalizedSettingsOrFail($receiver, true);
             $locale = $localizedSettings->locale;
             $localizedMailInfos[$locale] ??= $this->getLocalizedMailInfos($localizedSettings);
             $mailInfos = &$localizedMailInfos[$locale];
 
-            $mailInfos['bindings']['to'] = $to instanceof EmailReceiverInterface
-                ? $to->getExposableValues()
+            $mailInfos['bindings']['to'] = $receiver instanceof EmailReceiverInterface
+                ? $receiver->getExposableValues()
                 : $validatedReceivers[$index];
-            $preferredTimezone = $to instanceof HasTimezonePreferenceInterface
-                ? $to->preferredTimezone()
+            $preferredTimezone = $receiver instanceof HasTimezonePreferenceInterface
+                ? $receiver->preferredTimezone()
                 : null;
 
             $sendMethod = $this->sendAsynchronously ? 'queue' : 'send';
+            $to = $receiver instanceof EmailReceiverInterface
+                ? ['email' => $receiver->getEmail(), 'name' => $receiver->getEmailName()]
+                : $receiver;
+
             Mail::to($to)->$sendMethod(
                 new Custom($mailInfos['mail'], $mailInfos['bindings'], $locale, null, $preferredTimezone)
             );
