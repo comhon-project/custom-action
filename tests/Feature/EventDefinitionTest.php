@@ -49,7 +49,7 @@ class EventDefinitionTest extends TestCase
                     'binding_schema' => [
                         'company.name' => 'string',
                         'logo' => 'is:stored-file',
-                        'user' => 'is:email-receiver',
+                        'user' => 'is:mailable-entity',
                         'user.name' => 'string',
                         'user.email' => 'email',
                     ],

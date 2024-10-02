@@ -2,7 +2,7 @@
 
 namespace Comhon\CustomAction\Contracts;
 
-interface EmailReceiverInterface
+interface MailableEntityInterface
 {
     /**
      * Get receiver email

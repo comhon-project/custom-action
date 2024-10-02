@@ -5,9 +5,9 @@ namespace Comhon\CustomAction\Actions;
 use Comhon\CustomAction\Bindings\BindingsHelper;
 use Comhon\CustomAction\Contracts\BindingsContainerInterface;
 use Comhon\CustomAction\Contracts\CustomActionInterface;
-use Comhon\CustomAction\Contracts\EmailReceiverInterface;
 use Comhon\CustomAction\Contracts\HasBindingsInterface;
 use Comhon\CustomAction\Contracts\HasTimezonePreferenceInterface;
+use Comhon\CustomAction\Contracts\MailableEntityInterface;
 use Comhon\CustomAction\Facades\CustomActionModelResolver;
 use Comhon\CustomAction\Mail\Custom;
 use Comhon\CustomAction\Models\ActionLocalizedSettings;
@@ -54,13 +54,13 @@ class SendTemplatedMail implements CustomActionInterface, HasBindingsInterface
     {
         $schema = [
             'to_receivers' => 'array',
-            'to_receivers.*' => RuleHelper::getRuleName('model_reference').':email-receiver,receiver',
+            'to_receivers.*' => RuleHelper::getRuleName('model_reference').':mailable-entity,receiver',
             'to_emails' => 'array',
             'to_emails.*' => 'email',
         ];
         if ($eventClassContext && is_subclass_of($eventClassContext, HasBindingsInterface::class)) {
             $bindingTypes = [
-                'to_bindings_receivers' => 'array:email-receiver',
+                'to_bindings_receivers' => 'array:mailable-entity',
                 'to_bindings_emails' => 'array:email',
                 'attachments' => 'array:stored-file',
             ];
@@ -91,7 +91,7 @@ class SendTemplatedMail implements CustomActionInterface, HasBindingsInterface
     {
         return [
             ...static::getCommonBindingSchema() ?? [],
-            'to' => RuleHelper::getRuleName('is').':email-receiver',
+            'to' => RuleHelper::getRuleName('is').':mailable-entity',
             'default_timezone' => 'string',
             'preferred_timezone' => 'string',
         ];
@@ -129,11 +129,15 @@ class SendTemplatedMail implements CustomActionInterface, HasBindingsInterface
 
         $validatedReceivers = $this->getReceivers($this->getValidatedBindings());
 
-        // we retrieve receivers with not validated bindings to keep original object instances
-        $receivers = $this->getReceivers([
+        // we use not validated and not localized bindings to find recipients.
+        // by using not validating bindings, we keep original object instances.
+        // (usefull for models that implement MailableEntityInterface)
+        $bindings = [
             ...$this->bindingsContainer?->getBindingValues() ?? [],
             ...$this->getBindingValues(),
-        ]);
+        ];
+
+        $receivers = $this->getReceivers($bindings);
 
         foreach ($receivers as $index => $receiver) {
             $localizedSettings = $this->findActionLocalizedSettingsOrFail($receiver, true);
@@ -141,7 +145,7 @@ class SendTemplatedMail implements CustomActionInterface, HasBindingsInterface
             $localizedMailInfos[$locale] ??= $this->getLocalizedMailInfos($localizedSettings);
             $mailInfos = &$localizedMailInfos[$locale];
 
-            $mailInfos['bindings']['to'] = $receiver instanceof EmailReceiverInterface
+            $mailInfos['bindings']['to'] = $receiver instanceof MailableEntityInterface
                 ? $receiver->getExposableValues()
                 : $validatedReceivers[$index];
             $preferredTimezone = $receiver instanceof HasTimezonePreferenceInterface
@@ -149,7 +153,7 @@ class SendTemplatedMail implements CustomActionInterface, HasBindingsInterface
                 : null;
 
             $sendMethod = $this->sendAsynchronously ? 'queue' : 'send';
-            $to = $receiver instanceof EmailReceiverInterface
+            $to = $receiver instanceof MailableEntityInterface
                 ? ['email' => $receiver->getEmail(), 'name' => $receiver->getEmailName()]
                 : $receiver;
 

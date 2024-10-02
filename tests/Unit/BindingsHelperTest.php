@@ -19,17 +19,27 @@ class BindingsHelperTest extends TestCase
 
     public function testGetBindingsEmailReceiver()
     {
-        $rules = BindingsHelper::getEventBindingRules(CompanyRegistered::class, ['receivers' => 'email-receiver']);
+        $rules = BindingsHelper::getEventBindingRules(CompanyRegistered::class, ['receivers' => 'mailable-entity']);
 
         $this->assertEquals([
             'receivers' => 'string|in:user',
         ], $rules);
     }
 
+    public function testGetBindingsArray()
+    {
+        $rules = BindingsHelper::getEventBindingRules(CompanyRegistered::class, ['my.key' => 'array:string']);
+
+        $this->assertEquals([
+            'my.key' => 'array',
+            'my.key.*' => 'string|in:company.name,user.name,localized',
+        ], $rules);
+    }
+
     public function testGetBindingsSeveralTypes()
     {
         $rules = BindingsHelper::getEventBindingRules(CompanyRegistered::class, [
-            'receivers' => 'email-receiver',
+            'receivers' => 'mailable-entity',
             'my.key' => 'string',
         ]);
 

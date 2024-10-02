@@ -48,11 +48,11 @@ class ActionDefinitionTest extends TestCase
         $response->assertJson([
             'data' => [
                 'binding_schema' => [
-                    'to' => 'is:email-receiver',
+                    'to' => 'is:mailable-entity',
                 ],
                 'settings_schema' => [
                     'to_receivers' => 'array',
-                    'to_receivers.*' => 'model_reference:email-receiver,receiver',
+                    'to_receivers.*' => 'model_reference:mailable-entity,receiver',
                     'to_emails' => 'array',
                     'to_emails.*' => 'email',
                 ],
@@ -67,13 +67,13 @@ class ActionDefinitionTest extends TestCase
         $response->assertJson([
             'data' => [
                 'binding_schema' => [
-                    'to' => 'is:email-receiver',
+                    'to' => 'is:mailable-entity',
                     'company.name' => 'string',
                     'logo' => 'is:stored-file',
                 ],
                 'settings_schema' => [
                     'to_receivers' => 'array',
-                    'to_receivers.*' => 'model_reference:email-receiver,receiver',
+                    'to_receivers.*' => 'model_reference:mailable-entity,receiver',
                     'to_emails' => 'array',
                     'to_emails.*' => 'email',
                     'test' => 'required|string',
@@ -98,11 +98,11 @@ class ActionDefinitionTest extends TestCase
             ->assertJson([
                 'data' => [
                     'binding_schema' => [
-                        'to' => 'is:email-receiver',
+                        'to' => 'is:mailable-entity',
                     ],
                     'settings_schema' => [
                         'to_receivers' => 'array',
-                        'to_receivers.*' => 'model_reference:email-receiver,receiver',
+                        'to_receivers.*' => 'model_reference:mailable-entity,receiver',
                         'to_emails' => 'array',
                         'to_emails.*' => 'email',
 

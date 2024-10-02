@@ -36,7 +36,7 @@ class RuleModelReferenceTest extends TestCase
                 'model_id' => User::factory()->create()->id,
             ],
         ];
-        $validated = Validator::validate($data, ['foo' => 'model_reference:email-receiver']);
+        $validated = Validator::validate($data, ['foo' => 'model_reference:mailable-entity']);
         $this->assertEquals($data, $validated);
     }
 
@@ -51,7 +51,7 @@ class RuleModelReferenceTest extends TestCase
                 'receiver_id' => User::factory()->create()->id,
             ],
         ];
-        $validated = Validator::validate($data, ['foo' => 'model_reference:email-receiver,receiver']);
+        $validated = Validator::validate($data, ['foo' => 'model_reference:mailable-entity,receiver']);
         $this->assertEquals($data, $validated);
     }
 
@@ -79,7 +79,7 @@ class RuleModelReferenceTest extends TestCase
         ];
         $this->assertEquals(
             ['foo' => ['The model_type is not instance of eloquent model.']],
-            Validator::make($data, ['foo' => 'model_reference:email-receiver'])->errors()->toArray()
+            Validator::make($data, ['foo' => 'model_reference:mailable-entity'])->errors()->toArray()
         );
     }
 

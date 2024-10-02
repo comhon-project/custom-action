@@ -25,7 +25,7 @@ class RuleInstanceOfTest extends TestCase
             'user' => User::class,
         ]);
         $data = ['foo' => new User];
-        $validated = Validator::validate($data, ['foo' => 'is:email-receiver']);
+        $validated = Validator::validate($data, ['foo' => 'is:mailable-entity']);
         $this->assertEquals($data, $validated);
     }
 
@@ -45,7 +45,7 @@ class RuleInstanceOfTest extends TestCase
             'user' => User::class,
         ]);
         $data = ['foo' => 'user'];
-        $validated = Validator::validate($data, ['foo' => 'is:email-receiver,true,true']);
+        $validated = Validator::validate($data, ['foo' => 'is:mailable-entity,true,true']);
         $this->assertEquals($data, $validated);
     }
 
@@ -62,8 +62,8 @@ class RuleInstanceOfTest extends TestCase
             'foo' => 'bar',
         ];
         $this->assertEquals(
-            ['foo' => ['The foo is not instance of email-receiver.']],
-            Validator::make($data, ['foo' => 'is:email-receiver'])->errors()->toArray()
+            ['foo' => ['The foo is not instance of mailable-entity.']],
+            Validator::make($data, ['foo' => 'is:mailable-entity'])->errors()->toArray()
         );
     }
 

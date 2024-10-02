@@ -45,7 +45,7 @@ class CompanyRegistered implements CustomEventInterface, HasBindingsInterface
         return [
             'company.name' => 'string',
             'logo' => RuleHelper::getRuleName('is').':stored-file',
-            'user' => RuleHelper::getRuleName('is').':email-receiver',
+            'user' => RuleHelper::getRuleName('is').':mailable-entity',
             'user.name' => 'string',
             'user.email' => 'email',
             'responsibles' => 'array',
