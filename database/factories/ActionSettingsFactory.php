@@ -59,15 +59,15 @@ class ActionSettingsFactory extends Factory
      */
     public function sendMailRegistrationCompany(?array $toOtherUserIds = null, $withScopedSettings = false, $withAttachement = false): Factory
     {
-        $keyReceivers = $toOtherUserIds === null ? 'to_bindings_receivers' : 'to_receivers';
+        $keyReceivers = $toOtherUserIds === null ? 'bindings' : 'static';
         $valueReceivers = $toOtherUserIds === null
             ? ['user']
-            : collect($toOtherUserIds)->map(fn ($id) => ['receiver_type' => 'user', 'receiver_id' => $id])->all();
+            : collect($toOtherUserIds)->map(fn ($id) => ['recipient_type' => 'user', 'recipient_id' => $id])->all();
 
         return $this->state(function (array $attributes) use ($keyReceivers, $valueReceivers, $withAttachement) {
             return [
                 'settings' => [
-                    $keyReceivers => $valueReceivers,
+                    'recipients' => ['to' => [$keyReceivers => ['mailables' => $valueReceivers]]],
                     'attachments' => $withAttachement ? ['logo'] : null,
                 ],
             ];
@@ -82,7 +82,7 @@ class ActionSettingsFactory extends Factory
                 $scopedSettings->name = 'my scoped settings';
                 $scopedSettings->scope = ['company' => ['name' => 'My VIP company']];
                 $scopedSettings->settings = [
-                    $keyReceivers => $valueReceivers,
+                    'recipients' => ['to' => [$keyReceivers => ['mailables' => $valueReceivers]]],
                 ];
                 $scopedSettings->save();
 

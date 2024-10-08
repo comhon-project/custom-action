@@ -114,10 +114,18 @@ class EventDispatchTest extends TestCase
         $receiver = User::factory(['preferred_locale' => 'fr'])->create();
         $actionSettings = ActionSettings::factory([
             'settings' => [
-                'to_receivers' => [['receiver_type' => 'user', 'receiver_id' => $receiver->id]],
-                'to_emails' => ['john.doe@gmail.com'],
-                'to_bindings_receivers' => ['user'],
-                'to_bindings_emails' => ['responsibles.*.email'],
+                'recipients' => ['to' => [
+                    'static' => [
+                        'mailables' => [
+                            ['recipient_type' => 'user', 'recipient_id' => $receiver->id],
+                        ],
+                        'emails' => ['john.doe@gmail.com'],
+                    ],
+                    'bindings' => [
+                        'mailables' => ['user'],
+                        'emails' => ['responsibles.*.email'],
+                    ],
+                ]],
             ],
         ])->withEventAction(null, 'company-registered')->create();
 
@@ -231,5 +239,200 @@ class EventDispatchTest extends TestCase
         CompanyRegistered::dispatch($company, $targetUser);
 
         Queue::assertPushed(QueueTemplatedMail::class, 2);
+    }
+
+    public function testEventListenerWithCcBccSuccess()
+    {
+        $targetUser = User::factory()->create();
+        $otherUser = User::factory()->create();
+        $company = Company::factory()->create();
+
+        // create event listener for CompanyRegistered event
+        EventListener::factory()->genericRegistrationCompany()->create();
+        $actionSettings = ActionSettings::firstOrFail();
+        $settings = $actionSettings->settings;
+        $settings['recipients']['cc'] = [
+            'static' => [
+                'mailables' => [['recipient_type' => 'user', 'recipient_id' => $otherUser->id]],
+                'emails' => ['foo@cc.com'],
+            ],
+            'bindings' => [
+                'mailables' => ['user'],
+                'emails' => ['responsibles.*.email'],
+            ],
+        ];
+        $settings['recipients']['bcc'] = [
+            'static' => [
+                'mailables' => [['recipient_type' => 'user', 'recipient_id' => $otherUser->id]],
+                'emails' => ['foo@bcc.com'],
+            ],
+            'bindings' => [
+                'mailables' => ['user'],
+                'emails' => ['responsibles.*.email'],
+            ],
+        ];
+        $actionSettings->settings = $settings;
+        $actionSettings->save();
+
+        Queue::fake();
+        Mail::fake();
+
+        CompanyRegistered::dispatch($company, $targetUser);
+
+        Queue::assertNothingPushed();
+
+        $mails = [];
+        Mail::assertSent(Custom::class, 1);
+        Mail::assertSent(Custom::class, function (Custom $mail) use (&$mails) {
+            $mails[] = $mail;
+
+            return true;
+        });
+
+        $mails[0]->assertHasTo($targetUser->email);
+        $mails[0]->assertHasCc($otherUser->email);
+        $mails[0]->assertHasCc($targetUser->email);
+        $mails[0]->assertHasCc('responsible_one@gmail.com');
+        $mails[0]->assertHasCc('responsible_two@gmail.com');
+        $mails[0]->assertHasCc('foo@cc.com');
+
+        $mails[0]->assertHasBcc($otherUser->email);
+        $mails[0]->assertHasBcc($targetUser->email);
+        $mails[0]->assertHasBcc('responsible_one@gmail.com');
+        $mails[0]->assertHasBcc('responsible_two@gmail.com');
+        $mails[0]->assertHasBcc('foo@bcc.com');
+    }
+
+    public function testEventListenerWithStaticFromMailableSuccess()
+    {
+        $targetUser = User::factory()->create();
+        $otherUser = User::factory()->create();
+        $company = Company::factory()->create();
+
+        // create event listener for CompanyRegistered event
+        EventListener::factory()->genericRegistrationCompany()->create();
+        $actionSettings = ActionSettings::firstOrFail();
+        $settings = $actionSettings->settings;
+        $settings['from'] = [
+            'static' => [
+                'mailable' => ['from_type' => 'user', 'from_id' => $otherUser->id],
+            ],
+        ];
+        $actionSettings->settings = $settings;
+        $actionSettings->save();
+
+        Queue::fake();
+        Mail::fake();
+
+        CompanyRegistered::dispatch($company, $targetUser);
+
+        Queue::assertNothingPushed();
+
+        $mails = [];
+        Mail::assertSent(Custom::class, 1);
+        Mail::assertSent(Custom::class, function (Custom $mail) use (&$mails) {
+            $mails[] = $mail;
+
+            return true;
+        });
+
+        $mails[0]->assertHasTo($targetUser->email);
+        $mails[0]->assertFrom($otherUser->email);
+    }
+
+    public function testEventListenerWithStaticFromEmailSuccess()
+    {
+        $targetUser = User::factory()->create();
+        $company = Company::factory()->create();
+
+        // create event listener for CompanyRegistered event
+        EventListener::factory()->genericRegistrationCompany()->create();
+        $actionSettings = ActionSettings::firstOrFail();
+        $settings = $actionSettings->settings;
+        $settings['from'] = [
+            'static' => [
+                'email' => 'foo@cc.com',
+            ],
+        ];
+        $actionSettings->settings = $settings;
+        $actionSettings->save();
+
+        Queue::fake();
+        Mail::fake();
+
+        CompanyRegistered::dispatch($company, $targetUser);
+
+        Queue::assertNothingPushed();
+
+        $mails = [];
+        Mail::assertSent(Custom::class, 1);
+        Mail::assertSent(Custom::class, function (Custom $mail) use (&$mails) {
+            $mails[] = $mail;
+
+            return true;
+        });
+
+        $mails[0]->assertHasTo($targetUser->email);
+        $mails[0]->assertFrom('foo@cc.com');
+    }
+
+    public function testEventListenerWithBindingsFromMailableSuccess()
+    {
+        $targetUser = User::factory()->create();
+        $company = Company::factory()->create();
+
+        // create event listener for CompanyRegistered event
+        EventListener::factory()->genericRegistrationCompany()->create();
+        $actionSettings = ActionSettings::firstOrFail();
+        $settings = $actionSettings->settings;
+        $settings['from'] = [
+            'bindings' => [
+                'mailable' => 'user',
+            ],
+        ];
+        $actionSettings->settings = $settings;
+        $actionSettings->save();
+
+        Queue::fake();
+        Mail::fake();
+
+        CompanyRegistered::dispatch($company, $targetUser);
+
+        Queue::assertNothingPushed();
+
+        $mails = [];
+        Mail::assertSent(Custom::class, 1);
+        Mail::assertSent(Custom::class, function (Custom $mail) use (&$mails) {
+            $mails[] = $mail;
+
+            return true;
+        });
+
+        $mails[0]->assertHasTo($targetUser->email);
+        $mails[0]->assertFrom($targetUser->email);
+    }
+
+    public function testEventListenerWithBindingsFromEmailFailure()
+    {
+        $targetUser = User::factory()->create();
+        $company = Company::factory()->create();
+
+        // create event listener for CompanyRegistered event
+        EventListener::factory()->genericRegistrationCompany()->create();
+        $actionSettings = ActionSettings::firstOrFail();
+        $settings = $actionSettings->settings;
+        $settings['from'] = [
+            'bindings' => [
+                'email' => 'responsibles.*.email',
+            ],
+        ];
+        $actionSettings->settings = $settings;
+        $actionSettings->save();
+
+        Queue::fake();
+        Mail::fake();
+
+        $this->expectExceptionMessage("several 'from' defined");
+        CompanyRegistered::dispatch($company, $targetUser);
     }
 }

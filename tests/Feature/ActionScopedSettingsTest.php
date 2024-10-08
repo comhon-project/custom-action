@@ -27,17 +27,17 @@ class ActionScopedSettingsTest extends TestCase
             'settings' => [],
         ])->{$withAction}('send-email')->create();
         $settingsScope1 = [
-            'to_receivers' => [
-                ['receiver_id' => User::factory()->create()->id, 'receiver_type' => 'user'],
-            ],
+            'recipients' => ['to' => ['static' => ['mailables' => [
+                ['recipient_id' => User::factory()->create()->id, 'recipient_type' => 'user'],
+            ]]]],
         ];
         $scope1 = ['company' => [
             'name' => 'my company scope 1',
         ]];
         $settingsScope2 = [
-            'to_receivers' => [
-                ['receiver_id' => User::factory()->create()->id, 'receiver_type' => 'user'],
-            ],
+            'recipients' => ['to' => ['static' => ['mailables' => [
+                ['recipient_id' => User::factory()->create()->id, 'recipient_type' => 'user'],
+            ]]]],
         ];
         $scope2 = ['company' => [
             'name' => 'my company scope 2',
@@ -144,7 +144,7 @@ class ActionScopedSettingsTest extends TestCase
             'settings' => [],
         ])->withEventAction('send-email')->create();
         $settingsScope1 = [
-            'to_bindings_receivers' => ['user'],
+            'recipients' => ['to' => ['bindings' => ['mailables' => ['user']]]],
         ];
         $scope1 = ['company' => [
             'name' => 'my company scope 1',
@@ -199,9 +199,9 @@ class ActionScopedSettingsTest extends TestCase
         $actionSettings = ActionSettings::factory()->{$withAction}('send-email')->create();
         $scopedSettings = ActionScopedSettings::factory([
             'settings' => [
-                'to_receivers' => [
-                    ['receiver_id' => 789, 'receiver_type' => 'user'],
-                ],
+                'recipients' => ['to' => ['static' => ['mailables' => [
+                    ['recipient_id' => 789, 'recipient_type' => 'user'],
+                ]]]],
             ],
             'scope' => [
                 'company' => [
@@ -212,9 +212,9 @@ class ActionScopedSettingsTest extends TestCase
             ->create();
 
         $updatedSettings = [
-            'to_receivers' => [
-                ['receiver_id' => User::factory()->create()->id, 'receiver_type' => 'user'],
-            ],
+            'recipients' => ['to' => ['static' => ['mailables' => [
+                ['recipient_id' => User::factory()->create()->id, 'recipient_type' => 'user'],
+            ]]]],
         ];
         $updatedScope = ['company' => [
             'name' => 'my company scope 2',
@@ -252,9 +252,9 @@ class ActionScopedSettingsTest extends TestCase
 
         $scopedSettings = ActionScopedSettings::factory([
             'settings' => [
-                'to_receivers' => [
-                    ['receiver_id' => 789, 'receiver_type' => 'user'],
-                ],
+                'recipients' => ['to' => ['static' => ['mailables' => [
+                    ['recipient_id' => 789, 'recipient_type' => 'user'],
+                ]]]],
             ],
             'scope' => [
                 'company' => [
@@ -265,8 +265,10 @@ class ActionScopedSettingsTest extends TestCase
             ->create();
 
         $settingsScope1 = [
-            'to_bindings_receivers' => ['user'],
-            'to_bindings_emails' => ['responsibles.*.email'],
+            'recipients' => ['to' => ['bindings' => [
+                'mailables' => ['user'],
+                'emails' => ['responsibles.*.email'],
+            ]]],
         ];
         $scope1 = ['company' => [
             'name' => 'my company scope 1',

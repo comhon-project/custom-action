@@ -16,7 +16,7 @@ class CustomActionTest extends TestCase
     {
         ManualAction::factory()->sendMailRegistrationCompany([], false, false)->create();
 
-        $this->expectExceptionMessage('there is no mail receiver defined');
+        $this->expectExceptionMessage('there is no mail recipients defined');
         SendCompanyRegistrationMail::handleManual(new BindingsContainer([]));
     }
 
@@ -24,7 +24,7 @@ class CustomActionTest extends TestCase
     {
         ManualAction::factory()->sendMailRegistrationCompany([], false, false)->create();
 
-        $this->expectExceptionMessage('there is no mail receiver defined');
+        $this->expectExceptionMessage('there is no mail recipients defined');
         SendCompanyRegistrationMail::handleManual();
     }
 }

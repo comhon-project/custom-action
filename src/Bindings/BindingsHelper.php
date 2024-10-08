@@ -25,11 +25,13 @@ class BindingsHelper
                 $asArray = true;
             }
             $enum = BindingsFinder::find($type, $bindingSchema);
-            if ($asArray) {
-                $bindingRules[$key] = 'array';
-                $key .= '.*';
+            if (! empty($enum)) {
+                if ($asArray) {
+                    $bindingRules[$key] = 'array';
+                    $key .= '.*';
+                }
+                $bindingRules[$key] = 'string|in:'.implode(',', $enum);
             }
-            $bindingRules[$key] = 'string|in:'.implode(',', $enum);
         }
 
         return $bindingRules;

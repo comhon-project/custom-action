@@ -102,10 +102,12 @@ class EventActionTest extends TestCase
             'name' => 'my custom event listener',
             'type' => 'send-email',
             'settings' => [
-                'to_receivers' => [
-                    ['receiver_type' => 'user', 'receiver_id' => User::factory()->create()->id],
-                ],
-                'to_bindings_receivers' => ['user'],
+                'recipients' => ['to' => [
+                    'static' => ['mailables' => [
+                        ['recipient_type' => 'user', 'recipient_id' => User::factory()->create()->id],
+                    ]],
+                    'bindings' => ['mailables' => ['user']],
+                ]],
                 'attachments' => ['logo'],
             ],
         ];

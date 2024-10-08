@@ -46,9 +46,7 @@ class ManualActionTest extends TestCase
                 'action_settings' => [
                     'id' => $actionSettings->id,
                     'settings' => [
-                        'to_bindings_receivers' => [
-                            'user',
-                        ],
+                        'recipients' => ['to' => ['bindings' => ['mailables' => ['user']]]],
                         'attachments' => null,
                     ],
                 ],
@@ -60,9 +58,7 @@ class ManualActionTest extends TestCase
             'data' => [
                 'id' => $actionSettings->id,
                 'settings' => [
-                    'to_bindings_receivers' => [
-                        'user',
-                    ],
+                    'recipients' => ['to' => ['bindings' => ['mailables' => ['user']]]],
                     'attachments' => null,
                 ],
             ],

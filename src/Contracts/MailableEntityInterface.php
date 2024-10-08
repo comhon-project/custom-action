@@ -5,12 +5,12 @@ namespace Comhon\CustomAction\Contracts;
 interface MailableEntityInterface
 {
     /**
-     * Get receiver email
+     * Get entity email
      */
     public function getEmail(): string;
 
     /**
-     * Get receiver name
+     * Get entity name
      */
     public function getEmailName(): ?string;
 

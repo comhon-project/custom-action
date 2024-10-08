@@ -51,9 +51,9 @@ class ActionSettingsTest extends TestCase
             'settings' => [],
         ])->withEventAction('send-email')->create();
         $newSettings = [
-            'to_receivers' => [
-                ['receiver_id' => User::factory()->create()->id, 'receiver_type' => 'user'],
-            ],
+            'recipients' => ['to' => ['static' => ['mailables' => [
+                ['recipient_id' => User::factory()->create()->id, 'recipient_type' => 'user'],
+            ]]]],
         ];
 
         /** @var User $user */
@@ -80,9 +80,9 @@ class ActionSettingsTest extends TestCase
             ->actionSettings;
 
         $newSettings = [
-            'to_receivers' => [
-                ['receiver_id' => User::factory()->create()->id, 'receiver_type' => 'user'],
-            ],
+            'recipients' => ['to' => ['static' => ['mailables' => [
+                ['recipient_id' => User::factory()->create()->id, 'recipient_type' => 'user'],
+            ]]]],
             'test' => 'foo',
         ];
 
@@ -110,9 +110,9 @@ class ActionSettingsTest extends TestCase
             ->actionSettings;
 
         $newSettings = [
-            'to_receivers' => [
-                ['receiver_id' => User::factory()->create()->id, 'receiver_type' => 'user'],
-            ],
+            'recipients' => ['to' => ['static' => ['mailables' => [
+                ['recipient_id' => User::factory()->create()->id, 'recipient_type' => 'user'],
+            ]]]],
         ];
 
         /** @var User $user */
@@ -137,7 +137,7 @@ class ActionSettingsTest extends TestCase
             'settings' => [],
         ])->withEventAction('send-email')->create();
         $newSettings = [
-            'to_bindings_receivers' => ['user'],
+            'recipients' => ['to' => ['bindings' => ['mailables' => ['user']]]],
         ];
 
         /** @var User $user */

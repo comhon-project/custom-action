@@ -15,6 +15,7 @@ use Comhon\CustomAction\Models\ActionSettingsContainer;
 use Comhon\CustomAction\Rules\RuleHelper;
 use Illuminate\Bus\Queueable;
 use Illuminate\Foundation\Bus\Dispatchable;
+use Illuminate\Mail\Mailables\Address;
 use Illuminate\Queue\InteractsWithQueue;
 use Illuminate\Queue\SerializesModels;
 use Illuminate\Support\Arr;
@@ -29,8 +30,10 @@ class SendTemplatedMail implements CustomActionInterface, HasBindingsInterface
         Queueable,
         SerializesModels;
 
+    const RECIPIENT_TYPES = ['to', 'cc', 'bcc'];
+
     /**
-     * @param  mixed  $to  force the email receiver(s) and ignore receivers defined in settings.
+     * @param  mixed  $to  force the email recipient(s) and ignore recipients defined in settings.
      */
     public function __construct(
         private ActionSettingsContainer $settingsContainer,
@@ -53,17 +56,25 @@ class SendTemplatedMail implements CustomActionInterface, HasBindingsInterface
     public static function getSettingsSchema(?string $eventClassContext = null): array
     {
         $schema = [
-            'to_receivers' => 'array',
-            'to_receivers.*' => RuleHelper::getRuleName('model_reference').':mailable-entity,receiver',
-            'to_emails' => 'array',
-            'to_emails.*' => 'email',
+            'from.static.mailable' => RuleHelper::getRuleName('model_reference').':mailable-entity,from',
+            'from.static.email' => 'email',
         ];
+        foreach (static::RECIPIENT_TYPES as $recipientType) {
+            $schema["recipients.{$recipientType}.static.mailables"] = 'array';
+            $schema["recipients.{$recipientType}.static.mailables.*"] = RuleHelper::getRuleName('model_reference').':mailable-entity,recipient';
+            $schema["recipients.{$recipientType}.static.emails"] = 'array';
+            $schema["recipients.{$recipientType}.static.emails.*"] = 'email';
+        }
         if ($eventClassContext && is_subclass_of($eventClassContext, HasBindingsInterface::class)) {
             $bindingTypes = [
-                'to_bindings_receivers' => 'array:mailable-entity',
-                'to_bindings_emails' => 'array:email',
                 'attachments' => 'array:stored-file',
+                'from.bindings.mailable' => 'mailable-entity',
+                'from.bindings.email' => 'email',
             ];
+            foreach (static::RECIPIENT_TYPES as $recipientType) {
+                $bindingTypes["recipients.{$recipientType}.bindings.mailables"] = 'array:mailable-entity';
+                $bindingTypes["recipients.{$recipientType}.bindings.emails"] = 'array:email';
+            }
             $rules = BindingsHelper::getEventBindingRules($eventClassContext, $bindingTypes);
             $schema = array_merge($schema, $rules);
         }
@@ -100,7 +111,7 @@ class SendTemplatedMail implements CustomActionInterface, HasBindingsInterface
     /**
      * Get action common binding schema.
      *
-     * Common bindings are bindings that are the same for all receivers
+     * Common bindings are bindings that are the same for all recipients
      */
     protected static function getCommonBindingSchema(): ?array
     {
@@ -127,7 +138,7 @@ class SendTemplatedMail implements CustomActionInterface, HasBindingsInterface
     {
         $localizedMailInfos = [];
 
-        $validatedReceivers = $this->getReceivers($this->getValidatedBindings());
+        $validatedReceivers = $this->getRecipients($this->getValidatedBindings(), ['to']);
 
         // we use not validated and not localized bindings to find recipients.
         // by using not validating bindings, we keep original object instances.
@@ -137,70 +148,163 @@ class SendTemplatedMail implements CustomActionInterface, HasBindingsInterface
             ...$this->getBindingValues(),
         ];
 
-        $receivers = $this->getReceivers($bindings);
+        $from = $this->getFrom($bindings);
+        $recipients = $this->getRecipients($bindings);
+        $tos = $recipients['to'];
 
-        foreach ($receivers as $index => $receiver) {
-            $localizedSettings = $this->findActionLocalizedSettingsOrFail($receiver, true);
+        foreach ($tos as $index => $to) {
+            $localizedSettings = $this->findActionLocalizedSettingsOrFail($to, true);
             $locale = $localizedSettings->locale;
             $localizedMailInfos[$locale] ??= $this->getLocalizedMailInfos($localizedSettings);
             $mailInfos = &$localizedMailInfos[$locale];
 
-            $mailInfos['bindings']['to'] = $receiver instanceof MailableEntityInterface
-                ? $receiver->getExposableValues()
-                : $validatedReceivers[$index];
-            $preferredTimezone = $receiver instanceof HasTimezonePreferenceInterface
-                ? $receiver->preferredTimezone()
+            $mailInfos['bindings']['to'] = $to instanceof MailableEntityInterface
+                ? $to->getExposableValues()
+                : $validatedReceivers['to'][$index];
+            $preferredTimezone = $to instanceof HasTimezonePreferenceInterface
+                ? $to->preferredTimezone()
                 : null;
 
             $sendMethod = $this->sendAsynchronously ? 'queue' : 'send';
-            $to = $receiver instanceof MailableEntityInterface
-                ? ['email' => $receiver->getEmail(), 'name' => $receiver->getEmailName()]
-                : $receiver;
+            $to = $this->normalizeAddress($to);
 
-            Mail::to($to)->$sendMethod(
+            $pendingMail = Mail::to($to);
+
+            if ($recipients['cc'] ?? null) {
+                $pendingMail->cc($recipients['cc']);
+            }
+            if ($recipients['bcc'] ?? null) {
+                $pendingMail->bcc($recipients['bcc']);
+            }
+            if ($from) {
+                $mailInfos['mail']['from'] = $from;
+            }
+
+            $pendingMail->$sendMethod(
                 new Custom($mailInfos['mail'], $mailInfos['bindings'], $locale, null, $preferredTimezone)
             );
         }
     }
 
-    private function getReceivers(array $bindings): array
+    private function getFrom(array $bindings)
     {
-        if ($this->to) {
-            return is_array($this->to) ? $this->to : [$this->to];
+        $froms = [];
+        $settingsFrom = $this->settingsContainer->settings['from'] ?? null;
+        if (! $settingsFrom) {
+            return null;
         }
-        $tos = [];
-        if (isset($this->settingsContainer->settings['to_receivers'])) {
-            $toReceivers = collect($this->settingsContainer->settings['to_receivers'])->groupBy('receiver_type');
-            foreach ($toReceivers as $uniqueName => $modelReceivers) {
-                $class = CustomActionModelResolver::getClass($uniqueName);
-                $receivers = $class::find(collect($modelReceivers)->pluck('receiver_id'));
-                foreach ($receivers as $receiver) {
-                    $tos[] = $receiver;
+        $mailable = $settingsFrom['static']['mailable'] ?? null;
+        if ($mailable) {
+            $class = CustomActionModelResolver::getClass($mailable['from_type']);
+            $froms[] = $class::find($mailable['from_id']);
+        }
+        $email = $settingsFrom['static']['email'] ?? null;
+        if ($email) {
+            $froms[] = $email;
+        }
+        foreach (['mailable', 'email'] as $key) {
+            $bindingsKey = $settingsFrom['bindings'][$key] ?? null;
+            if ($bindingsKey) {
+                foreach (BindingsHelper::getBindingValues($bindings, $bindingsKey) as $binding) {
+                    if ($binding) {
+                        $froms[] = $binding;
+                    }
                 }
             }
         }
-        if (isset($this->settingsContainer->settings['to_emails'])) {
-            foreach ($this->settingsContainer->settings['to_emails'] as $email) {
-                $tos[] = ['email' => $email];
-            }
+        if (count($froms) > 1) {
+            throw new \Exception("several 'from' defined");
         }
-        foreach (['to_bindings_receivers', 'to_bindings_emails'] as $key) {
-            if (isset($this->settingsContainer->settings[$key])) {
-                $toBindings = $this->settingsContainer->settings[$key];
-                foreach ($toBindings as $toBinding) {
-                    foreach (BindingsHelper::getBindingValues($bindings, $toBinding) as $to) {
-                        if ($to) {
-                            $tos[] = is_string($to) ? ['email' => $to] : $to;
+
+        return count($froms) ? $this->normalizeAddress($froms[0]) : null;
+    }
+
+    private function getRecipients(array $bindings, ?array $recipientTypes = null): array
+    {
+        if ($this->to) {
+            return ['to' => is_array($this->to) ? $this->to : [$this->to]];
+        }
+        $recipients = [];
+        $settingsRecipients = $this->settingsContainer->settings['recipients'] ?? null;
+        $mailableEntities = $this->loadStaticMailableEntities();
+
+        $recipientTypes ??= static::RECIPIENT_TYPES;
+
+        foreach ($recipientTypes as $recipientType) {
+            $mailables = $settingsRecipients[$recipientType]['static']['mailables'] ?? null;
+            if ($mailables) {
+                foreach ($mailables as $mailable) {
+                    $mailableEntity = $mailableEntities[$mailable['recipient_type']][$mailable['recipient_id']] ?? null;
+                    if ($mailableEntity) {
+                        $recipients[$recipientType] ??= [];
+                        $recipients[$recipientType][] = $mailableEntity;
+                    }
+                }
+            }
+            $emails = $settingsRecipients[$recipientType]['static']['emails'] ?? null;
+            if ($emails) {
+                foreach ($emails as $email) {
+                    $recipients[$recipientType] ??= [];
+                    $recipients[$recipientType][] = ['email' => $email];
+                }
+            }
+            foreach (['mailables', 'emails'] as $key) {
+                $bindingsKeys = $settingsRecipients[$recipientType]['bindings'][$key] ?? null;
+                if ($bindingsKeys) {
+                    foreach ($bindingsKeys as $bindingsKey) {
+                        foreach (BindingsHelper::getBindingValues($bindings, $bindingsKey) as $recipient) {
+                            if ($recipient) {
+                                $recipients[$recipientType] ??= [];
+                                $recipients[$recipientType][] = is_string($recipient)
+                                    ? ['email' => $recipient]
+                                    : $recipient;
+                            }
                         }
                     }
                 }
             }
         }
-        if (empty($tos)) {
-            throw new \Exception('there is no mail receiver defined');
+        if (empty($recipients['to'] ?? null)) {
+            throw new \Exception('there is no mail recipients defined');
+        }
+        foreach (array_diff(static::RECIPIENT_TYPES, ['to']) as $recipientType) {
+            if ($recipients[$recipientType] ?? null) {
+                $recipients[$recipientType] = $this->normalizeAddresses($recipients[$recipientType]);
+            }
         }
 
-        return $tos;
+        return $recipients;
+    }
+
+    private function loadStaticMailableEntities(): array
+    {
+        $recipients = $this->settingsContainer->settings['recipients'] ?? null;
+        $mailableEntities = [];
+        $mailableIds = [];
+
+        if ($recipients) {
+            foreach (static::RECIPIENT_TYPES as $recipientType) {
+                $mailables = $recipients[$recipientType]['static']['mailables'] ?? null;
+                if ($mailables) {
+                    foreach ($mailables as $mailable) {
+                        $mailableIds[$mailable['recipient_type']] ??= [];
+                        $mailableIds[$mailable['recipient_type']][] = $mailable['recipient_id'];
+                    }
+                }
+            }
+            $mailable = $this->settingsContainer->settings['from']['static']['mailable'] ?? null;
+            if ($mailable) {
+                $mailableIds[$mailable['from_type']] ??= [];
+                $mailableIds[$mailable['from_type']][] = $mailable['from_id'];
+            }
+
+            foreach ($mailableIds as $uniqueName => $ids) {
+                $class = CustomActionModelResolver::getClass($uniqueName);
+                $mailableEntities[$uniqueName] = $class::find($ids)->keyBy('id')->all();
+            }
+        }
+
+        return $mailableEntities;
     }
 
     private function getLocalizedMailInfos(ActionLocalizedSettings $localizedSettings)
@@ -214,5 +318,28 @@ class SendTemplatedMail implements CustomActionInterface, HasBindingsInterface
                 'attachments' => $this->getAttachments($bindings, $this->settingsContainer->settings),
             ],
         ];
+    }
+
+    private function normalizeAddresses($values)
+    {
+        $addresses = [];
+        foreach ($values as $value) {
+            $addresses[] = $this->normalizeAddress($value);
+        }
+
+        return $addresses;
+    }
+
+    private function normalizeAddress($value): Address
+    {
+        if (is_string($value)) {
+            return new Address($value);
+        } elseif (is_array($value)) {
+            return new Address($value['email'], $value['name'] ?? null);
+        } elseif ($value instanceof MailableEntityInterface) {
+            return new Address($value->getEmail(), $value->getEmailName());
+        } elseif (is_object($value)) {
+            return new Address($value->email, $value->name ?? null);
+        }
     }
 }

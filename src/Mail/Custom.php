@@ -18,7 +18,7 @@ class Custom extends Mailable
     /**
      * Create a new message instance.
      *
-     * @param  array  $mail  mail informations like subject, body...
+     * @param  array  $mail  mail informations (handled keys: subject, body, attachments, from)
      * @param  array  $replacements  list of values that may be replaced in mail content
      * @param  string  $defaultLocale  the default locale that should be used
      * @param  string  $defaultTimezone  the default timezone that should be used
@@ -61,7 +61,10 @@ class Custom extends Mailable
      */
     public function envelope()
     {
-        return new Envelope(subject: $this->renderTemplate($this->mail['subject']));
+        return new Envelope(
+            from: $this->mail['from'] ?? null,
+            subject: $this->renderTemplate($this->mail['subject'])
+        );
     }
 
     /**

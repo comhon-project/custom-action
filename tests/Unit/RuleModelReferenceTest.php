@@ -47,11 +47,11 @@ class RuleModelReferenceTest extends TestCase
         ]);
         $data = [
             'foo' => [
-                'receiver_type' => 'user',
-                'receiver_id' => User::factory()->create()->id,
+                'recipient_type' => 'user',
+                'recipient_id' => User::factory()->create()->id,
             ],
         ];
-        $validated = Validator::validate($data, ['foo' => 'model_reference:mailable-entity,receiver']);
+        $validated = Validator::validate($data, ['foo' => 'model_reference:mailable-entity,recipient']);
         $this->assertEquals($data, $validated);
     }
 
