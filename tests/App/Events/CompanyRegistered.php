@@ -5,7 +5,7 @@ namespace App\Events;
 use App\Actions\SendCompanyRegistrationMail;
 use App\Models\Company;
 use App\Models\User;
-use Comhon\CustomAction\Actions\SendTemplatedMail;
+use Comhon\CustomAction\Actions\SendEmail;
 use Comhon\CustomAction\Contracts\CustomEventInterface;
 use Comhon\CustomAction\Contracts\HasBindingsInterface;
 use Comhon\CustomAction\Files\SystemFile;
@@ -32,7 +32,7 @@ class CompanyRegistered implements CustomEventInterface, HasBindingsInterface
     public static function getAllowedActions(): array
     {
         return [
-            SendTemplatedMail::class,
+            SendEmail::class,
             SendCompanyRegistrationMail::class,
         ];
     }

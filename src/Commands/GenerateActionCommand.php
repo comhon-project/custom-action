@@ -8,7 +8,7 @@ use Comhon\CustomAction\Actions\InteractWithLocalizedSettingsTrait;
 use Comhon\CustomAction\Contracts\BindingsContainerInterface;
 use Comhon\CustomAction\Contracts\CustomActionInterface;
 use Comhon\CustomAction\Facades\CustomActionModelResolver;
-use Comhon\CustomAction\Models\ActionSettings;
+use Comhon\CustomAction\Models\ActionSettingsContainer;
 use Illuminate\Bus\Queueable;
 use Illuminate\Console\Command;
 use Illuminate\Contracts\Queue\ShouldQueue;
@@ -82,13 +82,13 @@ class GenerateActionCommand extends Command
         }
 
         if (! $extendsClass || ! method_exists($extendsClass, '__construct')) {
-            $imports[] = ActionSettings::class;
+            $imports[] = ActionSettingsContainer::class;
             $imports[] = BindingsContainerInterface::class;
 
             $construct = <<<'EOT'
     public function __construct(
-        private ActionSettings $actionSettings,
-        private ?BindingsContainerInterface $bindingsContainer = null,
+        protected ActionSettingsContainer $settingsContainer,
+        protected ?BindingsContainerInterface $bindingsContainer = null,
     ) {
         //
     }

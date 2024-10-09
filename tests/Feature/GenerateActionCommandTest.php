@@ -55,7 +55,7 @@ use Comhon\CustomAction\Actions\InteractWithBindingsTrait;
 use Comhon\CustomAction\Actions\InteractWithLocalizedSettingsTrait;
 use Comhon\CustomAction\Contracts\BindingsContainerInterface;
 use Comhon\CustomAction\Contracts\CustomActionInterface;
-use Comhon\CustomAction\Models\ActionSettings;
+use Comhon\CustomAction\Models\ActionSettingsContainer;
 use Illuminate\Bus\Queueable;
 use Illuminate\Contracts\Queue\ShouldQueue;
 use Illuminate\Foundation\Bus\Dispatchable;
@@ -72,8 +72,8 @@ class TestGenericSendEmail implements CustomActionInterface
         InteractWithLocalizedSettingsTrait;
 
     public function __construct(
-        private ActionSettings \$actionSettings,
-        private ?BindingsContainerInterface \$bindingsContainer = null,
+        protected ActionSettingsContainer \$settingsContainer,
+        protected ?BindingsContainerInterface \$bindingsContainer = null,
     ) {
         //
     }
@@ -115,10 +115,10 @@ EOT
 
 namespace App\Actions\CustomActions;
 
-use Comhon\CustomAction\Actions\SendTemplatedMail;
+use Comhon\CustomAction\Actions\SendEmail;
 use Illuminate\Contracts\Queue\ShouldQueue;
 
-class TestGenericSendEmail extends SendTemplatedMail
+class TestGenericSendEmail extends SendEmail
 {
     /**
      * Get action settings schema
@@ -162,7 +162,7 @@ use Comhon\CustomAction\Actions\InteractWithBindingsTrait;
 use Comhon\CustomAction\Actions\InteractWithLocalizedSettingsTrait;
 use Comhon\CustomAction\Contracts\BindingsContainerInterface;
 use Comhon\CustomAction\Contracts\CustomActionInterface;
-use Comhon\CustomAction\Models\ActionSettings;
+use Comhon\CustomAction\Models\ActionSettingsContainer;
 use Illuminate\Bus\Queueable;
 use Illuminate\Contracts\Queue\ShouldQueue;
 use Illuminate\Foundation\Bus\Dispatchable;
@@ -179,8 +179,8 @@ class TestGenericSendEmail extends BadAction implements CustomActionInterface
         InteractWithLocalizedSettingsTrait;
 
     public function __construct(
-        private ActionSettings \$actionSettings,
-        private ?BindingsContainerInterface \$bindingsContainer = null,
+        protected ActionSettingsContainer \$settingsContainer,
+        protected ?BindingsContainerInterface \$bindingsContainer = null,
     ) {
         //
     }
@@ -223,10 +223,10 @@ EOT
 namespace App\Actions\CustomActions;
 
 use Comhon\CustomAction\Actions\HandleManualActionTrait;
-use Comhon\CustomAction\Actions\SendTemplatedMail;
+use Comhon\CustomAction\Actions\SendEmail;
 use Illuminate\Contracts\Queue\ShouldQueue;
 
-class TestGenericSendEmail extends SendTemplatedMail
+class TestGenericSendEmail extends SendEmail
 {
     use HandleManualActionTrait;
 

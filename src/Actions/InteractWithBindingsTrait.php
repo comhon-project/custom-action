@@ -15,7 +15,7 @@ trait InteractWithBindingsTrait
      * @param  bool  $useCache  if true, cache bindings for the action instance,
      *                          and get value from it if exists.
      */
-    public function getValidatedBindings(?string $locale = null, bool $useCache = false)
+    public function getValidatedBindings(?string $locale = null, bool $useCache = false): array
     {
         if ($useCache && isset($this->bindingsCache[$locale])) {
             return $this->bindingsCache[$locale];

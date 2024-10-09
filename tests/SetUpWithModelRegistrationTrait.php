@@ -10,8 +10,8 @@ use App\Events\CompanyRegistered;
 use App\Events\MyEventWithoutBindings;
 use App\Models\Company;
 use App\Models\User;
-use Comhon\CustomAction\Actions\QueueTemplatedMail;
-use Comhon\CustomAction\Actions\SendTemplatedMail;
+use Comhon\CustomAction\Actions\QueueEmail;
+use Comhon\CustomAction\Actions\SendEmail;
 use Comhon\CustomAction\Facades\CustomActionModelResolver;
 
 trait SetUpWithModelRegistrationTrait
@@ -25,8 +25,8 @@ trait SetUpWithModelRegistrationTrait
             'company' => Company::class,
 
             'company-registered' => CompanyRegistered::class,
-            'send-email' => SendTemplatedMail::class,
-            'queue-email' => QueueTemplatedMail::class,
+            'send-email' => SendEmail::class,
+            'queue-email' => QueueEmail::class,
             'send-company-email' => SendCompanyRegistrationMail::class,
 
             'my-event-without-bindings' => MyEventWithoutBindings::class,

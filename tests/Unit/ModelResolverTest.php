@@ -6,7 +6,7 @@ use App\Actions\SendCompanyRegistrationMail;
 use App\Events\CompanyRegistered;
 use App\Models\Company;
 use App\Models\User;
-use Comhon\CustomAction\Actions\SendTemplatedMail;
+use Comhon\CustomAction\Actions\SendEmail;
 use Comhon\CustomAction\Resolver\CustomActionModelResolver;
 use Comhon\ModelResolverContract\ModelResolverInterface;
 use Tests\TestCase;
@@ -20,7 +20,7 @@ class ModelResolverTest extends TestCase
         $resolver->register(
             [
                 'company' => Company::class,
-                'send-email' => SendTemplatedMail::class,
+                'send-email' => SendEmail::class,
                 'send-company-email' => SendCompanyRegistrationMail::class,
                 'company-registered' => CompanyRegistered::class,
             ]
@@ -30,7 +30,7 @@ class ModelResolverTest extends TestCase
         $this->assertInstanceOf(ModelResolverInterface::class, $resolver->getResolver());
         $this->assertEquals(Company::class, $resolver->getClass('company'));
         $this->assertEquals(User::class, $resolver->getClass('user'));
-        $this->assertEquals('send-email', $resolver->getUniqueName(SendTemplatedMail::class));
+        $this->assertEquals('send-email', $resolver->getUniqueName(SendEmail::class));
         $this->assertNull($resolver->getClass('foo'));
         $this->assertNull($resolver->getUniqueName('bar'));
 

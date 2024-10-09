@@ -6,7 +6,7 @@ use App\Events\CompanyRegistered;
 use App\Events\MyEventWithoutBindings;
 use App\Models\Company;
 use App\Models\User;
-use Comhon\CustomAction\Actions\QueueTemplatedMail;
+use Comhon\CustomAction\Actions\QueueEmail;
 use Comhon\CustomAction\Mail\Custom;
 use Comhon\CustomAction\Models\ActionLocalizedSettings;
 use Comhon\CustomAction\Models\ActionSettings;
@@ -238,7 +238,7 @@ class EventDispatchTest extends TestCase
         Queue::fake();
         CompanyRegistered::dispatch($company, $targetUser);
 
-        Queue::assertPushed(QueueTemplatedMail::class, 2);
+        Queue::assertPushed(QueueEmail::class, 2);
     }
 
     public function testEventListenerWithCcBccSuccess()

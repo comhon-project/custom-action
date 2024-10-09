@@ -3,56 +3,15 @@
 namespace Comhon\CustomAction\Actions;
 
 use Comhon\CustomAction\Bindings\BindingsHelper;
-use Comhon\CustomAction\Contracts\BindingsContainerInterface;
-use Comhon\CustomAction\Contracts\CustomActionInterface;
 use Comhon\CustomAction\Contracts\HasBindingsInterface;
-use Comhon\CustomAction\Contracts\HasTimezonePreferenceInterface;
-use Comhon\CustomAction\Contracts\MailableEntityInterface;
 use Comhon\CustomAction\Facades\CustomActionModelResolver;
-use Comhon\CustomAction\Mail\Custom;
 use Comhon\CustomAction\Models\ActionLocalizedSettings;
-use Comhon\CustomAction\Models\ActionSettingsContainer;
 use Comhon\CustomAction\Rules\RuleHelper;
-use Illuminate\Bus\Queueable;
-use Illuminate\Foundation\Bus\Dispatchable;
 use Illuminate\Mail\Mailables\Address;
-use Illuminate\Queue\InteractsWithQueue;
-use Illuminate\Queue\SerializesModels;
 use Illuminate\Support\Arr;
-use Illuminate\Support\Facades\Mail;
 
-class SendTemplatedMail implements CustomActionInterface, HasBindingsInterface
+class SendEmail extends AbstractSendEmail
 {
-    use Dispatchable,
-        InteractsWithQueue,
-        InteractWithBindingsTrait,
-        InteractWithLocalizedSettingsTrait,
-        Queueable,
-        SerializesModels;
-
-    const RECIPIENT_TYPES = ['to', 'cc', 'bcc'];
-
-    /**
-     * @param  mixed  $to  force the email recipient(s) and ignore recipients defined in settings.
-     */
-    public function __construct(
-        private ActionSettingsContainer $settingsContainer,
-        private ?BindingsContainerInterface $bindingsContainer = null,
-        private mixed $to = null,
-    ) {
-        //
-    }
-
-    /**
-     * Indicates if each mail should be sent asynchronously.
-     *
-     * @var bool
-     */
-    protected $sendAsynchronously = false;
-
-    /**
-     * Get action settings schema
-     */
     public static function getSettingsSchema(?string $eventClassContext = null): array
     {
         $schema = [
@@ -82,9 +41,6 @@ class SendTemplatedMail implements CustomActionInterface, HasBindingsInterface
         return $schema;
     }
 
-    /**
-     * Get action localized settings schema
-     */
     public static function getLocalizedSettingsSchema(?string $eventClassContext = null): array
     {
         return [
@@ -93,100 +49,7 @@ class SendTemplatedMail implements CustomActionInterface, HasBindingsInterface
         ];
     }
 
-    /**
-     * Get action binding schema.
-     *
-     * Global bindings + 'to' binding
-     */
-    final public static function getBindingSchema(): array
-    {
-        return [
-            ...static::getCommonBindingSchema() ?? [],
-            'to' => RuleHelper::getRuleName('is').':mailable-entity',
-            'default_timezone' => 'string',
-            'preferred_timezone' => 'string',
-        ];
-    }
-
-    /**
-     * Get action common binding schema.
-     *
-     * Common bindings are bindings that are the same for all recipients
-     */
-    protected static function getCommonBindingSchema(): ?array
-    {
-        return [];
-    }
-
-    public function getBindingValues(?string $locale = null): array
-    {
-        return [];
-    }
-
-    public function getAttachments($bindings, $settings)
-    {
-        if (! isset($settings['attachments'])) {
-            return [];
-        }
-
-        return collect($settings['attachments'])
-            ->map(fn ($property) => Arr::get($bindings, $property))
-            ->filter(fn ($path) => $path != null);
-    }
-
-    public function handle()
-    {
-        $localizedMailInfos = [];
-
-        $validatedReceivers = $this->getRecipients($this->getValidatedBindings(), ['to']);
-
-        // we use not validated and not localized bindings to find recipients.
-        // by using not validating bindings, we keep original object instances.
-        // (usefull for models that implement MailableEntityInterface)
-        $bindings = [
-            ...$this->bindingsContainer?->getBindingValues() ?? [],
-            ...$this->getBindingValues(),
-        ];
-
-        $from = $this->getFrom($bindings);
-        $recipients = $this->getRecipients($bindings);
-        $tos = $recipients['to'];
-
-        foreach ($tos as $index => $to) {
-            $localizedSettings = $this->findActionLocalizedSettingsOrFail($to, true);
-            $locale = $localizedSettings->locale;
-            $localizedMailInfos[$locale] ??= $this->getLocalizedMailInfos($localizedSettings);
-            $mailInfos = &$localizedMailInfos[$locale];
-
-            $mailInfos['bindings']['to'] = $to instanceof MailableEntityInterface
-                ? $to->getExposableValues()
-                : $validatedReceivers['to'][$index];
-            $preferredTimezone = $to instanceof HasTimezonePreferenceInterface
-                ? $to->preferredTimezone()
-                : null;
-
-            $sendMethod = $this->sendAsynchronously ? 'queue' : 'send';
-            $to = $this->normalizeAddress($to);
-
-            $pendingMail = Mail::to($to);
-
-            if ($recipients['cc'] ?? null) {
-                $pendingMail->cc($recipients['cc']);
-            }
-            if ($recipients['bcc'] ?? null) {
-                $pendingMail->bcc($recipients['bcc']);
-            }
-            if ($from) {
-                $mailInfos['mail']['from'] = $from;
-            }
-
-            $pendingMail->$sendMethod(
-                new Custom($mailInfos['mail'], $mailInfos['bindings'], $locale, null, $preferredTimezone)
-            );
-        }
-    }
-
-    private function getFrom(array $bindings)
+    protected function getFrom(array $bindings): ?Address
     {
         $froms = [];
         $settingsFrom = $this->settingsContainer->settings['from'] ?? null;
@@ -219,7 +82,7 @@ class SendTemplatedMail implements CustomActionInterface, HasBindingsInterface
         return count($froms) ? $this->normalizeAddress($froms[0]) : null;
     }
 
-    private function getRecipients(array $bindings, ?array $recipientTypes = null): array
+    protected function getRecipients(array $bindings, ?array $recipientTypes = null): array
     {
         if ($this->to) {
             return ['to' => is_array($this->to) ? $this->to : [$this->to]];
@@ -276,7 +139,30 @@ class SendTemplatedMail implements CustomActionInterface, HasBindingsInterface
         return $recipients;
     }
 
-    private function loadStaticMailableEntities(): array
+    protected function getSubject(array $bindings, ActionLocalizedSettings $localizedSettings): string
+    {
+        return $localizedSettings->settings['subject']
+            ?? throw new \Exception('localized settings subject is not defined');
+    }
+
+    protected function getBody(array $bindings, ActionLocalizedSettings $localizedSettings): string
+    {
+        return $localizedSettings->settings['body']
+            ?? throw new \Exception('localized settings body is not defined');
+    }
+
+    protected function getAttachments($bindings, ActionLocalizedSettings $localizedSettings): ?iterable
+    {
+        if (! isset($this->settingsContainer->settings['attachments'])) {
+            return [];
+        }
+
+        return collect($this->settingsContainer->settings['attachments'])
+            ->map(fn ($property) => Arr::get($bindings, $property))
+            ->filter(fn ($path) => $path != null);
+    }
+
+    protected function loadStaticMailableEntities(): array
     {
         $recipients = $this->settingsContainer->settings['recipients'] ?? null;
         $mailableEntities = [];
@@ -305,41 +191,5 @@ class SendTemplatedMail implements CustomActionInterface, HasBindingsInterface
         }
 
         return $mailableEntities;
-    }
-
-    private function getLocalizedMailInfos(ActionLocalizedSettings $localizedSettings)
-    {
-        $bindings = $this->getValidatedBindings($localizedSettings->locale, true);
-
-        return [
-            'bindings' => $bindings,
-            'mail' => [
-                ...$localizedSettings->settings,
-                'attachments' => $this->getAttachments($bindings, $this->settingsContainer->settings),
-            ],
-        ];
-    }
-
-    private function normalizeAddresses($values)
-    {
-        $addresses = [];
-        foreach ($values as $value) {
-            $addresses[] = $this->normalizeAddress($value);
-        }
-
-        return $addresses;
-    }
-
-    private function normalizeAddress($value): Address
-    {
-        if (is_string($value)) {
-            return new Address($value);
-        } elseif (is_array($value)) {
-            return new Address($value['email'], $value['name'] ?? null);
-        } elseif ($value instanceof MailableEntityInterface) {
-            return new Address($value->getEmail(), $value->getEmailName());
-        } elseif (is_object($value)) {
-            return new Address($value->email, $value->name ?? null);
-        }
     }
 }

@@ -3,10 +3,10 @@
 namespace App\Actions;
 
 use Comhon\CustomAction\Actions\HandleManualActionTrait;
-use Comhon\CustomAction\Actions\SendTemplatedMail;
+use Comhon\CustomAction\Actions\SendEmail;
 use Comhon\CustomAction\Rules\RuleHelper;
 
-class SendCompanyRegistrationMail extends SendTemplatedMail
+class SendCompanyRegistrationMail extends SendEmail
 {
     use HandleManualActionTrait;
 
