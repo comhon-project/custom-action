@@ -12,7 +12,7 @@ class BindingsScoper implements BindingsScoperInterface
     public function getEventListeners(Builder $query, array $bindings): Collection|array
     {
         $listeners = [];
-        foreach ($query->lazy() as $listener) {
+        foreach ($query->lazyById() as $listener) {
             if ($this->match($listener, $bindings)) {
                 $listeners[] = $listener;
             }
@@ -24,7 +24,7 @@ class BindingsScoper implements BindingsScoperInterface
     public function getActionScopedSettings(ActionSettings $actionSettings, array $bindings): Collection|array
     {
         $possibleSettings = [];
-        foreach ($actionSettings->scopedSettings as $scopedSettings) {
+        foreach ($actionSettings->scopedSettings()->lazyById() as $scopedSettings) {
             if ($this->match($scopedSettings, $bindings)) {
                 $possibleSettings[] = $scopedSettings;
             }
