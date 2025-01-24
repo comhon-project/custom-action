@@ -15,7 +15,7 @@ class EventActionTest extends TestCase
     use RefreshDatabase;
     use SetUpWithModelRegistrationTrait;
 
-    public function testListEventListenerActions()
+    public function test_list_event_listener_actions()
     {
         $toUser = User::factory()->create();
 
@@ -49,7 +49,7 @@ class EventActionTest extends TestCase
         ]);
     }
 
-    public function testListEventListenerActionsWithFilter()
+    public function test_list_event_listener_actions_with_filter()
     {
         // create event listener for CompanyRegistered event
         $eventListener = EventListener::factory([
@@ -77,7 +77,7 @@ class EventActionTest extends TestCase
             ]);
     }
 
-    public function testListEventListenerActionsForbidden()
+    public function test_list_event_listener_actions_forbidden()
     {
         $toUser = User::factory()->create();
 
@@ -90,7 +90,7 @@ class EventActionTest extends TestCase
             ->assertForbidden();
     }
 
-    public function testStoreEventListenerActionSuccess()
+    public function test_store_event_listener_action_success()
     {
         // create event listener for CompanyRegistered event
         $eventListener = EventListener::factory()->create();
@@ -133,7 +133,7 @@ class EventActionTest extends TestCase
         $this->assertEquals($actionValues['settings'], $eventAction->actionSettings->settings);
     }
 
-    public function testStoreEventListenerBadActionSuccess()
+    public function test_store_event_listener_bad_action_success()
     {
         // create event listener for CompanyRegistered event
         $eventListener = EventListener::factory([
@@ -162,7 +162,7 @@ class EventActionTest extends TestCase
             ]);
     }
 
-    public function testStoreEventListenerActionForbidden()
+    public function test_store_event_listener_action_forbidden()
     {
         // create event listener for CompanyRegistered event
         $eventListener = EventListener::factory()->create();
@@ -174,7 +174,7 @@ class EventActionTest extends TestCase
             ->assertForbidden();
     }
 
-    public function testGetEventListenerAction()
+    public function test_get_event_listener_action()
     {
         // create event listener for CompanyRegistered event
         $eventListener = EventListener::factory()->genericRegistrationCompany()->create();
@@ -196,7 +196,7 @@ class EventActionTest extends TestCase
             ]);
     }
 
-    public function testGetEventListenerActionForbidden()
+    public function test_get_event_listener_action_forbidden()
     {
         // create event listener for CompanyRegistered event
         $eventListener = EventListener::factory()->genericRegistrationCompany()->create();
@@ -208,7 +208,7 @@ class EventActionTest extends TestCase
             ->assertForbidden();
     }
 
-    public function testUpdateEventListenerAction()
+    public function test_update_event_listener_action()
     {
         // create event listener for CompanyRegistered event
         $eventListener = EventListener::factory()->genericRegistrationCompany()->create();
@@ -230,7 +230,7 @@ class EventActionTest extends TestCase
         $this->assertEquals($updateName, $action->refresh()->name);
     }
 
-    public function testUpdateEventListenerActionForbidden()
+    public function test_update_event_listener_action_forbidden()
     {
         // create event listener for CompanyRegistered event
         $eventListener = EventListener::factory()->genericRegistrationCompany()->create();
@@ -241,7 +241,7 @@ class EventActionTest extends TestCase
         $this->actingAs($user)->putJson("custom/event-actions/$action->id")->assertForbidden();
     }
 
-    public function testDeleteEventAction()
+    public function test_delete_event_action()
     {
         // create event listener for CompanyRegistered event
         $eventListener = EventListener::factory()->genericRegistrationCompany()->create();
@@ -260,7 +260,7 @@ class EventActionTest extends TestCase
         $this->assertEquals(0, ActionSettings::count());
     }
 
-    public function testDeleteEventActionForbidden()
+    public function test_delete_event_action_forbidden()
     {
         // create event listener for CompanyRegistered event
         $eventListener = EventListener::factory()->genericRegistrationCompany()->create();

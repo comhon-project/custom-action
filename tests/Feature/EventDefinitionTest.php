@@ -13,7 +13,7 @@ class EventDefinitionTest extends TestCase
     use RefreshDatabase;
     use SetUpWithModelRegistrationTrait;
 
-    public function testGetEventsSuccess()
+    public function test_get_events_success()
     {
         /** @var User $user */
         $user = User::factory()->hasConsumerAbility()->create();
@@ -25,7 +25,7 @@ class EventDefinitionTest extends TestCase
         ]);
     }
 
-    public function testGetEventsForbidden()
+    public function test_get_events_forbidden()
     {
         /** @var User $user */
         $user = User::factory()->create();
@@ -33,7 +33,7 @@ class EventDefinitionTest extends TestCase
             ->assertForbidden();
     }
 
-    public function testEventShemaSuccess()
+    public function test_event_shema_success()
     {
         /** @var User $user */
         $user = User::factory()->hasConsumerAbility()->create();
@@ -56,7 +56,7 @@ class EventDefinitionTest extends TestCase
             ]);
     }
 
-    public function testGetEventShemaWithoutBindingsSuccess()
+    public function test_get_event_shema_without_bindings_success()
     {
         /** @var User $user */
         $user = User::factory()->hasConsumerAbility()->create();
@@ -72,7 +72,7 @@ class EventDefinitionTest extends TestCase
             ]);
     }
 
-    public function testGetEventShemaNotFound()
+    public function test_get_event_shema_not_found()
     {
         CustomActionModelResolver::register([], true);
         /** @var User $user */
@@ -81,7 +81,7 @@ class EventDefinitionTest extends TestCase
         $response->assertNotFound();
     }
 
-    public function testGetEventShemaForbidden()
+    public function test_get_event_shema_forbidden()
     {
         /** @var User $user */
         $user = User::factory()->create();

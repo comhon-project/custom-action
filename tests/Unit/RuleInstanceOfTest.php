@@ -9,7 +9,7 @@ use Tests\TestCase;
 
 class RuleInstanceOfTest extends TestCase
 {
-    public function testValidSameClassInstance()
+    public function test_valid_same_class_instance()
     {
         CustomActionModelResolver::register([
             'user' => User::class,
@@ -19,7 +19,7 @@ class RuleInstanceOfTest extends TestCase
         $this->assertEquals($data, $validated);
     }
 
-    public function testValidSubClassInstance()
+    public function test_valid_sub_class_instance()
     {
         CustomActionModelResolver::register([
             'user' => User::class,
@@ -29,7 +29,7 @@ class RuleInstanceOfTest extends TestCase
         $this->assertEquals($data, $validated);
     }
 
-    public function testValidSameClassString()
+    public function test_valid_same_class_string()
     {
         CustomActionModelResolver::register([
             'user' => User::class,
@@ -39,7 +39,7 @@ class RuleInstanceOfTest extends TestCase
         $this->assertEquals($data, $validated);
     }
 
-    public function testValidSubClassString()
+    public function test_valid_sub_class_string()
     {
         CustomActionModelResolver::register([
             'user' => User::class,
@@ -49,14 +49,14 @@ class RuleInstanceOfTest extends TestCase
         $this->assertEquals($data, $validated);
     }
 
-    public function testInvalidNoparams()
+    public function test_invalid_noparams()
     {
         $data = ['foo' => 'bar'];
         $this->expectExceptionMessage('must have one parameter');
         Validator::validate($data, ['foo' => 'is']);
     }
 
-    public function testInvalidNotInstanceOf()
+    public function test_invalid_not_instance_of()
     {
         $data = [
             'foo' => 'bar',
@@ -67,7 +67,7 @@ class RuleInstanceOfTest extends TestCase
         );
     }
 
-    public function testInvalidSameClassStringOnlySubClass()
+    public function test_invalid_same_class_string_only_sub_class()
     {
         CustomActionModelResolver::register([
             'user' => User::class,

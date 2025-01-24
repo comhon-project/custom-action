@@ -15,7 +15,7 @@ class EventListenerTest extends TestCase
     use RefreshDatabase;
     use SetUpWithModelRegistrationTrait;
 
-    public function testGetEventListeners()
+    public function test_get_event_listeners()
     {
         // create event listener for CompanyRegistered event
         $eventListener = EventListener::factory()->genericRegistrationCompany()->create();
@@ -46,7 +46,7 @@ class EventListenerTest extends TestCase
             ]);
     }
 
-    public function testGetEventListenersWithFilter()
+    public function test_get_event_listeners_with_filter()
     {
         // create event listener for CompanyRegistered event
         $eventListener = EventListener::factory(['name' => 'my one'])->genericRegistrationCompany()->create();
@@ -69,7 +69,7 @@ class EventListenerTest extends TestCase
             ]);
     }
 
-    public function testGetEventListenersWithNotFoundEvent()
+    public function test_get_event_listeners_with_not_found_event()
     {
         /** @var User $user */
         $user = User::factory()->hasConsumerAbility()->create();
@@ -78,7 +78,7 @@ class EventListenerTest extends TestCase
         $response->assertNotFound();
     }
 
-    public function testGetEventListenersForbidden()
+    public function test_get_event_listeners_forbidden()
     {
         /** @var User $user */
         $user = User::factory()->create();
@@ -86,7 +86,7 @@ class EventListenerTest extends TestCase
             ->assertForbidden();
     }
 
-    public function testStoreEventListeners()
+    public function test_store_event_listeners()
     {
         $scope = [
             'company' => [
@@ -117,7 +117,7 @@ class EventListenerTest extends TestCase
         $this->assertEquals($scope, $eventListener->scope);
     }
 
-    public function testStoreEventListenersWithNotFoundEvent()
+    public function test_store_event_listeners_with_not_found_event()
     {
         /** @var User $user */
         $user = User::factory()->hasConsumerAbility()->create();
@@ -125,7 +125,7 @@ class EventListenerTest extends TestCase
         $response->assertNotFound();
     }
 
-    public function testStoreEventListenersForbidden()
+    public function test_store_event_listeners_forbidden()
     {
         /** @var User $user */
         $user = User::factory()->create();
@@ -133,7 +133,7 @@ class EventListenerTest extends TestCase
             ->assertForbidden();
     }
 
-    public function testUpdateEventListener()
+    public function test_update_event_listener()
     {
         $eventListener = EventListener::factory()->genericRegistrationCompany()->create();
         $this->assertNull($eventListener->scope);
@@ -162,7 +162,7 @@ class EventListenerTest extends TestCase
         $this->assertEquals($scope, $storedEventListener->scope);
     }
 
-    public function testUpdateEventListenerForbidden()
+    public function test_update_event_listener_forbidden()
     {
         $eventListener = EventListener::factory()->genericRegistrationCompany()->create();
 
@@ -172,7 +172,7 @@ class EventListenerTest extends TestCase
             ->assertForbidden();
     }
 
-    public function testDeleteEventListeners()
+    public function test_delete_event_listeners()
     {
         $eventListener = EventListener::factory()->genericRegistrationCompany()->create();
 
@@ -190,7 +190,7 @@ class EventListenerTest extends TestCase
         $this->assertEquals(0, ActionLocalizedSettings::count());
     }
 
-    public function testDeleteEventListenersForbidden()
+    public function test_delete_event_listeners_forbidden()
     {
         $eventListener = EventListener::factory()->genericRegistrationCompany()->create();
 

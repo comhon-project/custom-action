@@ -18,7 +18,7 @@ class ActionScopedSettingsTest extends TestCase
     /**
      * @dataProvider providerActionScopedSettings
      */
-    public function testStoreActionScopedSettings($fromEventAction)
+    public function test_store_action_scoped_settings($fromEventAction)
     {
         $withAction = $fromEventAction ? 'withEventAction' : 'withManualAction';
 
@@ -111,7 +111,7 @@ class ActionScopedSettingsTest extends TestCase
         ]);
     }
 
-    public function testListScopedActionsWithFilter()
+    public function test_list_scoped_actions_with_filter()
     {
         /** @var ActionSettings $actionSettings */
         $actionSettings = ActionSettings::factory()->withManualAction()->create();
@@ -137,7 +137,7 @@ class ActionScopedSettingsTest extends TestCase
             ]);
     }
 
-    public function testStoreActionScopedWithEventContextSettings()
+    public function test_store_action_scoped_with_event_context_settings()
     {
         /** @var ActionSettings $actionSettings */
         $actionSettings = ActionSettings::factory([
@@ -175,7 +175,7 @@ class ActionScopedSettingsTest extends TestCase
     /**
      * @dataProvider providerActionScopedSettings
      */
-    public function testStoreActionScopedSettingsForbidden($fromEventAction)
+    public function test_store_action_scoped_settings_forbidden($fromEventAction)
     {
         $withAction = $fromEventAction ? 'withEventAction' : 'withManualAction';
 
@@ -191,7 +191,7 @@ class ActionScopedSettingsTest extends TestCase
     /**
      * @dataProvider providerActionScopedSettings
      */
-    public function testUpdateActionScopedSettingsSuccess($fromEventAction)
+    public function test_update_action_scoped_settings_success($fromEventAction)
     {
         $withAction = $fromEventAction ? 'withEventAction' : 'withManualAction';
 
@@ -242,7 +242,7 @@ class ActionScopedSettingsTest extends TestCase
         $this->assertEquals(1, ActionScopedSettings::count());
     }
 
-    public function testUpdateActionScopedWithEventContextSettings()
+    public function test_update_action_scoped_with_event_context_settings()
     {
         /** @var ActionSettings $actionSettings */
         $actionSettings = EventAction::factory()
@@ -299,7 +299,7 @@ class ActionScopedSettingsTest extends TestCase
     /**
      * @dataProvider providerActionScopedSettings
      */
-    public function testUpdateActionScopedSettingsForbidden($fromEventAction)
+    public function test_update_action_scoped_settings_forbidden($fromEventAction)
     {
         $withAction = $fromEventAction ? 'withEventAction' : 'withManualAction';
 
@@ -314,7 +314,7 @@ class ActionScopedSettingsTest extends TestCase
     /**
      * @dataProvider providerActionScopedSettings
      */
-    public function testDeleteActionScopedSettings($fromEventAction)
+    public function test_delete_action_scoped_settings($fromEventAction)
     {
         $withAction = $fromEventAction ? 'withEventAction' : 'withManualAction';
 
@@ -341,7 +341,7 @@ class ActionScopedSettingsTest extends TestCase
     /**
      * @dataProvider providerActionScopedSettings
      */
-    public function testDeleteActionScopedSettingsForbidden($fromEventAction)
+    public function test_delete_action_scoped_settings_forbidden($fromEventAction)
     {
         $withAction = $fromEventAction ? 'withEventAction' : 'withManualAction';
 
@@ -365,7 +365,7 @@ class ActionScopedSettingsTest extends TestCase
     /**
      * @dataProvider providerActionLocalizedSettingsValidationSendEmail
      */
-    public function testActionLocalizedSettingsValidationSendEmail($settings, $success)
+    public function test_action_localized_settings_validation_send_email($settings, $success)
     {
         $actionSettings = ActionSettings::factory([
             'settings' => [],

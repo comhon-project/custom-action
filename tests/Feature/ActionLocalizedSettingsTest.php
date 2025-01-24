@@ -18,7 +18,7 @@ class ActionLocalizedSettingsTest extends TestCase
     /**
      * @dataProvider providerActionLocalizedSettings
      */
-    public function testStoreActionLocalizedSettings($settingsContainerClass, $fromEventAction)
+    public function test_store_action_localized_settings($settingsContainerClass, $fromEventAction)
     {
         $resource = $settingsContainerClass == ActionSettings::class ? 'action-settings' : 'scoped-settings';
         $withAction = $fromEventAction ? 'withEventAction' : 'withManualAction';
@@ -94,7 +94,7 @@ class ActionLocalizedSettingsTest extends TestCase
     /**
      * @dataProvider providerActionLocalizedSettings
      */
-    public function testStoreActionLocalizedSettingsMissingRequired($settingsContainerClass, $fromEventAction)
+    public function test_store_action_localized_settings_missing_required($settingsContainerClass, $fromEventAction)
     {
         $resource = $settingsContainerClass == ActionSettings::class ? 'action-settings' : 'scoped-settings';
         $withAction = $fromEventAction ? 'withEventAction' : 'withManualAction';
@@ -126,7 +126,7 @@ class ActionLocalizedSettingsTest extends TestCase
     /**
      * @dataProvider providerActionLocalizedSettings
      */
-    public function testStoreActionLocalizedSettingsWithLocalizedSettings($settingsContainerClass, $fromEventAction)
+    public function test_store_action_localized_settings_with_localized_settings($settingsContainerClass, $fromEventAction)
     {
         $resource = $settingsContainerClass == ActionSettings::class ? 'action-settings' : 'scoped-settings';
         $withAction = $fromEventAction ? 'withEventAction' : 'withManualAction';
@@ -164,7 +164,7 @@ class ActionLocalizedSettingsTest extends TestCase
     /**
      * @dataProvider providerActionLocalizedSettings
      */
-    public function testStoreActionLocalizedSettingsForbidden($settingsContainerClass, $fromEventAction)
+    public function test_store_action_localized_settings_forbidden($settingsContainerClass, $fromEventAction)
     {
         $resource = $settingsContainerClass == ActionSettings::class ? 'action-settings' : 'scoped-settings';
         $withAction = $fromEventAction ? 'withEventAction' : 'withManualAction';
@@ -182,7 +182,7 @@ class ActionLocalizedSettingsTest extends TestCase
     /**
      * @dataProvider providerActionLocalizedSettings
      */
-    public function testUpdateActionLocalizedSettings($settingsContainerClass, $fromEventAction)
+    public function test_update_action_localized_settings($settingsContainerClass, $fromEventAction)
     {
         $withAction = $fromEventAction ? 'withEventAction' : 'withManualAction';
 
@@ -225,7 +225,7 @@ class ActionLocalizedSettingsTest extends TestCase
     /**
      * @dataProvider providerActionLocalizedSettings
      */
-    public function testUpdateActionLocalizedSettingsWithActionLocalizedSetting($settingsContainerClass, $fromEventAction)
+    public function test_update_action_localized_settings_with_action_localized_setting($settingsContainerClass, $fromEventAction)
     {
         $withAction = $fromEventAction ? 'withEventAction' : 'withManualAction';
 
@@ -269,7 +269,7 @@ class ActionLocalizedSettingsTest extends TestCase
     /**
      * @dataProvider providerActionLocalizedSettings
      */
-    public function testUpdateActionLocalizedSettingsForbidden($settingsContainerClass, $fromEventAction)
+    public function test_update_action_localized_settings_forbidden($settingsContainerClass, $fromEventAction)
     {
         $withAction = $fromEventAction ? 'withEventAction' : 'withManualAction';
 
@@ -293,7 +293,7 @@ class ActionLocalizedSettingsTest extends TestCase
     /**
      * @dataProvider providerActionLocalizedSettings
      */
-    public function testDeleteActionLocalizedSettings($settingsContainerClass, $fromEventAction)
+    public function test_delete_action_localized_settings($settingsContainerClass, $fromEventAction)
     {
         $withAction = $fromEventAction ? 'withEventAction' : 'withManualAction';
 
@@ -319,7 +319,7 @@ class ActionLocalizedSettingsTest extends TestCase
     /**
      * @dataProvider providerActionLocalizedSettings
      */
-    public function testDeleteActionLocalizedSettingsForbidden($settingsContainerClass, $fromEventAction)
+    public function test_delete_action_localized_settings_forbidden($settingsContainerClass, $fromEventAction)
     {
         $withAction = $fromEventAction ? 'withEventAction' : 'withManualAction';
 

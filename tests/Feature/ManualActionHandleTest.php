@@ -31,7 +31,7 @@ class ManualActionHandleTest extends TestCase
     /**
      * @dataProvider providerHandleManualActionSuccess
      */
-    public function testHandleManualActionSuccess($preferredLocale, $appLocale, $fallbackLocale, $success)
+    public function test_handle_manual_action_success($preferredLocale, $appLocale, $fallbackLocale, $success)
     {
         App::setLocale($appLocale);
         App::setFallbackLocale($fallbackLocale);
@@ -75,7 +75,7 @@ class ManualActionHandleTest extends TestCase
     /**
      * @dataProvider providerHandleManualActionUserWithoutPreferencesSuccess
      */
-    public function testHandleManualActionUserWithoutPreferencesSuccess($appLocale, $fallbackLocale, $success)
+    public function test_handle_manual_action_user_without_preferences_success($appLocale, $fallbackLocale, $success)
     {
         App::setLocale($appLocale);
         App::setFallbackLocale($fallbackLocale);
@@ -109,7 +109,7 @@ class ManualActionHandleTest extends TestCase
     /**
      * @dataProvider providerHandleManualActionUserWithoutPreferencesSuccess
      */
-    public function testHandleManualActionUserWithBindingsContainerWithSchemaAllValid($appLocale, $fallbackLocale, $success)
+    public function test_handle_manual_action_user_with_bindings_container_with_schema_all_valid($appLocale, $fallbackLocale, $success)
     {
         App::setLocale($appLocale);
         App::setFallbackLocale($fallbackLocale);
@@ -144,7 +144,7 @@ class ManualActionHandleTest extends TestCase
         $this->assertTrue($mails[0]->hasAttachment(Attachment::fromPath($this->getAssetPath())));
     }
 
-    public function testHandleManualActionUserWithBindingsContainerWithSchemaWithInvalid()
+    public function test_handle_manual_action_user_with_bindings_container_with_schema_with_invalid()
     {
         $user = UserWithoutPreference::factory()->create();
         ManualAction::factory()->sendMailRegistrationCompany(null, false, true)->create();
@@ -163,7 +163,7 @@ class ManualActionHandleTest extends TestCase
     /**
      * @dataProvider providerHandleManualActionUserWithoutPreferencesSuccess
      */
-    public function testHandleManualActionUserWithoutBindingsContainer($appLocale, $fallbackLocale, $success)
+    public function test_handle_manual_action_user_without_bindings_container($appLocale, $fallbackLocale, $success)
     {
         App::setLocale($appLocale);
         App::setFallbackLocale($fallbackLocale);
@@ -200,7 +200,7 @@ class ManualActionHandleTest extends TestCase
         ];
     }
 
-    public function testHandleManualActionWithoutSettings()
+    public function test_handle_manual_action_without_settings()
     {
         /** @var User $user */
         $user = User::factory()->create();
@@ -211,7 +211,7 @@ class ManualActionHandleTest extends TestCase
         SendCompanyRegistrationMail::handleManual(new BindingsContainer($bindings), $user);
     }
 
-    public function testHandleManualActionWithScopedSettingsConflicts()
+    public function test_handle_manual_action_with_scoped_settings_conflicts()
     {
         /** @var User $user */
         $user = User::factory()->create();

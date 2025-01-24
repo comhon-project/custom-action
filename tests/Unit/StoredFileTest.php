@@ -9,13 +9,13 @@ use Tests\TestCase;
 
 class StoredFileTest extends TestCase
 {
-    public function testGetSystemFileAttachment()
+    public function test_get_system_file_attachment()
     {
         $systemFile = new SystemFile('foo.pdf');
         $this->assertInstanceOf(Attachment::class, $systemFile->getAttachmentInstance());
     }
 
-    public function testGetStorageFileAttachment()
+    public function test_get_storage_file_attachment()
     {
         $systemFile = new StorageFile('foo.pdf');
         $this->assertInstanceOf(Attachment::class, $systemFile->getAttachmentInstance());

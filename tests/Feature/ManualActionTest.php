@@ -14,7 +14,7 @@ class ManualActionTest extends TestCase
     use RefreshDatabase;
     use SetUpWithModelRegistrationTrait;
 
-    public function testGetManualActionNotCreated()
+    public function test_get_manual_action_not_created()
     {
         /** @var User $user */
         $user = User::factory()->hasConsumerAbility()->create();
@@ -29,7 +29,7 @@ class ManualActionTest extends TestCase
         ]);
     }
 
-    public function testGetManualActionCreated()
+    public function test_get_manual_action_created()
     {
         $actionSettings = ManualAction::factory([
             'type' => 'send-company-email',
@@ -65,7 +65,7 @@ class ManualActionTest extends TestCase
         ]);
     }
 
-    public function testGetActionNotFound()
+    public function test_get_action_not_found()
     {
         CustomActionModelResolver::register([], true);
         /** @var User $user */
@@ -77,7 +77,7 @@ class ManualActionTest extends TestCase
         ]);
     }
 
-    public function testGetActionSettingsForbidden()
+    public function test_get_action_settings_forbidden()
     {
         /** @var User $user */
         $user = User::factory()->create();

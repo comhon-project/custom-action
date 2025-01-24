@@ -31,7 +31,7 @@ class EventDispatchTest extends TestCase
      *
      * @return void
      */
-    public function testEventListenerSuccess($addCompanyScope)
+    public function test_event_listener_success($addCompanyScope)
     {
         $targetUser = User::factory()->create();
         $otherUserFr = User::factory(['preferred_locale' => 'fr'])->create();
@@ -84,7 +84,7 @@ class EventDispatchTest extends TestCase
         ];
     }
 
-    public function testEventListenerWithEventWithoutBindings()
+    public function test_event_listener_with_event_without_bindings()
     {
         // create event listener for CompanyRegistered event
         $settings = ActionSettings::factory()
@@ -104,7 +104,7 @@ class EventDispatchTest extends TestCase
         MyEventWithoutBindings::dispatch();
     }
 
-    public function testEventListenerWithAllAvailableToProperties()
+    public function test_event_listener_with_all_available_to_properties()
     {
         /** @var User $user */
         $user = User::factory()->create();
@@ -163,7 +163,7 @@ class EventDispatchTest extends TestCase
         $mails[4]->assertHasSubject("Dear , company $company->name en");
     }
 
-    public function testEventListenerScopeNoMatch()
+    public function test_event_listener_scope_no_match()
     {
         $targetUser = User::factory()->create();
         $otherUsers = User::factory()->count(2)->create();
@@ -187,7 +187,7 @@ class EventDispatchTest extends TestCase
     /**
      * @dataProvider providerEventListener
      */
-    public function testEventListenerWithActionScopedSettings($useFr)
+    public function test_event_listener_with_action_scoped_settings($useFr)
     {
         $state = $useFr ? ['preferred_locale' => 'fr'] : [];
         $company = Company::factory(['name' => 'My VIP company'])->create();
@@ -226,7 +226,7 @@ class EventDispatchTest extends TestCase
         ];
     }
 
-    public function testEventListenerQueuedActions()
+    public function test_event_listener_queued_actions()
     {
         $targetUser = User::factory()->create();
         $otherUsers = User::factory()->count(2)->create();
@@ -241,7 +241,7 @@ class EventDispatchTest extends TestCase
         Queue::assertPushed(QueueEmail::class, 2);
     }
 
-    public function testEventListenerWithCcBccSuccess()
+    public function test_event_listener_with_cc_bcc_success()
     {
         $targetUser = User::factory()->create();
         $otherUser = User::factory()->create();
@@ -303,7 +303,7 @@ class EventDispatchTest extends TestCase
         $mails[0]->assertHasBcc('foo@bcc.com');
     }
 
-    public function testEventListenerWithStaticFromMailableSuccess()
+    public function test_event_listener_with_static_from_mailable_success()
     {
         $targetUser = User::factory()->create();
         $otherUser = User::factory()->create();
@@ -340,7 +340,7 @@ class EventDispatchTest extends TestCase
         $mails[0]->assertFrom($otherUser->email);
     }
 
-    public function testEventListenerWithStaticFromEmailSuccess()
+    public function test_event_listener_with_static_from_email_success()
     {
         $targetUser = User::factory()->create();
         $company = Company::factory()->create();
@@ -376,7 +376,7 @@ class EventDispatchTest extends TestCase
         $mails[0]->assertFrom('foo@cc.com');
     }
 
-    public function testEventListenerWithBindingsFromMailableSuccess()
+    public function test_event_listener_with_bindings_from_mailable_success()
     {
         $targetUser = User::factory()->create();
         $company = Company::factory()->create();
@@ -412,7 +412,7 @@ class EventDispatchTest extends TestCase
         $mails[0]->assertFrom($targetUser->email);
     }
 
-    public function testEventListenerWithBindingsFromEmailFailure()
+    public function test_event_listener_with_bindings_from_email_failure()
     {
         $targetUser = User::factory()->create();
         $company = Company::factory()->create();

@@ -8,7 +8,7 @@ use Tests\TestCase;
 
 class BindingsHelperTest extends TestCase
 {
-    public function testGetBindingsString()
+    public function test_get_bindings_string()
     {
         $rules = BindingsHelper::getEventBindingRules(CompanyRegistered::class, ['my.key' => 'string']);
 
@@ -17,7 +17,7 @@ class BindingsHelperTest extends TestCase
         ], $rules);
     }
 
-    public function testGetBindingsEmailReceiver()
+    public function test_get_bindings_email_receiver()
     {
         $rules = BindingsHelper::getEventBindingRules(CompanyRegistered::class, ['receivers' => 'mailable-entity']);
 
@@ -26,7 +26,7 @@ class BindingsHelperTest extends TestCase
         ], $rules);
     }
 
-    public function testGetBindingsArray()
+    public function test_get_bindings_array()
     {
         $rules = BindingsHelper::getEventBindingRules(CompanyRegistered::class, ['my.key' => 'array:string']);
 
@@ -36,7 +36,7 @@ class BindingsHelperTest extends TestCase
         ], $rules);
     }
 
-    public function testGetBindingsSeveralTypes()
+    public function test_get_bindings_several_types()
     {
         $rules = BindingsHelper::getEventBindingRules(CompanyRegistered::class, [
             'receivers' => 'mailable-entity',
@@ -49,14 +49,14 @@ class BindingsHelperTest extends TestCase
         ], $rules);
     }
 
-    public function testGetBindingsInvalidEventClass()
+    public function test_get_bindings_invalid_event_class()
     {
         $this->expectExceptionMessage('first argument must be a subclass of HasBindingsInterface');
         BindingsHelper::getEventBindingRules('foo', ['my.key' => 'string']);
 
     }
 
-    public function testGetBindingsValuesSimple()
+    public function test_get_bindings_values_simple()
     {
         $bindings = [
             'my' => [
@@ -71,7 +71,7 @@ class BindingsHelperTest extends TestCase
         );
     }
 
-    public function testGetBindingsValuesSimpleNotExist()
+    public function test_get_bindings_values_simple_not_exist()
     {
         $bindings = [
             'my' => [],
@@ -82,7 +82,7 @@ class BindingsHelperTest extends TestCase
         );
     }
 
-    public function testGetBindingsValuesSimpleNotAccessible()
+    public function test_get_bindings_values_simple_not_accessible()
     {
         $bindings = [
             'my' => 'foo',
@@ -93,7 +93,7 @@ class BindingsHelperTest extends TestCase
         );
     }
 
-    public function testGetBindingsValuesWildCardKey()
+    public function test_get_bindings_values_wild_card_key()
     {
         $bindings = [
             12, 13,
@@ -104,7 +104,7 @@ class BindingsHelperTest extends TestCase
         );
     }
 
-    public function testGetBindingsValuesNestedWildCardKey()
+    public function test_get_bindings_values_nested_wild_card_key()
     {
         $bindings = [
             'my' => [
@@ -127,7 +127,7 @@ class BindingsHelperTest extends TestCase
         );
     }
 
-    public function testGetBindingsValuesWildCardKeyEnding()
+    public function test_get_bindings_values_wild_card_key_ending()
     {
         $bindings = [
             'my' => [

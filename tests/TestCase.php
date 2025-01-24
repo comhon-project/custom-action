@@ -33,7 +33,7 @@ class TestCase extends Orchestra
     public function defineEnvironment($app)
     {
         // Warning! set a specific config for only one test
-        $shoudQueueDispatcher = $this->name() == 'testShouldQueueDispatcher';
+        $shoudQueueDispatcher = $this->name() == 'test_should_queue_dispatcher';
 
         $cacheDirectory = $app->useStoragePath(Utils::getBasePath('storage'))->storagePath('custom-action');
 

@@ -15,7 +15,7 @@ class CustomMailTest extends TestCase
         return Utils::joinPaths(Utils::getTestPath('Data'), 'jc.jpeg');
     }
 
-    public function testCustomMail()
+    public function test_custom_mail()
     {
         $user = User::factory()->create();
         $mailable = new Custom([
@@ -32,7 +32,7 @@ class CustomMailTest extends TestCase
     /**
      * @dataProvider providerCustomMailMissingRequiredValues
      */
-    public function testCustomMailMissingRequiredValues($missingProperty)
+    public function test_custom_mail_missing_required_values($missingProperty)
     {
         $user = User::factory()->create();
 

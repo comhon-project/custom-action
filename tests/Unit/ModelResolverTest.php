@@ -13,7 +13,7 @@ use Tests\TestCase;
 
 class ModelResolverTest extends TestCase
 {
-    public function testModelResolver()
+    public function test_model_resolver()
     {
         /** @var CustomActionModelResolver $resolver */
         $resolver = app(CustomActionModelResolver::class);

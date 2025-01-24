@@ -12,7 +12,7 @@ class ConfigWithoutPolicyTest extends TestCase
     use RefreshDatabase;
     use SetUpWithModelRegistrationTrait;
 
-    public function testGetEventsConfigWithoutAbility()
+    public function test_get_events_config_without_ability()
     {
         config(['custom-action.use_policies' => false]);
         /** @var User $user */

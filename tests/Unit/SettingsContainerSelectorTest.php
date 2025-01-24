@@ -8,7 +8,7 @@ use Tests\TestCase;
 
 class SettingsContainerSelectorTest extends TestCase
 {
-    public function testSelectWithMissingActionSettings()
+    public function test_select_with_missing_action_settings()
     {
         $this->expectExceptionMessage('missing action settings');
         SettingsContainerSelector::select(ManualAction::factory()->create(), []);

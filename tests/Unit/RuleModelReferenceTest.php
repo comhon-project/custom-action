@@ -10,7 +10,7 @@ use Tests\TestCase;
 
 class RuleModelReferenceTest extends TestCase
 {
-    public function testValidSimple()
+    public function test_valid_simple()
     {
         CustomActionModelResolver::register([
             'user' => User::class,
@@ -25,7 +25,7 @@ class RuleModelReferenceTest extends TestCase
         $this->assertEquals($data, $validated);
     }
 
-    public function testValidSubclass()
+    public function test_valid_subclass()
     {
         CustomActionModelResolver::register([
             'user' => User::class,
@@ -40,7 +40,7 @@ class RuleModelReferenceTest extends TestCase
         $this->assertEquals($data, $validated);
     }
 
-    public function testValidPrefix()
+    public function test_valid_prefix()
     {
         CustomActionModelResolver::register([
             'user' => User::class,
@@ -55,21 +55,21 @@ class RuleModelReferenceTest extends TestCase
         $this->assertEquals($data, $validated);
     }
 
-    public function testInvalidNoparams()
+    public function test_invalid_noparams()
     {
         $data = ['foo' => []];
         $this->expectExceptionMessage('must have one parameter');
         Validator::validate($data, ['foo' => 'model_reference']);
     }
 
-    public function testInvalidParamModel()
+    public function test_invalid_param_model()
     {
         $data = ['foo' => []];
         $this->expectExceptionMessage('invalid model bar');
         Validator::validate($data, ['foo' => 'model_reference:bar']);
     }
 
-    public function testInvalidNotEloquentModel()
+    public function test_invalid_not_eloquent_model()
     {
         $data = [
             'foo' => [
@@ -83,7 +83,7 @@ class RuleModelReferenceTest extends TestCase
         );
     }
 
-    public function testInvalidNotRuleModel()
+    public function test_invalid_not_rule_model()
     {
         CustomActionModelResolver::register([
             'user' => User::class,
@@ -101,7 +101,7 @@ class RuleModelReferenceTest extends TestCase
         );
     }
 
-    public function testInvalidDoesntExist()
+    public function test_invalid_doesnt_exist()
     {
         CustomActionModelResolver::register([
             'user' => User::class,
@@ -118,7 +118,7 @@ class RuleModelReferenceTest extends TestCase
         );
     }
 
-    public function testInvalidNotArray()
+    public function test_invalid_not_array()
     {
         CustomActionModelResolver::register([
             'user' => User::class,

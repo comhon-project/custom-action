@@ -14,7 +14,7 @@ class ActionDefinitionTest extends TestCase
     use RefreshDatabase;
     use SetUpWithModelRegistrationTrait;
 
-    public function testGetActionsSuccess()
+    public function test_get_actions_success()
     {
         /** @var User $user */
         $user = User::factory()->hasConsumerAbility()->create();
@@ -26,7 +26,7 @@ class ActionDefinitionTest extends TestCase
         ]);
     }
 
-    public function testGetActionsForbidden()
+    public function test_get_actions_forbidden()
     {
         /** @var User $user */
         $user = User::factory()->create();
@@ -34,7 +34,7 @@ class ActionDefinitionTest extends TestCase
             ->assertForbidden();
     }
 
-    public function testGetActionShemaSuccess()
+    public function test_get_action_shema_success()
     {
         /** @var User $user */
         $user = User::factory()->hasConsumerAbility()->create();
@@ -107,7 +107,7 @@ class ActionDefinitionTest extends TestCase
         ]);
     }
 
-    public function testGetActionShemaWithContextSuccess()
+    public function test_get_action_shema_with_context_success()
     {
         /** @var User $user */
         $user = User::factory()->hasConsumerAbility()->create();
@@ -162,7 +162,7 @@ class ActionDefinitionTest extends TestCase
             ]);
     }
 
-    public function testGetActionShemaWithoutBindingsSuccess()
+    public function test_get_action_shema_without_bindings_success()
     {
         /** @var User $user */
         $user = User::factory()->hasConsumerAbility()->create();
@@ -178,7 +178,7 @@ class ActionDefinitionTest extends TestCase
             ]);
     }
 
-    public function testGetActionShemaWithInvalidContext()
+    public function test_get_action_shema_with_invalid_context()
     {
         /** @var User $user */
         $user = User::factory()->hasConsumerAbility()->create();
@@ -191,7 +191,7 @@ class ActionDefinitionTest extends TestCase
             ]);
     }
 
-    public function testGetActionShemaWithInvalidContext2()
+    public function test_get_action_shema_with_invalid_context2()
     {
         /** @var User $user */
         $user = User::factory()->hasConsumerAbility()->create();
@@ -204,7 +204,7 @@ class ActionDefinitionTest extends TestCase
             ]);
     }
 
-    public function testGetActionShemaNotFound()
+    public function test_get_action_shema_not_found()
     {
         CustomActionModelResolver::register([], true);
         /** @var User $user */
@@ -214,7 +214,7 @@ class ActionDefinitionTest extends TestCase
         $response->assertNotFound();
     }
 
-    public function testGetActionShemaForbidden()
+    public function test_get_action_shema_forbidden()
     {
         /** @var User $user */
         $user = User::factory()->create();

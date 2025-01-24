@@ -12,7 +12,7 @@ class CustomActionTest extends TestCase
 {
     use SetUpWithModelRegistrationTrait;
 
-    public function testHandleWithoutReceiver()
+    public function test_handle_without_receiver()
     {
         ManualAction::factory()->sendMailRegistrationCompany([], false, false)->create();
 
@@ -20,7 +20,7 @@ class CustomActionTest extends TestCase
         SendCompanyRegistrationMail::handleManual(new BindingsContainer([]));
     }
 
-    public function testHandleWithoutBindingsContainer()
+    public function test_handle_without_bindings_container()
     {
         ManualAction::factory()->sendMailRegistrationCompany([], false, false)->create();
 

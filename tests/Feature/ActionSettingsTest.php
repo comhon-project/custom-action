@@ -14,7 +14,7 @@ class ActionSettingsTest extends TestCase
     use RefreshDatabase;
     use SetUpWithModelRegistrationTrait;
 
-    public function testGetActionSettingsSuccess()
+    public function test_get_action_settings_success()
     {
         $actionSettings = ActionSettings::factory([
             'settings' => [
@@ -36,7 +36,7 @@ class ActionSettingsTest extends TestCase
             ]);
     }
 
-    public function testGetActionSettingsForbidden()
+    public function test_get_action_settings_forbidden()
     {
         $actionSettings = ActionSettings::factory()->withManualAction()->create();
         /** @var User $consumer */
@@ -45,7 +45,7 @@ class ActionSettingsTest extends TestCase
             ->assertForbidden();
     }
 
-    public function testUpdateGenericActionSettings()
+    public function test_update_generic_action_settings()
     {
         $actionSettings = ActionSettings::factory([
             'settings' => [],
@@ -71,7 +71,7 @@ class ActionSettingsTest extends TestCase
         $this->assertEquals($newSettings, ActionSettings::findOrFail($actionSettings->id)->settings);
     }
 
-    public function testUpdateManualActionSettings()
+    public function test_update_manual_action_settings()
     {
         $actionSettings = ManualAction::factory([
             'type' => 'send-company-email',
@@ -101,7 +101,7 @@ class ActionSettingsTest extends TestCase
         $this->assertEquals($newSettings, ActionSettings::findOrFail($actionSettings->id)->settings);
     }
 
-    public function testUpdateManualActionSettingsMissingRequired()
+    public function test_update_manual_action_settings_missing_required()
     {
         $actionSettings = ManualAction::factory([
             'type' => 'send-company-email',
@@ -131,7 +131,7 @@ class ActionSettingsTest extends TestCase
 
     }
 
-    public function testUpdateActionWithEventContextSettings()
+    public function test_update_action_with_event_context_settings()
     {
         $actionSettings = ActionSettings::factory([
             'settings' => [],
@@ -155,7 +155,7 @@ class ActionSettingsTest extends TestCase
         $this->assertEquals($newSettings, ActionSettings::findOrFail($actionSettings->id)->settings);
     }
 
-    public function testUpdateActionSettingsForbidden()
+    public function test_update_action_settings_forbidden()
     {
         $actionSettings = ActionSettings::factory([
             'settings' => [],

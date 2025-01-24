@@ -14,7 +14,7 @@ class GenerateActionCommandTest extends TestCase
     /**
      * @dataProvider providerGenerateActionFileSuccess
      */
-    public function testGenerateActionFileSuccess($dirShouldExists, $extends, $manual, $expectContent)
+    public function test_generate_action_file_success($dirShouldExists, $extends, $manual, $expectContent)
     {
         CustomActionModelResolver::bind('bad-action', BadAction::class);
         $dir = Utils::joinPaths(Utils::getTestPath('Actions'), 'CustomActions');
@@ -261,7 +261,7 @@ EOT
         ];
     }
 
-    public function testGenerateActionFileFailure()
+    public function test_generate_action_file_failure()
     {
         app()->useAppPath(Utils::getTestPath());
 

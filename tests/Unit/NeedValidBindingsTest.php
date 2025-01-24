@@ -22,7 +22,7 @@ class NeedValidBindingsTest extends TestCase
         );
     }
 
-    public function testGetValidatedBindingsWithoutCache()
+    public function test_get_validated_bindings_without_cache()
     {
         $action = $this->getAction();
         $res = $action->getValidatedBindings('en');
@@ -32,7 +32,7 @@ class NeedValidBindingsTest extends TestCase
         $this->assertEquals(2, $res['index']);
     }
 
-    public function testGetValidatedBindingsWithCache()
+    public function test_get_validated_bindings_with_cache()
     {
         $action = $this->getAction();
         $res = $action->getValidatedBindings('en', true);
