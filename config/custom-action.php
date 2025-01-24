@@ -49,16 +49,4 @@ return [
         */
         'queue_name' => null,
     ],
-
-    /*
-     | actions that may be defined as manual actions.
-     | each element must a class that implements CustomActionInterface.
-     */
-    'manual_actions' => [],
-
-    /*
-     | events that may be linked to actions
-     | each element must be a class that implements CustomEventInterface.
-     */
-    'events' => [],
 ];

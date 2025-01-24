@@ -2,6 +2,7 @@
 
 namespace Comhon\CustomAction\Http\Controllers;
 
+use Comhon\CustomAction\Catalogs\ManualActionTypeCatalog;
 use Comhon\CustomAction\Contracts\CustomActionInterface;
 use Comhon\CustomAction\Contracts\HasBindingsInterface;
 use Comhon\CustomAction\Facades\CustomActionModelResolver;
@@ -17,21 +18,11 @@ class ActionTypeController extends Controller
      *
      * @return \Illuminate\Http\Resources\Json\JsonResource
      */
-    public function listManualActionTypes()
+    public function listManualActionTypes(ManualActionTypeCatalog $catalog)
     {
         $this->authorize('view-any', CustomActionInterface::class);
 
-        $actions = config('custom-action.manual_actions') ?? [];
-        $actions = collect($actions)->map(function ($class) {
-            $uniqueName = CustomActionModelResolver::getUniqueName($class);
-
-            return [
-                'type' => $uniqueName,
-                'name' => trans('custom-action::messages.actions.'.$uniqueName),
-            ];
-        })->values();
-
-        return new JsonResource($actions);
+        return new JsonResource($catalog->get());
     }
 
     /**

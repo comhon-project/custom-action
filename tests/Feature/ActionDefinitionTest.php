@@ -2,7 +2,6 @@
 
 namespace Tests\Feature;
 
-use App\Actions\SendCompanyRegistrationMail;
 use App\Models\User;
 use Comhon\CustomAction\Facades\CustomActionModelResolver;
 use Comhon\CustomAction\Rules\RuleHelper;
@@ -17,16 +16,12 @@ class ActionDefinitionTest extends TestCase
 
     public function testGetActionsSuccess()
     {
-        config(['custom-action.manual_actions' => [SendCompanyRegistrationMail::class]]);
         /** @var User $user */
         $user = User::factory()->hasConsumerAbility()->create();
         $response = $this->actingAs($user)->getJson('custom/action-types/manual');
         $response->assertJson([
             'data' => [
-                [
-                    'type' => 'send-company-email',
-                    'name' => 'send company email',
-                ],
+                'send-company-email',
             ],
         ]);
     }

@@ -39,8 +39,7 @@
         "psr-4": {
             "Tests\\": "tests/",
             "Database\\Factories\\": "database/factories/",
-            "App\\": "tests/App/",
-            "Workbench\\App\\": "workbench/app/"
+            "App\\": "workbench/app/"
         }
     },
     "scripts": {

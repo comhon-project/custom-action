@@ -54,9 +54,8 @@ class CustomActionServiceProvider extends PackageServiceProvider
             ->name('laravel-custom-action')
             ->hasConfigFile()
             ->hasMigration('create_laravel-custom-action_table')
-            ->hasTranslations()
             ->hasRoute('routes')
-            ->hasCommand(GenerateActionCommand::class);
+            ->hasConsoleCommand(GenerateActionCommand::class);
     }
 
     public function packageRegistered()

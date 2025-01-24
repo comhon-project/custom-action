@@ -2,11 +2,11 @@
 
 namespace Tests;
 
+use App\Providers\WorkbenchServiceProvider;
 use Comhon\CustomAction\CustomActionServiceProvider;
 use Comhon\TemplateRenderer\TemplateRendererServiceProvider;
 use Illuminate\Contracts\Config\Repository;
 use Illuminate\Database\Eloquent\Factories\Factory;
-use Illuminate\Support\Facades\Lang;
 use Orchestra\Testbench\TestCase as Orchestra;
 use Tests\Support\Utils;
 
@@ -24,6 +24,7 @@ class TestCase extends Orchestra
     protected function getPackageProviders($app)
     {
         return [
+            WorkbenchServiceProvider::class,
             CustomActionServiceProvider::class,
             TemplateRendererServiceProvider::class,
         ];
@@ -60,14 +61,6 @@ class TestCase extends Orchestra
         $migration->up();
         $migration = include Utils::joinPaths(Utils::getTestPath(), 'Migrations', 'create_test_table.php');
         $migration->up();
-
-        // TODO find a better way to test translations
-        Lang::addLines([
-            'messages.actions.send-email' => 'send email',
-            'messages.actions.queue-email' => 'send email',
-            'messages.actions.send-company-email' => 'send company email',
-            'messages.events.company-registered' => 'company registered',
-        ], 'en', 'custom-action');
     }
 
     public function setPoliciesFiles()

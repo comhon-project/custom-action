@@ -2,7 +2,6 @@
 
 namespace Tests\Feature;
 
-use App\Events\CompanyRegistered;
 use App\Models\User;
 use Comhon\CustomAction\Facades\CustomActionModelResolver;
 use Illuminate\Foundation\Testing\RefreshDatabase;
@@ -16,16 +15,12 @@ class EventDefinitionTest extends TestCase
 
     public function testGetEventsSuccess()
     {
-        config(['custom-action.events' => [CompanyRegistered::class]]);
         /** @var User $user */
         $user = User::factory()->hasConsumerAbility()->create();
         $response = $this->actingAs($user)->getJson('custom/events');
         $response->assertJson([
             'data' => [
-                [
-                    'type' => 'company-registered',
-                    'name' => 'company registered',
-                ],
+                'company-registered',
             ],
         ]);
     }
@@ -54,14 +49,8 @@ class EventDefinitionTest extends TestCase
                         'user.email' => 'email',
                     ],
                     'allowed_actions' => [
-                        [
-                            'type' => 'send-email',
-                            'name' => 'send email',
-                        ],
-                        [
-                            'type' => 'send-company-email',
-                            'name' => 'send company email',
-                        ],
+                        'send-email',
+                        'send-company-email',
                     ],
                 ],
             ]);
@@ -77,9 +66,7 @@ class EventDefinitionTest extends TestCase
                 'data' => [
                     'binding_schema' => [],
                     'allowed_actions' => [
-                        [
-                            'type' => 'my-action-without-bindings',
-                        ],
+                        'my-action-without-bindings',
                     ],
                 ],
             ]);
