@@ -37,25 +37,4 @@ class ActionScopedSettings extends ActionSettingsContainer
         'settings',
         'scope',
     ];
-
-    protected static function booted()
-    {
-        static::deleting(function (ActionScopedSettings $actionScopedSettings) {
-            ActionLocalizedSettings::whereHasMorph(
-                'localizable',
-                [static::class],
-                function ($query) use ($actionScopedSettings) {
-                    $query->where('id', $actionScopedSettings->id);
-                }
-            )->delete();
-        });
-    }
-
-    /**
-     * @return \Illuminate\Database\Eloquent\Relations\BelongsTo
-     */
-    public function actionSettings()
-    {
-        return $this->belongsTo(ActionSettings::class);
-    }
 }

@@ -11,6 +11,8 @@ use Illuminate\Database\Eloquent\Factories\Factory;
  */
 class ManualActionFactory extends Factory
 {
+    use ActionFactoryTrait;
+
     /**
      * The name of the factory's corresponding model.
      *
@@ -37,8 +39,12 @@ class ManualActionFactory extends Factory
     {
         return $this->afterCreating(function (ManualAction $manualAction) use ($toOtherUserIds, $withScopedSettings, $withAttachement) {
             ActionSettings::factory()->for($manualAction, 'action')
-                ->sendMailRegistrationCompany($toOtherUserIds, $withScopedSettings, $withAttachement)
+                ->sendMailRegistrationCompany($toOtherUserIds, $withAttachement)
                 ->create();
+
+            if ($withScopedSettings) {
+                $this->sendMailRegistrationCompanyScoped($manualAction, $toOtherUserIds);
+            }
         });
     }
 }

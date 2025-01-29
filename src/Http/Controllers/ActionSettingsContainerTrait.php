@@ -3,7 +3,6 @@
 namespace Comhon\CustomAction\Http\Controllers;
 
 use Comhon\CustomAction\Models\ActionLocalizedSettings;
-use Comhon\CustomAction\Models\ActionScopedSettings;
 use Comhon\CustomAction\Models\ActionSettingsContainer;
 use Comhon\CustomAction\Models\EventAction;
 use Comhon\CustomAction\Resources\ActionLocalizedSettingsResource;
@@ -21,14 +20,11 @@ trait ActionSettingsContainerTrait
     {
         $this->authorize('create', [ActionLocalizedSettings::class, $container]);
 
-        /** @var \Comhon\CustomAction\Models\ActionSettings $actionSettings */
-        $actionSettings = $container instanceof ActionScopedSettings ? $container->actionSettings : $container;
-
-        $eventContext = $actionSettings->action instanceof EventAction
-            ? $actionSettings->action->eventListener->getEventClass()
+        $eventContext = $container->action instanceof EventAction
+            ? $container->action->eventListener->getEventClass()
             : null;
 
-        $actionClass = $actionSettings->action->getActionClass();
+        $actionClass = $container->action->getActionClass();
         $rules = RuleHelper::getSettingsRules($actionClass::getLocalizedSettingsSchema($eventContext));
         $rules['locale'] = 'required|string';
         $validated = $request->validate($rules);

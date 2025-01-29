@@ -22,9 +22,7 @@ class ManualActionTest extends TestCase
         $response->assertJson([
             'data' => [
                 'type' => 'send-company-email',
-                'action_settings' => [
-                    'settings' => [],
-                ],
+                'action_settings' => null,
             ],
         ]);
     }

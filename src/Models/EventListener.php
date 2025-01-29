@@ -40,15 +40,6 @@ class EventListener extends Model
         'scope',
     ];
 
-    protected static function booted()
-    {
-        static::deleting(function (EventListener $eventListener) {
-            foreach ($eventListener->eventActions as $eventAction) {
-                $eventAction->delete();
-            }
-        });
-    }
-
     public function eventActions(): HasMany
     {
         return $this->hasMany(EventAction::class, 'event_listener_id');

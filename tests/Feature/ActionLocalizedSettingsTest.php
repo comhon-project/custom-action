@@ -7,6 +7,7 @@ use Comhon\CustomAction\Models\ActionLocalizedSettings;
 use Comhon\CustomAction\Models\ActionScopedSettings;
 use Comhon\CustomAction\Models\ActionSettings;
 use Illuminate\Foundation\Testing\RefreshDatabase;
+use PHPUnit\Framework\Attributes\DataProvider;
 use Tests\SetUpWithModelRegistrationTrait;
 use Tests\TestCase;
 
@@ -15,9 +16,7 @@ class ActionLocalizedSettingsTest extends TestCase
     use RefreshDatabase;
     use SetUpWithModelRegistrationTrait;
 
-    /**
-     * @dataProvider providerActionLocalizedSettings
-     */
+    #[DataProvider('providerActionLocalizedSettings')]
     public function test_store_action_localized_settings($settingsContainerClass, $fromEventAction)
     {
         $resource = $settingsContainerClass == ActionSettings::class ? 'action-settings' : 'scoped-settings';
@@ -91,9 +90,7 @@ class ActionLocalizedSettingsTest extends TestCase
         ]);
     }
 
-    /**
-     * @dataProvider providerActionLocalizedSettings
-     */
+    #[DataProvider('providerActionLocalizedSettings')]
     public function test_store_action_localized_settings_missing_required($settingsContainerClass, $fromEventAction)
     {
         $resource = $settingsContainerClass == ActionSettings::class ? 'action-settings' : 'scoped-settings';
@@ -123,9 +120,7 @@ class ActionLocalizedSettingsTest extends TestCase
             ]);
     }
 
-    /**
-     * @dataProvider providerActionLocalizedSettings
-     */
+    #[DataProvider('providerActionLocalizedSettings')]
     public function test_store_action_localized_settings_with_localized_settings($settingsContainerClass, $fromEventAction)
     {
         $resource = $settingsContainerClass == ActionSettings::class ? 'action-settings' : 'scoped-settings';
@@ -161,9 +156,7 @@ class ActionLocalizedSettingsTest extends TestCase
         $this->assertEquals($originalSettingsEn, $localizedSettingsEn->settings);
     }
 
-    /**
-     * @dataProvider providerActionLocalizedSettings
-     */
+    #[DataProvider('providerActionLocalizedSettings')]
     public function test_store_action_localized_settings_forbidden($settingsContainerClass, $fromEventAction)
     {
         $resource = $settingsContainerClass == ActionSettings::class ? 'action-settings' : 'scoped-settings';
@@ -179,9 +172,7 @@ class ActionLocalizedSettingsTest extends TestCase
             ->assertForbidden();
     }
 
-    /**
-     * @dataProvider providerActionLocalizedSettings
-     */
+    #[DataProvider('providerActionLocalizedSettings')]
     public function test_update_action_localized_settings($settingsContainerClass, $fromEventAction)
     {
         $withAction = $fromEventAction ? 'withEventAction' : 'withManualAction';
@@ -222,9 +213,7 @@ class ActionLocalizedSettingsTest extends TestCase
         $this->assertEquals(1, ActionLocalizedSettings::count());
     }
 
-    /**
-     * @dataProvider providerActionLocalizedSettings
-     */
+    #[DataProvider('providerActionLocalizedSettings')]
     public function test_update_action_localized_settings_with_action_localized_setting($settingsContainerClass, $fromEventAction)
     {
         $withAction = $fromEventAction ? 'withEventAction' : 'withManualAction';
@@ -266,9 +255,7 @@ class ActionLocalizedSettingsTest extends TestCase
         $this->assertEquals(1, ActionLocalizedSettings::count());
     }
 
-    /**
-     * @dataProvider providerActionLocalizedSettings
-     */
+    #[DataProvider('providerActionLocalizedSettings')]
     public function test_update_action_localized_settings_forbidden($settingsContainerClass, $fromEventAction)
     {
         $withAction = $fromEventAction ? 'withEventAction' : 'withManualAction';
@@ -290,9 +277,7 @@ class ActionLocalizedSettingsTest extends TestCase
             ->assertForbidden();
     }
 
-    /**
-     * @dataProvider providerActionLocalizedSettings
-     */
+    #[DataProvider('providerActionLocalizedSettings')]
     public function test_delete_action_localized_settings($settingsContainerClass, $fromEventAction)
     {
         $withAction = $fromEventAction ? 'withEventAction' : 'withManualAction';
@@ -316,9 +301,7 @@ class ActionLocalizedSettingsTest extends TestCase
         $this->assertEquals(0, ActionLocalizedSettings::count());
     }
 
-    /**
-     * @dataProvider providerActionLocalizedSettings
-     */
+    #[DataProvider('providerActionLocalizedSettings')]
     public function test_delete_action_localized_settings_forbidden($settingsContainerClass, $fromEventAction)
     {
         $withAction = $fromEventAction ? 'withEventAction' : 'withManualAction';

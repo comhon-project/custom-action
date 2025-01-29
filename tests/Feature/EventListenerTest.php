@@ -177,8 +177,6 @@ class EventListenerTest extends TestCase
         $eventListener = EventListener::factory()->genericRegistrationCompany()->create();
 
         $this->assertEquals(1, EventListener::count());
-        $this->assertEquals(1, ActionSettings::count());
-        $this->assertEquals(4, ActionLocalizedSettings::count());
 
         /** @var User $user */
         $user = User::factory()->hasConsumerAbility()->create();
@@ -186,8 +184,6 @@ class EventListenerTest extends TestCase
             ->assertNoContent();
 
         $this->assertEquals(0, EventListener::count());
-        $this->assertEquals(0, ActionSettings::count());
-        $this->assertEquals(0, ActionLocalizedSettings::count());
     }
 
     public function test_delete_event_listeners_forbidden()

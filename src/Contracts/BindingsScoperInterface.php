@@ -2,7 +2,7 @@
 
 namespace Comhon\CustomAction\Contracts;
 
-use Comhon\CustomAction\Models\ActionSettings;
+use Comhon\CustomAction\Models\Action;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Support\Collection;
 
@@ -19,5 +19,5 @@ interface BindingsScoperInterface
     /**
      * get action scoped settings according given action settings and given bindings.
      */
-    public function getActionScopedSettings(ActionSettings $actionSettings, array $bindings): Collection|array;
+    public function getActionScopedSettings(Action $action, array $bindings): Collection|array;
 }

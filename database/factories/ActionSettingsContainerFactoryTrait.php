@@ -4,32 +4,32 @@ namespace Database\Factories;
 
 use Comhon\CustomAction\Models\ActionLocalizedSettings;
 use Comhon\CustomAction\Models\ActionSettings;
+use Comhon\CustomAction\Models\ActionSettingsContainer;
+use Comhon\CustomAction\Models\EventAction;
+use Comhon\CustomAction\Models\EventListener;
+use Comhon\CustomAction\Models\ManualAction;
 use Illuminate\Database\Eloquent\Factories\Factory;
 
-/**
- * @extends \Illuminate\Database\Eloquent\Factories\Factory<\Comhon\CustomAction\Models\ActionSettings>
- */
-class ActionSettingsFactory extends Factory
+trait ActionSettingsContainerFactoryTrait
 {
-    use ActionSettingsContainerFactoryTrait;
-
-    /**
-     * The name of the factory's corresponding model.
-     *
-     * @var class-string<\Illuminate\Database\Eloquent\Model>
-     */
-    protected $model = ActionSettings::class;
-
-    /**
-     * Define the model's default state.
-     *
-     * @return array<string, mixed>
-     */
-    public function definition()
+    public function withEventAction(?string $type = null, ?string $event = null): Factory
     {
-        return [
-            'settings' => [],
-        ];
+        return $this->afterMaking(function (ActionSettingsContainer $actionSettings) use ($type, $event) {
+            $stateAction = $type ? ['type' => $type] : [];
+            $stateEvent = $event ? ['event' => $event] : [];
+            $eventAction = EventAction::factory($stateAction)
+                ->for(EventListener::factory($stateEvent), 'eventListener')
+                ->create();
+            $actionSettings->action()->associate($eventAction);
+        });
+    }
+
+    public function withManualAction(?string $type = null): Factory
+    {
+        return $this->afterMaking(function (ActionSettingsContainer $actionSettings) use ($type) {
+            $state = $type ? ['type' => $type] : [];
+            $actionSettings->action()->associate(ManualAction::factory($state)->create());
+        });
     }
 
     /**

@@ -3,7 +3,6 @@
 namespace Comhon\CustomAction\Http\Controllers;
 
 use Comhon\CustomAction\Models\ActionLocalizedSettings;
-use Comhon\CustomAction\Models\ActionScopedSettings;
 use Comhon\CustomAction\Models\EventAction;
 use Comhon\CustomAction\Resources\ActionLocalizedSettingsResource;
 use Comhon\CustomAction\Rules\RuleHelper;
@@ -33,16 +32,14 @@ class ActionLocalizedSettingsController extends Controller
         $localizedSettings = $localizedSetting;
         $this->authorize('update', $localizedSettings);
 
-        /** @var \Comhon\CustomAction\Models\ActionSettings $actionSettings */
-        $actionSettings = $localizedSettings->localizable instanceof ActionScopedSettings
-            ? $localizedSettings->localizable->actionSettings
-            : $localizedSettings->localizable;
+        /** @var \Comhon\CustomAction\Models\ActionSettingsContainer $container */
+        $container = $localizedSettings->localizable;
 
-        $eventContext = $actionSettings->action instanceof EventAction
-            ? $actionSettings->action->eventListener->getEventClass()
+        $eventContext = $container->action instanceof EventAction
+            ? $container->action->eventListener->getEventClass()
             : null;
 
-        $actionClass = $actionSettings->action->getActionClass();
+        $actionClass = $container->action->getActionClass();
         $rules = RuleHelper::getSettingsRules($actionClass::getLocalizedSettingsSchema($eventContext));
         $rules['locale'] = 'string';
         $validated = $request->validate($rules);

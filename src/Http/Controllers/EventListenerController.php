@@ -21,8 +21,7 @@ class EventListenerController extends Controller
         if (! CustomActionModelResolver::isAllowedEvent($eventUniqueName)) {
             throw new NotFoundHttpException('not found');
         }
-        $eventClass = CustomActionModelResolver::getClass($eventUniqueName);
-        $this->authorize('create', [EventListener::class, $eventClass]);
+        $this->authorize('create', [EventListener::class, $eventUniqueName]);
 
         $validated = $this->validateEventListenerRequest($request);
 

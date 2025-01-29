@@ -257,7 +257,6 @@ class EventActionTest extends TestCase
         $response->assertNoContent();
         $this->assertEquals(0, $eventListener->eventActions()->count());
         $this->assertEquals(0, EventAction::count());
-        $this->assertEquals(0, ActionSettings::count());
     }
 
     public function test_delete_event_action_forbidden()

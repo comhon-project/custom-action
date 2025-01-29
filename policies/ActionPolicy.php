@@ -7,17 +7,9 @@ use App\Models\User;
 class ActionPolicy
 {
     /**
-     * Determine whether the user can view any models.
+     * Determine whether the user can view the schema of an action.
      */
-    public function viewAny(User $user)
-    {
-        // TODO put your authorization logic here
-    }
-
-    /**
-     * Determine whether the user can view the action.
-     */
-    public function view(User $user, string $actionClass)
+    public function viewSchema(User $user, string $type)
     {
         // TODO put your authorization logic here
     }

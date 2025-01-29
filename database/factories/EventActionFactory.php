@@ -12,6 +12,8 @@ use Illuminate\Database\Eloquent\Factories\Factory;
  */
 class EventActionFactory extends Factory
 {
+    use ActionFactoryTrait;
+
     /**
      * The name of the factory's corresponding model.
      *
@@ -42,8 +44,12 @@ class EventActionFactory extends Factory
             $eventAction->type = $shoudQueue ? 'queue-email' : 'send-email';
         })->afterCreating(function (EventAction $eventAction) use ($toOtherUserIds, $withScopedSettings, $withAttachement) {
             ActionSettings::factory()->for($eventAction, 'action')
-                ->sendMailRegistrationCompany($toOtherUserIds, $withScopedSettings, $withAttachement)
+                ->sendMailRegistrationCompany($toOtherUserIds, $withAttachement)
                 ->create();
+
+            if ($withScopedSettings) {
+                $this->sendMailRegistrationCompanyScoped($eventAction, $toOtherUserIds);
+            }
         });
     }
 }

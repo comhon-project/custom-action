@@ -59,14 +59,14 @@ class TestCase extends Orchestra
 
         $migration = include Utils::joinPaths(Utils::getBasePath(), 'database', 'migrations', 'create_laravel-custom-action_table.php.stub');
         $migration->up();
-        $migration = include Utils::joinPaths(Utils::getTestPath(), 'Migrations', 'create_test_table.php');
+        $migration = include Utils::joinPaths(Utils::getBasePath(), 'workbench', 'database', 'migrations', 'create_test_table.php');
         $migration->up();
     }
 
     public function setPoliciesFiles()
     {
         $stubPolicyDir = Utils::getBasePath('policies');
-        $testPolicyDir = Utils::joinPaths(Utils::getTestPath('App'), 'Policies', 'CustomAction');
+        $testPolicyDir = Utils::joinPaths(Utils::getAppPath(), 'Policies', 'CustomAction');
 
         if (file_exists($testPolicyDir)) {
             $files = array_diff(scandir($testPolicyDir), ['.', '..']);
@@ -86,5 +86,13 @@ class TestCase extends Orchestra
             );
             file_put_contents(Utils::joinPaths($testPolicyDir, $file), $policy);
         }
+    }
+
+    public static function providerBoolean()
+    {
+        return [
+            [true],
+            [false],
+        ];
     }
 }

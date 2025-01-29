@@ -16,6 +16,7 @@ use Illuminate\Mail\Mailables\Attachment;
 use Illuminate\Support\Facades\Mail;
 use Illuminate\Support\Facades\Queue;
 use Mockery\MockInterface;
+use PHPUnit\Framework\Attributes\DataProvider;
 use Tests\SetUpWithModelRegistrationTrait;
 use Tests\Support\Caller;
 use Tests\Support\Utils;
@@ -26,11 +27,7 @@ class EventDispatchTest extends TestCase
     use RefreshDatabase;
     use SetUpWithModelRegistrationTrait;
 
-    /**
-     * @dataProvider providerEventListener
-     *
-     * @return void
-     */
+    #[DataProvider('providerEventListener')]
     public function test_event_listener_success($addCompanyScope)
     {
         $targetUser = User::factory()->create();
@@ -184,9 +181,7 @@ class EventDispatchTest extends TestCase
         Mail::assertNothingSent();
     }
 
-    /**
-     * @dataProvider providerEventListener
-     */
+    #[DataProvider('providerEventListener')]
     public function test_event_listener_with_action_scoped_settings($useFr)
     {
         $state = $useFr ? ['preferred_locale' => 'fr'] : [];

@@ -4,6 +4,7 @@ namespace Tests\Feature;
 
 use App\Actions\BadAction;
 use Comhon\CustomAction\Facades\CustomActionModelResolver;
+use PHPUnit\Framework\Attributes\DataProvider;
 use Tests\Support\Utils;
 use Tests\TestCase;
 
@@ -11,26 +12,24 @@ use function Orchestra\Testbench\artisan;
 
 class GenerateActionCommandTest extends TestCase
 {
-    /**
-     * @dataProvider providerGenerateActionFileSuccess
-     */
+    #[DataProvider('providerGenerateActionFileSuccess')]
     public function test_generate_action_file_success($dirShouldExists, $extends, $manual, $expectContent)
     {
         CustomActionModelResolver::bind('bad-action', BadAction::class);
-        $dir = Utils::joinPaths(Utils::getTestPath('Actions'), 'CustomActions');
+        $dir = Utils::joinPaths(Utils::getAppPath('Actions'), 'CustomActions');
         if (file_exists($dir)) {
             rmdir($dir);
         }
         if ($dirShouldExists) {
             mkdir($dir, 0775, true);
         }
-        app()->useAppPath(Utils::getTestPath());
+        app()->useAppPath(Utils::getAppPath());
         artisan($this, 'custom-action:generate', [
             'name' => 'TestGenericSendEmail',
             ...($extends ? ['--extends' => $extends, '--manual' => $manual] : ['--manual' => $manual]),
         ]);
 
-        $path = Utils::joinPaths(Utils::getTestPath('Actions'), 'CustomActions', 'TestGenericSendEmail.php');
+        $path = Utils::joinPaths(Utils::getAppPath('Actions'), 'CustomActions', 'TestGenericSendEmail.php');
         $fileContent = file_exists($path) ? file_get_contents($path) : null;
         if ($fileContent !== null) {
             unlink($path);
@@ -263,7 +262,7 @@ EOT
 
     public function test_generate_action_file_failure()
     {
-        app()->useAppPath(Utils::getTestPath());
+        app()->useAppPath(Utils::getAppPath());
 
         $this->expectExceptionMessage("invalid extends parameter 'failure'");
         artisan($this, 'custom-action:generate', [

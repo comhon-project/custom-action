@@ -19,7 +19,7 @@ class ActionLocalizedSettingsPolicy
     /**
      * Determine whether the user can create models.
      */
-    public function create(User $user, ActionSettingsContainer $container)
+    public function create(User $user, ActionSettingsContainer $model)
     {
         // TODO put your authorization logic here
     }

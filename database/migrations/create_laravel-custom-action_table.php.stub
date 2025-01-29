@@ -31,17 +31,20 @@ return new class extends Migration
             $table->timestamps();
             $table->softDeletes();
 
-            $table->index(['action_type', 'action_id']);
+            $table->unique(['action_type', 'action_id']);
         });
         Schema::create('custom_action_scoped_settings', function (Blueprint $table) {
             $table->id();
-            $table->foreignId('action_settings_id')->constrained('custom_action_settings');
+            $table->string('action_type', 31);
+            $table->unsignedBigInteger('action_id');
             $table->string('name', 63);
+            $table->json('scope');
             $table->json('settings');
-            $table->json('scope')->nullable(true);
 
             $table->timestamps();
             $table->softDeletes();
+
+            $table->unique(['action_type', 'action_id', 'name']);
         });
         Schema::create('custom_action_localized_settings', function (Blueprint $table) {
             $table->id();

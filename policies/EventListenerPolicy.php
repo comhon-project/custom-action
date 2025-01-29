@@ -18,7 +18,7 @@ class EventListenerPolicy
     /**
      * Determine whether the user can create models.
      */
-    public function create(User $user, string $eventClass)
+    public function create(User $user, string $eventUniqueName)
     {
         // TODO put your authorization logic here
     }

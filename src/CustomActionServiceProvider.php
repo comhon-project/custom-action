@@ -87,26 +87,29 @@ class CustomActionServiceProvider extends PackageServiceProvider
     {
         if (config('custom-action.use_policies')) {
             $policies = Gate::policies();
-            if (! isset($policies[ActionLocalizedSettings::class])) {
-                Gate::policy(ActionLocalizedSettings::class, 'App\Policies\CustomAction\ActionLocalizedSettingsPolicy');
-            }
-            if (! isset($policies[ActionScopedSettings::class])) {
-                Gate::policy(ActionScopedSettings::class, 'App\Policies\CustomAction\ActionScopedSettingsPolicy');
-            }
-            if (! isset($policies[CustomActionInterface::class])) {
-                Gate::policy(CustomActionInterface::class, 'App\Policies\CustomAction\ActionPolicy');
-            }
-            if (! isset($policies[ActionSettings::class])) {
-                Gate::policy(ActionSettings::class, 'App\Policies\CustomAction\ActionSettingsPolicy');
-            }
             if (! isset($policies[CustomEventInterface::class])) {
                 Gate::policy(CustomEventInterface::class, 'App\Policies\CustomAction\EventPolicy');
             }
             if (! isset($policies[EventListener::class])) {
                 Gate::policy(EventListener::class, 'App\Policies\CustomAction\EventListenerPolicy');
             }
+            if (! isset($policies[CustomActionInterface::class])) {
+                Gate::policy(CustomActionInterface::class, 'App\Policies\CustomAction\ActionPolicy');
+            }
             if (! isset($policies[EventAction::class])) {
                 Gate::policy(EventAction::class, 'App\Policies\CustomAction\EventActionPolicy');
+            }
+            if (! isset($policies[ManualAction::class])) {
+                Gate::policy(ManualAction::class, 'App\Policies\CustomAction\ManualActionPolicy');
+            }
+            if (! isset($policies[ActionSettings::class])) {
+                Gate::policy(ActionSettings::class, 'App\Policies\CustomAction\ActionSettingsPolicy');
+            }
+            if (! isset($policies[ActionScopedSettings::class])) {
+                Gate::policy(ActionScopedSettings::class, 'App\Policies\CustomAction\ActionScopedSettingsPolicy');
+            }
+            if (! isset($policies[ActionLocalizedSettings::class])) {
+                Gate::policy(ActionLocalizedSettings::class, 'App\Policies\CustomAction\ActionLocalizedSettingsPolicy');
             }
         }
     }

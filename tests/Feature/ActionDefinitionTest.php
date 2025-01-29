@@ -6,6 +6,7 @@ use App\Models\User;
 use Comhon\CustomAction\Facades\CustomActionModelResolver;
 use Comhon\CustomAction\Rules\RuleHelper;
 use Illuminate\Foundation\Testing\RefreshDatabase;
+use PHPUnit\Framework\Attributes\DataProvider;
 use Tests\SetUpWithModelRegistrationTrait;
 use Tests\TestCase;
 
@@ -18,7 +19,7 @@ class ActionDefinitionTest extends TestCase
     {
         /** @var User $user */
         $user = User::factory()->hasConsumerAbility()->create();
-        $response = $this->actingAs($user)->getJson('custom/action-types/manual');
+        $response = $this->actingAs($user)->getJson('custom/manual-actions');
         $response->assertJson([
             'data' => [
                 'send-company-email',
@@ -30,7 +31,7 @@ class ActionDefinitionTest extends TestCase
     {
         /** @var User $user */
         $user = User::factory()->create();
-        $this->actingAs($user)->getJson('custom/action-types/manual')
+        $this->actingAs($user)->getJson('custom/manual-actions')
             ->assertForbidden();
     }
 
@@ -39,7 +40,7 @@ class ActionDefinitionTest extends TestCase
         /** @var User $user */
         $user = User::factory()->hasConsumerAbility()->create();
 
-        $response = $this->actingAs($user)->getJson('custom/action-types/send-email/schema');
+        $response = $this->actingAs($user)->getJson('custom/actions/send-email/schema');
         $response->assertJson([
             'data' => [
                 'binding_schema' => [
@@ -71,7 +72,7 @@ class ActionDefinitionTest extends TestCase
             ],
         ]);
 
-        $response = $this->actingAs($user)->getJson('custom/action-types/send-company-email/schema');
+        $response = $this->actingAs($user)->getJson('custom/actions/send-company-email/schema');
         $response->assertJson([
             'data' => [
                 'binding_schema' => [
@@ -113,7 +114,7 @@ class ActionDefinitionTest extends TestCase
         $user = User::factory()->hasConsumerAbility()->create();
 
         $params = http_build_query(['event_context' => 'company-registered']);
-        $this->actingAs($user)->getJson("custom/action-types/send-email/schema?$params")
+        $this->actingAs($user)->getJson("custom/actions/send-email/schema?$params")
             ->assertOk()
             ->assertJson([
                 'data' => [
@@ -167,7 +168,7 @@ class ActionDefinitionTest extends TestCase
         /** @var User $user */
         $user = User::factory()->hasConsumerAbility()->create();
 
-        $this->actingAs($user)->getJson('custom/action-types/my-action-without-bindings/schema')
+        $this->actingAs($user)->getJson('custom/actions/my-action-without-bindings/schema')
             ->assertOk()
             ->assertJson([
                 'data' => [
@@ -178,30 +179,26 @@ class ActionDefinitionTest extends TestCase
             ]);
     }
 
-    public function test_get_action_shema_with_invalid_context()
+    #[DataProvider('providerBadEventContext')]
+    public function test_get_action_shema_with_invalid_context($eventContext)
     {
         /** @var User $user */
         $user = User::factory()->hasConsumerAbility()->create();
 
-        $params = http_build_query(['event_context' => 'stored-file']);
-        $this->actingAs($user)->getJson("custom/action-types/send-email/schema?$params")
+        $params = http_build_query(['event_context' => $eventContext]);
+        $this->actingAs($user)->getJson("custom/actions/send-email/schema?$params")
             ->assertUnprocessable()
             ->assertJson([
                 'message' => 'The event context is not subclass of custom-event.',
             ]);
     }
 
-    public function test_get_action_shema_with_invalid_context2()
+    public static function providerBadEventContext()
     {
-        /** @var User $user */
-        $user = User::factory()->hasConsumerAbility()->create();
-
-        $params = http_build_query(['event_context' => 'custom-event']);
-        $this->actingAs($user)->getJson("custom/action-types/send-email/schema?$params")
-            ->assertUnprocessable()
-            ->assertJson([
-                'message' => 'The event context is not subclass of custom-event.',
-            ]);
+        return [
+            ['stored-file'],
+            ['custom-event'],
+        ];
     }
 
     public function test_get_action_shema_not_found()
@@ -210,7 +207,7 @@ class ActionDefinitionTest extends TestCase
         /** @var User $user */
         $user = User::factory()->hasConsumerAbility()->create();
 
-        $response = $this->actingAs($user)->getJson('custom/action-types/send-email/schema');
+        $response = $this->actingAs($user)->getJson('custom/actions/send-email/schema');
         $response->assertNotFound();
     }
 
@@ -218,7 +215,7 @@ class ActionDefinitionTest extends TestCase
     {
         /** @var User $user */
         $user = User::factory()->create();
-        $this->actingAs($user)->getJson('custom/action-types/send-email/schema')
+        $this->actingAs($user)->getJson('custom/actions/send-email/schema')
             ->assertForbidden();
     }
 }

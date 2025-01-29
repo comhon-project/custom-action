@@ -17,7 +17,7 @@ class SettingsContainerSelector
         if ($bindings === null) {
             return $action->actionSettings;
         }
-        $possibleSettings = BindingsScoper::getActionScopedSettings($action->actionSettings, $bindings);
+        $possibleSettings = BindingsScoper::getActionScopedSettings($action, $bindings);
 
         if (count($possibleSettings) == 0) {
             return $action->actionSettings;

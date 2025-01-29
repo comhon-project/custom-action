@@ -3,7 +3,6 @@
 namespace Database\Factories;
 
 use Comhon\CustomAction\Models\ActionScopedSettings;
-use Comhon\CustomAction\Models\ActionSettings;
 use Illuminate\Database\Eloquent\Factories\Factory;
 
 /**
@@ -11,6 +10,8 @@ use Illuminate\Database\Eloquent\Factories\Factory;
  */
 class ActionScopedSettingsFactory extends Factory
 {
+    use ActionSettingsContainerFactoryTrait;
+
     /**
      * The name of the factory's corresponding model.
      *
@@ -30,23 +31,5 @@ class ActionScopedSettingsFactory extends Factory
             'scope' => [],
             'settings' => [],
         ];
-    }
-
-    public function withEventAction(?string $type = null, ?string $event = null): Factory
-    {
-        return $this->afterMaking(function (ActionScopedSettings $actionScopedSettings) use ($type, $event) {
-            $actionScopedSettings->actionSettings()->associate(
-                ActionSettings::factory()->withEventAction($type, $event)->create()
-            );
-        });
-    }
-
-    public function withManualAction(?string $type = null): Factory
-    {
-        return $this->afterMaking(function (ActionScopedSettings $actionScopedSettings) use ($type) {
-            $actionScopedSettings->actionSettings()->associate(
-                ActionSettings::factory()->withManualAction($type)->create()
-            );
-        });
     }
 }

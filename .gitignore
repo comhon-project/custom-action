@@ -10,4 +10,4 @@ testbench.yaml
 vendor
 node_modules
 storage
-tests/App/Policies
+workbench/app/Policies

@@ -3,22 +3,23 @@
 namespace App\Policies\CustomAction;
 
 use App\Models\User;
+use Comhon\CustomAction\Models\ManualAction;
 
-class ActionPolicy
+class ManualActionPolicy
 {
     /**
      * Determine whether the user can view any models.
      */
     public function viewAny(User $user)
     {
-        return $user->has_consumer_ability == true;
+        // TODO put your authorization logic here
     }
 
     /**
      * Determine whether the user can view the action.
      */
-    public function view(User $user, string $actionClass)
+    public function view(User $user, ManualAction $model)
     {
-        return $user->has_consumer_ability == true;
+        // TODO put your authorization logic here
     }
 }

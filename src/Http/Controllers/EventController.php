@@ -35,10 +35,10 @@ class EventController extends Controller
         if (! CustomActionModelResolver::isAllowedEvent($eventUniqueName)) {
             throw new NotFoundHttpException('not found');
         }
+
+        $this->authorize('view-schema', [CustomEventInterface::class, $eventUniqueName]);
+
         $eventClass = CustomActionModelResolver::getClass($eventUniqueName);
-
-        $this->authorize('view', [CustomEventInterface::class, $eventClass]);
-
         $schema = [
             'binding_schema' => is_subclass_of($eventClass, HasBindingsInterface::class)
                 ? $eventClass::getBindingSchema()
@@ -62,8 +62,7 @@ class EventController extends Controller
             throw new NotFoundHttpException('not found');
         }
 
-        $eventClass = CustomActionModelResolver::getClass($eventUniqueName);
-        $this->authorize('view', [CustomEventInterface::class, $eventClass]);
+        $this->authorize('view-listeners', [CustomEventInterface::class, $eventUniqueName]);
 
         $query = EventListener::where('event', $eventUniqueName);
 

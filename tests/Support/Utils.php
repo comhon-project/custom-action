@@ -14,6 +14,11 @@ class Utils
         return self::getBasePath(self::joinPaths('tests', $path));
     }
 
+    public static function getAppPath(string $path = ''): string
+    {
+        return self::getBasePath(self::joinPaths('workbench', 'app', $path));
+    }
+
     public static function joinPaths($basePath, ...$paths)
     {
         foreach ($paths as $index => $path) {

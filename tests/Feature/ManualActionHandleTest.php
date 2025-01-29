@@ -14,6 +14,7 @@ use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Mail\Mailables\Attachment;
 use Illuminate\Support\Facades\App;
 use Illuminate\Support\Facades\Mail;
+use PHPUnit\Framework\Attributes\DataProvider;
 use Tests\SetUpWithModelRegistrationTrait;
 use Tests\Support\Utils;
 use Tests\TestCase;
@@ -28,9 +29,7 @@ class ManualActionHandleTest extends TestCase
         return Utils::joinPaths(Utils::getTestPath('Data'), 'jc.jpeg');
     }
 
-    /**
-     * @dataProvider providerHandleManualActionSuccess
-     */
+    #[DataProvider('providerHandleManualActionSuccess')]
     public function test_handle_manual_action_success($preferredLocale, $appLocale, $fallbackLocale, $success)
     {
         App::setLocale($appLocale);
@@ -72,9 +71,7 @@ class ManualActionHandleTest extends TestCase
         ];
     }
 
-    /**
-     * @dataProvider providerHandleManualActionUserWithoutPreferencesSuccess
-     */
+    #[DataProvider('providerHandleManualActionUserWithoutPreferencesSuccess')]
     public function test_handle_manual_action_user_without_preferences_success($appLocale, $fallbackLocale, $success)
     {
         App::setLocale($appLocale);
@@ -106,9 +103,7 @@ class ManualActionHandleTest extends TestCase
         $this->assertTrue($mails[0]->hasAttachment(Attachment::fromPath($this->getAssetPath())));
     }
 
-    /**
-     * @dataProvider providerHandleManualActionUserWithoutPreferencesSuccess
-     */
+    #[DataProvider('providerHandleManualActionUserWithoutPreferencesSuccess')]
     public function test_handle_manual_action_user_with_bindings_container_with_schema_all_valid($appLocale, $fallbackLocale, $success)
     {
         App::setLocale($appLocale);
@@ -160,9 +155,7 @@ class ManualActionHandleTest extends TestCase
 
     }
 
-    /**
-     * @dataProvider providerHandleManualActionUserWithoutPreferencesSuccess
-     */
+    #[DataProvider('providerHandleManualActionUserWithoutPreferencesSuccess')]
     public function test_handle_manual_action_user_without_bindings_container($appLocale, $fallbackLocale, $success)
     {
         App::setLocale($appLocale);
@@ -218,10 +211,11 @@ class ManualActionHandleTest extends TestCase
         $company = Company::factory(['name' => 'My VIP company'])->create();
 
         $action = ManualAction::factory()->sendMailRegistrationCompany(null, true)->create();
-        $action->actionSettings->scopedSettings->first()->replicate()->save();
+        $copedSettings = $action->scopedSettings->first()->replicate();
+        $copedSettings->name = 'foo';
+        $copedSettings->save();
 
         $this->expectExceptionMessage('cannot resolve conflict between several action scoped settings');
         SendCompanyRegistrationMail::handleManual(new BindingsContainer(['company' => $company]), $user);
-
     }
 }

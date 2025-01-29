@@ -2,10 +2,9 @@
 
 namespace Comhon\CustomAction\Http\Controllers;
 
+use Comhon\CustomAction\Models\Action;
 use Comhon\CustomAction\Models\ActionScopedSettings;
-use Comhon\CustomAction\Models\ActionSettings;
-use Comhon\CustomAction\Models\EventAction;
-use Comhon\CustomAction\Rules\RuleHelper;
+use Comhon\CustomAction\Services\ActionService;
 use Illuminate\Http\Request;
 use Illuminate\Http\Resources\Json\JsonResource;
 use Illuminate\Support\Facades\DB;
@@ -27,45 +26,16 @@ class ActionScopedSettingsController extends Controller
     }
 
     /**
-     * Store action scoped settings.
-     *
-     * @return \Illuminate\Http\Resources\Json\JsonResource
-     */
-    public function store(Request $request, ActionSettings $actionSettings)
-    {
-        $this->authorize('create', [ActionScopedSettings::class, $actionSettings]);
-
-        $eventContext = $actionSettings->action instanceof EventAction
-            ? $actionSettings->action->eventListener->getEventClass()
-            : null;
-
-        $validated = $this->validateRequest($request, $actionSettings->action->getActionClass(), $eventContext);
-
-        $scopedSettings = new ActionScopedSettings($validated);
-        $scopedSettings->actionSettings()->associate($actionSettings->id);
-        $scopedSettings->save();
-
-        return new JsonResource($scopedSettings);
-    }
-
-    /**
      * Update action scoped settings.
      *
      * @return \Illuminate\Http\Resources\Json\JsonResource
      */
-    public function update(Request $request, ActionScopedSettings $scopedSetting)
+    public function update(Request $request, ActionService $actionService, ActionScopedSettings $scopedSetting)
     {
         $scopedSettings = $scopedSetting;
         $this->authorize('update', $scopedSettings);
 
-        /** @var ActionSettings $actionSettings */
-        $actionSettings = $scopedSettings->actionSettings;
-
-        $eventContext = $actionSettings->action instanceof EventAction
-            ? $actionSettings->action->eventListener->getEventClass()
-            : null;
-
-        $validated = $this->validateRequest($request, $actionSettings->action->getActionClass(), $eventContext);
+        $validated = $request->validate($actionService->getSettingsRules($scopedSettings->action, true));
         $scopedSettings->fill($validated);
         $scopedSettings->save();
 
@@ -111,14 +81,5 @@ class ActionScopedSettingsController extends Controller
         $paginator = $scopedSettings->localizedSettings()->select('id', 'locale')->paginate();
 
         return JsonResource::collection($paginator);
-    }
-
-    private function validateRequest(Request $request, string $actionClass, ?string $eventContext)
-    {
-        $rules = RuleHelper::getSettingsRules($actionClass::getSettingsSchema($eventContext));
-        $rules['scope'] = 'required|array';
-        $rules['name'] = 'required|string|max:63';
-
-        return $request->validate($rules);
     }
 }

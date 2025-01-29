@@ -5,6 +5,7 @@ namespace Tests\Unit;
 use App\Models\User;
 use Comhon\CustomAction\Mail\Custom;
 use Illuminate\Mail\Mailables\Attachment;
+use PHPUnit\Framework\Attributes\DataProvider;
 use Tests\Support\Utils;
 use Tests\TestCase;
 
@@ -29,9 +30,7 @@ class CustomMailTest extends TestCase
         $mailable->assertHasAttachment(Attachment::fromPath($this->getAssetPath()));
     }
 
-    /**
-     * @dataProvider providerCustomMailMissingRequiredValues
-     */
+    #[DataProvider('providerCustomMailMissingRequiredValues')]
     public function test_custom_mail_missing_required_values($missingProperty)
     {
         $user = User::factory()->create();

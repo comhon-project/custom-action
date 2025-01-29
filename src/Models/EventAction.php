@@ -22,11 +22,4 @@ class EventAction extends Action
     {
         return $this->belongsTo(EventListener::class);
     }
-
-    protected static function booted()
-    {
-        static::deleting(function (EventAction $eventAction) {
-            $eventAction->actionSettings?->delete();
-        });
-    }
 }

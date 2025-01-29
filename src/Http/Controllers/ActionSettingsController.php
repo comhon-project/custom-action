@@ -2,9 +2,9 @@
 
 namespace Comhon\CustomAction\Http\Controllers;
 
+use Comhon\CustomAction\Models\Action;
 use Comhon\CustomAction\Models\ActionSettings;
-use Comhon\CustomAction\Models\EventAction;
-use Comhon\CustomAction\Rules\RuleHelper;
+use Comhon\CustomAction\Services\ActionService;
 use Illuminate\Http\Request;
 use Illuminate\Http\Resources\Json\JsonResource;
 
@@ -29,42 +29,16 @@ class ActionSettingsController extends Controller
      *
      * @return \Illuminate\Http\Resources\Json\JsonResource
      */
-    public function update(Request $request, ActionSettings $actionSetting)
+    public function update(Request $request, ActionService $actionService, ActionSettings $actionSetting)
     {
         $actionSettings = $actionSetting;
         $this->authorize('update', $actionSettings);
 
-        $eventContext = $actionSettings->action instanceof EventAction
-            ? $actionSettings->action->eventListener->getEventClass()
-            : null;
-
-        $actionClass = $actionSettings->action->getActionClass();
-        $rules = RuleHelper::getSettingsRules($actionClass::getSettingsSchema($eventContext));
-
-        $validated = $request->validate($rules);
-        $actionSettings->settings = $validated['settings'] ?? [];
+        $validated = $request->validate($actionService->getSettingsRules($actionSetting->action, false));
+        $actionSettings->settings = $validated['settings'];
         $actionSettings->save();
 
         return new JsonResource($actionSettings->unsetRelations());
-    }
-
-    /**
-     * Display list of scoped settings.
-     *
-     * @return \Illuminate\Http\Resources\Json\JsonResource
-     */
-    public function listActionScopedSettings(Request $request, ActionSettings $actionSettings)
-    {
-        $this->authorize('view', $actionSettings);
-
-        $query = $actionSettings->scopedSettings();
-
-        $name = $request->input('name');
-        if ($name !== null) {
-            $query->where('name', 'LIKE', "%$name%");
-        }
-
-        return new JsonResource($query->select('id', 'name')->paginate());
     }
 
     /**

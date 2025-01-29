@@ -15,9 +15,17 @@ class EventPolicy
     }
 
     /**
-     * Determine whether the user can view the model.
+     * Determine whether the user can view the event schema.
      */
-    public function view(User $user, string $eventClass)
+    public function viewSchema(User $user, string $eventUniqueName)
+    {
+        // TODO put your authorization logic here
+    }
+
+    /**
+     * Determine whether the user can view the events listeners.
+     */
+    public function viewListeners(User $user, string $eventUniqueName)
     {
         // TODO put your authorization logic here
     }

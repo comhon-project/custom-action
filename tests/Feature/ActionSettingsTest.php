@@ -3,9 +3,12 @@
 namespace Tests\Feature;
 
 use App\Models\User;
+use Comhon\CustomAction\Models\Action;
 use Comhon\CustomAction\Models\ActionSettings;
+use Comhon\CustomAction\Models\EventAction;
 use Comhon\CustomAction\Models\ManualAction;
 use Illuminate\Foundation\Testing\RefreshDatabase;
+use PHPUnit\Framework\Attributes\DataProvider;
 use Tests\SetUpWithModelRegistrationTrait;
 use Tests\TestCase;
 
@@ -164,6 +167,55 @@ class ActionSettingsTest extends TestCase
         /** @var User $user */
         $user = User::factory()->create();
         $this->actingAs($user)->putJson("custom/action-settings/$actionSettings->id")
+            ->assertForbidden();
+    }
+
+    #[DataProvider('providerBoolean')]
+    public function test_store_action_settings_success($fromEventAction)
+    {
+        $prefixAction = $fromEventAction ? 'event-actions' : 'manual-actions';
+        $actionClass = $fromEventAction ? EventAction::class : ManualAction::class;
+
+        /** @var Action $action */
+        $action = $actionClass::factory()->create();
+        $input = [
+            'recipients' => ['to' => ['static' => ['mailables' => [
+                ['recipient_id' => User::factory()->create()->id, 'recipient_type' => 'user'],
+            ]]]],
+            ...($fromEventAction ? [] : ['test' => 'foo']),
+        ];
+        /** @var User $user */
+        $user = User::factory()->hasConsumerAbility()->create();
+
+        $response = $this->actingAs($user)->postJson("custom/$prefixAction/{$action->getKey()}/action-settings", [
+            'settings' => $input,
+        ]);
+        $response->assertCreated();
+        $this->assertEquals(1, $action->actionSettings()->count());
+        $actionSettings = $action->actionSettings()->first();
+        $response->assertJson([
+            'data' => [
+                'id' => $actionSettings->id,
+                'settings' => $input,
+            ],
+        ]);
+        $this->assertEquals($input, $actionSettings->settings);
+
+        $this->actingAs($user)->postJson("custom/$prefixAction/{$action->getKey()}/action-settings", [
+            'settings' => $input,
+        ])->assertForbidden()
+            ->assertJson([
+                'message' => 'default settings already exist',
+            ]);
+    }
+
+    public function test_store_action_scoped_settings_forbidden()
+    {
+        $action = ManualAction::factory()->create();
+
+        /** @var User $user */
+        $user = User::factory()->create();
+        $this->actingAs($user)->postJson("custom/manual-actions/{$action->type}/scoped-settings")
             ->assertForbidden();
     }
 }

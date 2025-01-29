@@ -4,22 +4,25 @@ namespace Comhon\CustomAction\Http\Controllers;
 
 use Comhon\CustomAction\Contracts\CustomActionInterface;
 use Comhon\CustomAction\Facades\CustomActionModelResolver;
+use Comhon\CustomAction\Models\ActionScopedSettings;
 use Comhon\CustomAction\Models\ActionSettings;
 use Comhon\CustomAction\Models\EventAction;
 use Comhon\CustomAction\Models\EventListener;
-use Comhon\CustomAction\Rules\RuleHelper;
+use Comhon\CustomAction\Services\ActionService;
 use Illuminate\Http\Request;
 use Illuminate\Http\Resources\Json\JsonResource;
 use Illuminate\Support\Facades\DB;
 
 class EventActionController extends Controller
 {
+    use ActionTrait;
+
     /**
      * Store event listener action.
      *
      * @return \Illuminate\Http\Resources\Json\JsonResource
      */
-    public function store(Request $request, EventListener $eventListener)
+    public function store(Request $request, ActionService $actionService, EventListener $eventListener)
     {
         $this->authorize('create', [EventAction::class, $eventListener]);
 
@@ -30,16 +33,21 @@ class EventActionController extends Controller
         $eventAction->type = $validated['type'];
         $eventAction->name = $validated['name'];
 
-        DB::transaction(function () use ($eventAction, $validated) {
+        $actionSettings = null;
+        if ($request->filled('settings')) {
+            $validated = $request->validate($actionService->getSettingsRules($eventAction, false));
+            $actionSettings = new ActionSettings;
+            $actionSettings->settings = $validated['settings'];
+        }
+
+        DB::transaction(function () use ($eventAction, $actionSettings) {
             $eventAction->save();
 
-            $actionSettings = new ActionSettings;
-            $actionSettings->settings = $validated['settings'] ?? [];
-            $actionSettings->action()->associate($eventAction);
-            $actionSettings->save();
-
-            // to avoid infinite loop
-            $actionSettings->unsetRelation('action');
+            if ($actionSettings) {
+                $actionSettings->action()->associate($eventAction);
+                $actionSettings->save();
+                $actionSettings->unsetRelation('action'); // to avoid infinite loop
+            }
 
             $eventAction->setRelation('actionSettings', $actionSettings);
         });
@@ -87,6 +95,29 @@ class EventActionController extends Controller
         return response('', 204);
     }
 
+    public function listActionScopedSettings(Request $request, EventAction $eventAction)
+    {
+        return $this->listCommonActionScopedSettings($request, $eventAction);
+    }
+
+    public function storeDefaultSettings(Request $request, ActionService $actionService, EventAction $eventAction): JsonResource
+    {
+        $this->authorize('create', [ActionSettings::class, $eventAction]);
+
+        $defaultSettings = $actionService->storeDefaultSettings($eventAction, $request->input());
+
+        return new JsonResource($defaultSettings);
+    }
+
+    public function storeScopedSettings(Request $request, ActionService $actionService, EventAction $eventAction): JsonResource
+    {
+        $this->authorize('create', [ActionScopedSettings::class, $eventAction]);
+
+        $defaultSettings = $actionService->storeScopedSettings($eventAction, $request->input());
+
+        return new JsonResource($defaultSettings);
+    }
+
     private function validateStoreRequest(Request $request, EventListener $eventListener)
     {
         $eventClass = $eventListener->getEventClass();
@@ -94,7 +125,7 @@ class EventActionController extends Controller
             ->map(fn ($class) => CustomActionModelResolver::getUniqueName($class))
             ->filter(fn ($key) => $key !== null);
 
-        $validated = $request->validate([
+        return $request->validate([
             'type' => [
                 'required',
                 'string',
@@ -108,13 +139,5 @@ class EventActionController extends Controller
             ],
             'name' => 'required|string|max:63',
         ]);
-
-        $actionClass = CustomActionModelResolver::getClass($validated['type']);
-        $settingsRules = RuleHelper::getSettingsRules($actionClass::getSettingsSchema($eventClass));
-
-        return [
-            ...$validated,
-            ...$request->validate($settingsRules),
-        ];
     }
 }

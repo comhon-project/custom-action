@@ -3,13 +3,17 @@
 namespace Comhon\CustomAction\Models;
 
 use Illuminate\Database\Eloquent\Model;
+use Illuminate\Database\Eloquent\Relations\MorphMany;
+use Illuminate\Database\Eloquent\Relations\MorphTo;
 
 abstract class ActionSettingsContainer extends Model
 {
-    /**
-     * @return \Illuminate\Database\Eloquent\Relations\MorphMany
-     */
-    public function localizedSettings()
+    public function action(): MorphTo
+    {
+        return $this->morphTo();
+    }
+
+    public function localizedSettings(): MorphMany
     {
         return $this->morphMany(ActionLocalizedSettings::class, 'localizable');
     }
