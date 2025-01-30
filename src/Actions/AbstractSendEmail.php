@@ -8,8 +8,8 @@ use Comhon\CustomAction\Contracts\HasBindingsInterface;
 use Comhon\CustomAction\Contracts\HasTimezonePreferenceInterface;
 use Comhon\CustomAction\Contracts\MailableEntityInterface;
 use Comhon\CustomAction\Mail\Custom;
-use Comhon\CustomAction\Models\ActionLocalizedSettings;
-use Comhon\CustomAction\Models\ActionSettingsContainer;
+use Comhon\CustomAction\Models\LocalizedSetting;
+use Comhon\CustomAction\Models\Setting;
 use Comhon\CustomAction\Rules\RuleHelper;
 use Illuminate\Bus\Queueable;
 use Illuminate\Foundation\Bus\Dispatchable;
@@ -33,7 +33,7 @@ abstract class AbstractSendEmail implements CustomActionInterface, HasBindingsIn
      * @param  mixed  $to  force the email recipient(s) and ignore recipients defined in settings.
      */
     public function __construct(
-        protected ActionSettingsContainer $settingsContainer,
+        protected Setting $setting,
         protected ?BindingsContainerInterface $bindingsContainer = null,
         protected mixed $to = null,
     ) {
@@ -67,19 +67,19 @@ abstract class AbstractSendEmail implements CustomActionInterface, HasBindingsIn
      *
      * returned subject can be a text template that will be processed to do some replacements
      */
-    abstract protected function getSubject(array $bindings, ActionLocalizedSettings $localizedSettings): string;
+    abstract protected function getSubject(array $bindings, LocalizedSetting $localizedSetting): string;
 
     /**
      * Get email body
      *
      * returned body can be a html template that will be processed to do some replacements
      */
-    abstract protected function getBody(array $bindings, ActionLocalizedSettings $localizedSettings): string;
+    abstract protected function getBody(array $bindings, LocalizedSetting $localizedSetting): string;
 
     /**
      * Get email attachements
      */
-    abstract protected function getAttachments(array $bindings, ActionLocalizedSettings $localizedSettings): ?iterable;
+    abstract protected function getAttachments(array $bindings, LocalizedSetting $localizedSetting): ?iterable;
 
     /**
      * Get action binding schema.
@@ -130,9 +130,9 @@ abstract class AbstractSendEmail implements CustomActionInterface, HasBindingsIn
         $tos = $recipients['to'];
 
         foreach ($tos as $index => $to) {
-            $localizedSettings = $this->findActionLocalizedSettingsOrFail($to, true);
-            $locale = $localizedSettings->locale;
-            $localizedMailInfos[$locale] ??= $this->getLocalizedMailInfos($localizedSettings, $from);
+            $localizedSetting = $this->findLocalizedSettingOrFail($to, true);
+            $locale = $localizedSetting->locale;
+            $localizedMailInfos[$locale] ??= $this->getLocalizedMailInfos($localizedSetting, $from);
             $mailInfos = &$localizedMailInfos[$locale];
 
             $mailInfos['bindings']['to'] = $to instanceof MailableEntityInterface
@@ -160,17 +160,17 @@ abstract class AbstractSendEmail implements CustomActionInterface, HasBindingsIn
         }
     }
 
-    protected function getLocalizedMailInfos(ActionLocalizedSettings $localizedSettings, ?Address $from)
+    protected function getLocalizedMailInfos(LocalizedSetting $localizedSetting, ?Address $from)
     {
-        $bindings = $this->getValidatedBindings($localizedSettings->locale, true);
+        $bindings = $this->getValidatedBindings($localizedSetting->locale, true);
 
         return [
             'bindings' => $bindings,
             'mail' => [
                 'from' => $from,
-                'subject' => $this->getSubject($bindings, $localizedSettings),
-                'body' => $this->getBody($bindings, $localizedSettings),
-                'attachments' => $this->getAttachments($bindings, $localizedSettings),
+                'subject' => $this->getSubject($bindings, $localizedSetting),
+                'body' => $this->getBody($bindings, $localizedSetting),
+                'attachments' => $this->getAttachments($bindings, $localizedSetting),
             ],
         ];
     }

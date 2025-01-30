@@ -3,23 +3,23 @@
 namespace App\Policies\CustomAction;
 
 use App\Models\User;
-use Comhon\CustomAction\Models\Action;
-use Comhon\CustomAction\Models\ActionScopedSettings;
+use Comhon\CustomAction\Models\LocalizedSetting;
+use Comhon\CustomAction\Models\Setting;
 
-class ActionScopedSettingsPolicy
+class LocalizedSettingPolicy
 {
     /**
      * Determine whether the user can view the model.
      */
-    public function view(User $user, ActionScopedSettings $model)
+    public function view(User $user, LocalizedSetting $model)
     {
         // TODO put your authorization logic here
     }
 
     /**
-     * Determine whether the user can create the model.
+     * Determine whether the user can create models.
      */
-    public function create(User $user, Action $model)
+    public function create(User $user, Setting $model)
     {
         // TODO put your authorization logic here
     }
@@ -27,7 +27,7 @@ class ActionScopedSettingsPolicy
     /**
      * Determine whether the user can update the model.
      */
-    public function update(User $user, ActionScopedSettings $model)
+    public function update(User $user, LocalizedSetting $model)
     {
         // TODO put your authorization logic here
     }
@@ -35,7 +35,7 @@ class ActionScopedSettingsPolicy
     /**
      * Determine whether the user can delete the model.
      */
-    public function delete(User $user, ActionScopedSettings $model)
+    public function delete(User $user, LocalizedSetting $model)
     {
         // TODO put your authorization logic here
     }

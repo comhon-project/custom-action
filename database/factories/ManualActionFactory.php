@@ -2,7 +2,7 @@
 
 namespace Database\Factories;
 
-use Comhon\CustomAction\Models\ActionSettings;
+use Comhon\CustomAction\Models\DefaultSetting;
 use Comhon\CustomAction\Models\ManualAction;
 use Illuminate\Database\Eloquent\Factories\Factory;
 
@@ -38,7 +38,7 @@ class ManualActionFactory extends Factory
     public function sendMailRegistrationCompany(?array $toOtherUserIds = null, $withScopedSettings = false, $withAttachement = false): Factory
     {
         return $this->afterCreating(function (ManualAction $manualAction) use ($toOtherUserIds, $withScopedSettings, $withAttachement) {
-            ActionSettings::factory()->for($manualAction, 'action')
+            DefaultSetting::factory()->for($manualAction, 'action')
                 ->sendMailRegistrationCompany($toOtherUserIds, $withAttachement)
                 ->create();
 

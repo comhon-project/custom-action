@@ -3,7 +3,7 @@
 namespace Tests\Feature;
 
 use App\Models\User;
-use Comhon\CustomAction\Models\ActionSettings;
+use Comhon\CustomAction\Models\DefaultSetting;
 use Comhon\CustomAction\Models\EventAction;
 use Comhon\CustomAction\Models\EventListener;
 use Illuminate\Foundation\Testing\RefreshDatabase;
@@ -34,15 +34,15 @@ class EventActionTest extends TestCase
                 [
                     'id' => $actions[0]->id,
                     'type' => 'send-email',
-                    'action_settings' => [
-                        'id' => $actions[0]->actionSettings->id,
+                    'default_setting' => [
+                        'id' => $actions[0]->defaultSetting->id,
                     ],
                 ],
                 [
                     'id' => $actions[1]->id,
                     'type' => 'send-email',
-                    'action_settings' => [
-                        'id' => $actions[1]->actionSettings->id,
+                    'default_setting' => [
+                        'id' => $actions[1]->defaultSetting->id,
                     ],
                 ],
             ],
@@ -114,7 +114,7 @@ class EventActionTest extends TestCase
         $response = $this->actingAs($user)->postJson("custom/event-listeners/$eventListener->id/actions", $actionValues);
         $response->assertCreated();
         $this->assertEquals(1, EventAction::count());
-        $this->assertEquals(1, ActionSettings::count());
+        $this->assertEquals(1, DefaultSetting::count());
         $this->assertEquals(1, $eventListener->eventActions()->count());
         $eventAction = EventAction::findOrFail($response->json('data.id'));
 
@@ -123,14 +123,14 @@ class EventActionTest extends TestCase
                 'id' => $eventAction->id,
                 'name' => $actionValues['name'],
                 'type' => $actionValues['type'],
-                'action_settings' => [
-                    'id' => $eventAction->actionSettings->id,
+                'default_setting' => [
+                    'id' => $eventAction->defaultSetting->id,
                     'settings' => $actionValues['settings'],
                 ],
             ],
         ]);
         $this->assertEquals('send-email', $eventAction->type);
-        $this->assertEquals($actionValues['settings'], $eventAction->actionSettings->settings);
+        $this->assertEquals($actionValues['settings'], $eventAction->defaultSetting->settings);
     }
 
     public function test_store_event_listener_bad_action_success()
@@ -189,8 +189,8 @@ class EventActionTest extends TestCase
                     'id' => $action->id,
                     'name' => $action->name,
                     'event_listener_id' => $action->event_listener_id,
-                    'action_settings' => [
-                        'id' => $action->actionSettings->id,
+                    'default_setting' => [
+                        'id' => $action->defaultSetting->id,
                     ],
                 ],
             ]);

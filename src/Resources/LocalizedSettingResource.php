@@ -5,7 +5,7 @@ namespace Comhon\CustomAction\Resources;
 use Illuminate\Http\Request;
 use Illuminate\Http\Resources\Json\JsonResource;
 
-class ActionLocalizedSettingsResource extends JsonResource
+class LocalizedSettingResource extends JsonResource
 {
     /**
      * Transform the resource into an array.

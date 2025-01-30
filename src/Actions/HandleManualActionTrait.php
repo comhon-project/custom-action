@@ -2,7 +2,7 @@
 
 namespace Comhon\CustomAction\Actions;
 
-use Comhon\CustomAction\ActionSettings\SettingsContainerSelector;
+use Comhon\CustomAction\ActionSettings\SettingSelector;
 use Comhon\CustomAction\Contracts\BindingsContainerInterface;
 use Comhon\CustomAction\Facades\CustomActionModelResolver;
 use Comhon\CustomAction\Models\ManualAction;
@@ -13,11 +13,11 @@ trait HandleManualActionTrait
     {
         $type = CustomActionModelResolver::getUniqueName(static::class);
 
-        $settingsContainer = SettingsContainerSelector::select(
+        $setting = SettingSelector::select(
             ManualAction::findOrFail($type),
             $bindingsContainer?->getBindingValues()
         );
 
-        static::dispatch($settingsContainer, $bindingsContainer, ...$args);
+        static::dispatch($setting, $bindingsContainer, ...$args);
     }
 }

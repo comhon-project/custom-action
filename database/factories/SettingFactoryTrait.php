@@ -2,33 +2,33 @@
 
 namespace Database\Factories;
 
-use Comhon\CustomAction\Models\ActionLocalizedSettings;
-use Comhon\CustomAction\Models\ActionSettings;
-use Comhon\CustomAction\Models\ActionSettingsContainer;
+use Comhon\CustomAction\Models\DefaultSetting;
 use Comhon\CustomAction\Models\EventAction;
 use Comhon\CustomAction\Models\EventListener;
+use Comhon\CustomAction\Models\LocalizedSetting;
 use Comhon\CustomAction\Models\ManualAction;
+use Comhon\CustomAction\Models\Setting;
 use Illuminate\Database\Eloquent\Factories\Factory;
 
-trait ActionSettingsContainerFactoryTrait
+trait SettingFactoryTrait
 {
     public function withEventAction(?string $type = null, ?string $event = null): Factory
     {
-        return $this->afterMaking(function (ActionSettingsContainer $actionSettings) use ($type, $event) {
+        return $this->afterMaking(function (Setting $setting) use ($type, $event) {
             $stateAction = $type ? ['type' => $type] : [];
             $stateEvent = $event ? ['event' => $event] : [];
             $eventAction = EventAction::factory($stateAction)
                 ->for(EventListener::factory($stateEvent), 'eventListener')
                 ->create();
-            $actionSettings->action()->associate($eventAction);
+            $setting->action()->associate($eventAction);
         });
     }
 
     public function withManualAction(?string $type = null): Factory
     {
-        return $this->afterMaking(function (ActionSettingsContainer $actionSettings) use ($type) {
+        return $this->afterMaking(function (Setting $setting) use ($type) {
             $state = $type ? ['type' => $type] : [];
-            $actionSettings->action()->associate(ManualAction::factory($state)->create());
+            $setting->action()->associate(ManualAction::factory($state)->create());
         });
     }
 
@@ -49,9 +49,9 @@ trait ActionSettingsContainerFactoryTrait
                     'attachments' => $withAttachement ? ['logo'] : null,
                 ],
             ];
-        })->afterCreating(function (ActionSettings $action) {
-            ActionLocalizedSettings::factory()->for($action, 'localizable')->emailSettings('en', true)->create();
-            ActionLocalizedSettings::factory()->for($action, 'localizable')->emailSettings('fr', true)->create();
+        })->afterCreating(function (DefaultSetting $action) {
+            LocalizedSetting::factory()->for($action, 'localizable')->emailSettings('en', true)->create();
+            LocalizedSetting::factory()->for($action, 'localizable')->emailSettings('fr', true)->create();
         });
     }
 }

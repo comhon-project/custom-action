@@ -10,14 +10,14 @@ use Illuminate\Database\Eloquent\Relations\MorphOne;
 
 abstract class Action extends Model
 {
-    public function actionSettings(): MorphOne
+    public function defaultSetting(): MorphOne
     {
-        return $this->MorphOne(ActionSettings::class, 'action');
+        return $this->MorphOne(DefaultSetting::class, 'action');
     }
 
     public function scopedSettings(): MorphMany
     {
-        return $this->morphMany(ActionScopedSettings::class, 'action');
+        return $this->morphMany(ScopedSetting::class, 'action');
     }
 
     public function getActionClass(): string

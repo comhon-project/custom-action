@@ -8,9 +8,9 @@ use App\Models\Company;
 use App\Models\User;
 use Comhon\CustomAction\Actions\QueueEmail;
 use Comhon\CustomAction\Mail\Custom;
-use Comhon\CustomAction\Models\ActionLocalizedSettings;
-use Comhon\CustomAction\Models\ActionSettings;
+use Comhon\CustomAction\Models\DefaultSetting;
 use Comhon\CustomAction\Models\EventListener;
+use Comhon\CustomAction\Models\LocalizedSetting;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Mail\Mailables\Attachment;
 use Illuminate\Support\Facades\Mail;
@@ -84,17 +84,17 @@ class EventDispatchTest extends TestCase
     public function test_event_listener_with_event_without_bindings()
     {
         // create event listener for CompanyRegistered event
-        $settings = ActionSettings::factory()
+        $setting = DefaultSetting::factory()
             ->withEventAction('my-action-without-bindings')
             ->create();
 
-        $eventListener = $settings->action->eventListener;
+        $eventListener = $setting->action->eventListener;
         $eventListener->event = 'my-event-without-bindings';
         $eventListener->save();
 
-        $this->partialMock(Caller::class, function (MockInterface $mock) use ($settings) {
-            $mock->shouldReceive('call')->once()->withArgs(function ($actionSettings, $bindingsContainer) use ($settings) {
-                return $settings->is($actionSettings) && $bindingsContainer === null;
+        $this->partialMock(Caller::class, function (MockInterface $mock) use ($setting) {
+            $mock->shouldReceive('call')->once()->withArgs(function ($defaultSetting, $bindingsContainer) use ($setting) {
+                return $setting->is($defaultSetting) && $bindingsContainer === null;
             });
         });
 
@@ -109,7 +109,7 @@ class EventDispatchTest extends TestCase
         $company = Company::factory(['name' => $companyName])->create();
 
         $receiver = User::factory(['preferred_locale' => 'fr'])->create();
-        $actionSettings = ActionSettings::factory([
+        $defaultSetting = DefaultSetting::factory([
             'settings' => [
                 'recipients' => ['to' => [
                     'static' => [
@@ -126,8 +126,8 @@ class EventDispatchTest extends TestCase
             ],
         ])->withEventAction(null, 'company-registered')->create();
 
-        ActionLocalizedSettings::factory()->for($actionSettings, 'localizable')->emailSettings('en')->create();
-        ActionLocalizedSettings::factory()->for($actionSettings, 'localizable')->emailSettings('fr')->create();
+        LocalizedSetting::factory()->for($defaultSetting, 'localizable')->emailSettings('en')->create();
+        LocalizedSetting::factory()->for($defaultSetting, 'localizable')->emailSettings('fr')->create();
 
         Queue::fake();
         Mail::fake();
@@ -213,14 +213,6 @@ class EventDispatchTest extends TestCase
         }
     }
 
-    public static function providerEventListenerWithActionScopedSettings()
-    {
-        return [
-            [false],
-            [true],
-        ];
-    }
-
     public function test_event_listener_queued_actions()
     {
         $targetUser = User::factory()->create();
@@ -244,8 +236,8 @@ class EventDispatchTest extends TestCase
 
         // create event listener for CompanyRegistered event
         EventListener::factory()->genericRegistrationCompany()->create();
-        $actionSettings = ActionSettings::firstOrFail();
-        $settings = $actionSettings->settings;
+        $defaultSetting = DefaultSetting::firstOrFail();
+        $settings = $defaultSetting->settings;
         $settings['recipients']['cc'] = [
             'static' => [
                 'mailables' => [['recipient_type' => 'user', 'recipient_id' => $otherUser->id]],
@@ -266,8 +258,8 @@ class EventDispatchTest extends TestCase
                 'emails' => ['responsibles.*.email'],
             ],
         ];
-        $actionSettings->settings = $settings;
-        $actionSettings->save();
+        $defaultSetting->settings = $settings;
+        $defaultSetting->save();
 
         Queue::fake();
         Mail::fake();
@@ -306,15 +298,15 @@ class EventDispatchTest extends TestCase
 
         // create event listener for CompanyRegistered event
         EventListener::factory()->genericRegistrationCompany()->create();
-        $actionSettings = ActionSettings::firstOrFail();
-        $settings = $actionSettings->settings;
+        $defaultSetting = DefaultSetting::firstOrFail();
+        $settings = $defaultSetting->settings;
         $settings['from'] = [
             'static' => [
                 'mailable' => ['from_type' => 'user', 'from_id' => $otherUser->id],
             ],
         ];
-        $actionSettings->settings = $settings;
-        $actionSettings->save();
+        $defaultSetting->settings = $settings;
+        $defaultSetting->save();
 
         Queue::fake();
         Mail::fake();
@@ -342,15 +334,15 @@ class EventDispatchTest extends TestCase
 
         // create event listener for CompanyRegistered event
         EventListener::factory()->genericRegistrationCompany()->create();
-        $actionSettings = ActionSettings::firstOrFail();
-        $settings = $actionSettings->settings;
+        $defaultSetting = DefaultSetting::firstOrFail();
+        $settings = $defaultSetting->settings;
         $settings['from'] = [
             'static' => [
                 'email' => 'foo@cc.com',
             ],
         ];
-        $actionSettings->settings = $settings;
-        $actionSettings->save();
+        $defaultSetting->settings = $settings;
+        $defaultSetting->save();
 
         Queue::fake();
         Mail::fake();
@@ -378,15 +370,15 @@ class EventDispatchTest extends TestCase
 
         // create event listener for CompanyRegistered event
         EventListener::factory()->genericRegistrationCompany()->create();
-        $actionSettings = ActionSettings::firstOrFail();
-        $settings = $actionSettings->settings;
+        $defaultSetting = DefaultSetting::firstOrFail();
+        $settings = $defaultSetting->settings;
         $settings['from'] = [
             'bindings' => [
                 'mailable' => 'user',
             ],
         ];
-        $actionSettings->settings = $settings;
-        $actionSettings->save();
+        $defaultSetting->settings = $settings;
+        $defaultSetting->save();
 
         Queue::fake();
         Mail::fake();
@@ -414,15 +406,15 @@ class EventDispatchTest extends TestCase
 
         // create event listener for CompanyRegistered event
         EventListener::factory()->genericRegistrationCompany()->create();
-        $actionSettings = ActionSettings::firstOrFail();
-        $settings = $actionSettings->settings;
+        $defaultSetting = DefaultSetting::firstOrFail();
+        $settings = $defaultSetting->settings;
         $settings['from'] = [
             'bindings' => [
                 'email' => 'responsibles.*.email',
             ],
         ];
-        $actionSettings->settings = $settings;
-        $actionSettings->save();
+        $defaultSetting->settings = $settings;
+        $defaultSetting->save();
 
         Queue::fake();
         Mail::fake();

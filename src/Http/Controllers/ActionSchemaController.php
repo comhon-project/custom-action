@@ -41,7 +41,7 @@ class ActionSchemaController extends Controller
         $actionSchema = [
             'settings_schema' => $actionClass::getSettingsSchema($eventClassContext),
             'localized_settings_schema' => $actionClass::getLocalizedSettingsSchema($eventClassContext),
-            'binding_schema' => is_subclass_of($actionClass, HasBindingsInterface::class)
+            'bindings_schema' => is_subclass_of($actionClass, HasBindingsInterface::class)
                 ? $actionClass::getBindingSchema()
                 : [],
         ];

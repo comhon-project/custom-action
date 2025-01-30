@@ -2,7 +2,7 @@
 
 namespace Database\Factories;
 
-use Comhon\CustomAction\Models\ActionSettings;
+use Comhon\CustomAction\Models\DefaultSetting;
 use Comhon\CustomAction\Models\EventAction;
 use Comhon\CustomAction\Models\EventListener;
 use Illuminate\Database\Eloquent\Factories\Factory;
@@ -43,7 +43,7 @@ class EventActionFactory extends Factory
         return $this->aftermaking(function (EventAction $eventAction) use ($shoudQueue) {
             $eventAction->type = $shoudQueue ? 'queue-email' : 'send-email';
         })->afterCreating(function (EventAction $eventAction) use ($toOtherUserIds, $withScopedSettings, $withAttachement) {
-            ActionSettings::factory()->for($eventAction, 'action')
+            DefaultSetting::factory()->for($eventAction, 'action')
                 ->sendMailRegistrationCompany($toOtherUserIds, $withAttachement)
                 ->create();
 

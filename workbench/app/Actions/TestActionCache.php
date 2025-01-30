@@ -6,7 +6,7 @@ use Comhon\CustomAction\Actions\InteractWithBindingsTrait;
 use Comhon\CustomAction\Actions\InteractWithLocalizedSettingsTrait;
 use Comhon\CustomAction\Contracts\BindingsContainerInterface;
 use Comhon\CustomAction\Contracts\CustomActionInterface;
-use Comhon\CustomAction\Models\ActionSettings;
+use Comhon\CustomAction\Models\DefaultSetting;
 use Illuminate\Bus\Queueable;
 use Illuminate\Foundation\Bus\Dispatchable;
 use Illuminate\Queue\InteractsWithQueue;
@@ -22,7 +22,7 @@ class TestActionCache implements CustomActionInterface
         SerializesModels;
 
     public function __construct(
-        private ActionSettings $actionSettings,
+        private DefaultSetting $defaultSetting,
         private ?BindingsContainerInterface $bindingsContainer = null,
     ) {
         //

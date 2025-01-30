@@ -8,7 +8,7 @@ use Illuminate\Http\Resources\Json\JsonResource;
 
 trait ActionTrait
 {
-    protected function listCommonActionScopedSettings(Request $request, Action $action): JsonResource
+    protected function listActionScopedSettings(Request $request, Action $action): JsonResource
     {
         $this->authorize('view', $action);
 

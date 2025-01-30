@@ -54,7 +54,7 @@ use Comhon\CustomAction\Actions\InteractWithBindingsTrait;
 use Comhon\CustomAction\Actions\InteractWithLocalizedSettingsTrait;
 use Comhon\CustomAction\Contracts\BindingsContainerInterface;
 use Comhon\CustomAction\Contracts\CustomActionInterface;
-use Comhon\CustomAction\Models\ActionSettingsContainer;
+use Comhon\CustomAction\Models\Setting;
 use Illuminate\Bus\Queueable;
 use Illuminate\Contracts\Queue\ShouldQueue;
 use Illuminate\Foundation\Bus\Dispatchable;
@@ -71,7 +71,7 @@ class TestGenericSendEmail implements CustomActionInterface
         InteractWithLocalizedSettingsTrait;
 
     public function __construct(
-        protected ActionSettingsContainer \$settingsContainer,
+        protected Setting \$setting,
         protected ?BindingsContainerInterface \$bindingsContainer = null,
     ) {
         //
@@ -161,7 +161,7 @@ use Comhon\CustomAction\Actions\InteractWithBindingsTrait;
 use Comhon\CustomAction\Actions\InteractWithLocalizedSettingsTrait;
 use Comhon\CustomAction\Contracts\BindingsContainerInterface;
 use Comhon\CustomAction\Contracts\CustomActionInterface;
-use Comhon\CustomAction\Models\ActionSettingsContainer;
+use Comhon\CustomAction\Models\Setting;
 use Illuminate\Bus\Queueable;
 use Illuminate\Contracts\Queue\ShouldQueue;
 use Illuminate\Foundation\Bus\Dispatchable;
@@ -178,7 +178,7 @@ class TestGenericSendEmail extends BadAction implements CustomActionInterface
         InteractWithLocalizedSettingsTrait;
 
     public function __construct(
-        protected ActionSettingsContainer \$settingsContainer,
+        protected Setting \$setting,
         protected ?BindingsContainerInterface \$bindingsContainer = null,
     ) {
         //

@@ -4,16 +4,16 @@ namespace Tests\Feature;
 
 use App\Models\User;
 use Comhon\CustomAction\Models\Action;
-use Comhon\CustomAction\Models\ActionScopedSettings;
-use Comhon\CustomAction\Models\ActionSettings;
+use Comhon\CustomAction\Models\DefaultSetting;
 use Comhon\CustomAction\Models\EventAction;
 use Comhon\CustomAction\Models\ManualAction;
+use Comhon\CustomAction\Models\ScopedSetting;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use PHPUnit\Framework\Attributes\DataProvider;
 use Tests\SetUpWithModelRegistrationTrait;
 use Tests\TestCase;
 
-class ActionScopedSettingsTest extends TestCase
+class ScopedSettingTest extends TestCase
 {
     use RefreshDatabase;
     use SetUpWithModelRegistrationTrait;
@@ -117,10 +117,10 @@ class ActionScopedSettingsTest extends TestCase
     {
         /** @var ManualAction $action */
         $action = ManualAction::factory()->create();
-        $scopedSettings = ActionScopedSettings::factory([
+        $scopedSettings = ScopedSetting::factory([
             'name' => 'my one',
         ])->for($action, 'action')->create();
-        ActionScopedSettings::factory([
+        ScopedSetting::factory([
             'name' => 'my two',
         ])->for($action, 'action')->create();
 
@@ -187,7 +187,7 @@ class ActionScopedSettingsTest extends TestCase
     {
         /** @var EventAction $action */
         $action = EventAction::factory()->create();
-        $scopedSettings = ActionScopedSettings::factory([
+        $scopedSettings = ScopedSetting::factory([
             'settings' => [
                 'recipients' => ['to' => ['static' => ['mailables' => [
                     ['recipient_id' => 789, 'recipient_type' => 'user'],
@@ -225,11 +225,11 @@ class ActionScopedSettingsTest extends TestCase
                 ],
             ]);
 
-        $storedScopedSettings = ActionScopedSettings::findOrFail($scopedSettings->id);
+        $storedScopedSettings = ScopedSetting::findOrFail($scopedSettings->id);
         $this->assertEquals($updatedSettings, $storedScopedSettings->settings);
         $this->assertEquals($updatedScope, $storedScopedSettings->scope);
         $this->assertEquals(1, $action->scopedSettings()->count());
-        $this->assertEquals(1, ActionScopedSettings::count());
+        $this->assertEquals(1, ScopedSetting::count());
     }
 
     public function test_update_action_scoped_with_event_context_settings()
@@ -239,7 +239,7 @@ class ActionScopedSettingsTest extends TestCase
             ->sendMailRegistrationCompany()
             ->create();
 
-        $scopedSettings = ActionScopedSettings::factory([
+        $scopedSettings = ScopedSetting::factory([
             'settings' => [
                 'recipients' => ['to' => ['static' => ['mailables' => [
                     ['recipient_id' => 789, 'recipient_type' => 'user'],
@@ -290,7 +290,7 @@ class ActionScopedSettingsTest extends TestCase
     {
         $withAction = $fromEventAction ? 'withEventAction' : 'withManualAction';
 
-        $scopedSettings = ActionScopedSettings::factory()->{$withAction}('send-email')->create();
+        $scopedSettings = ScopedSetting::factory()->{$withAction}('send-email')->create();
 
         /** @var User $user */
         $user = User::factory()->create();
@@ -306,21 +306,21 @@ class ActionScopedSettingsTest extends TestCase
         /** @var Action $action */
         $action = $actionClass::factory()->create();
 
-        $scopedSettings = ActionScopedSettings::factory([
+        $scopedSettings = ScopedSetting::factory([
             'settings' => [],
             'scope' => [],
         ])->for($action, 'action')
             ->create();
 
         $this->assertEquals(1, $action->scopedSettings()->count());
-        $this->assertEquals(1, ActionScopedSettings::count());
+        $this->assertEquals(1, ScopedSetting::count());
 
         /** @var User $user */
         $user = User::factory()->hasConsumerAbility()->create();
         $response = $this->actingAs($user)->delete("custom/scoped-settings/$scopedSettings->id");
         $response->assertNoContent();
         $this->assertEquals(0, $action->scopedSettings()->count());
-        $this->assertEquals(0, ActionScopedSettings::count());
+        $this->assertEquals(0, ScopedSetting::count());
     }
 
     #[DataProvider('providerBoolean')]
@@ -328,8 +328,8 @@ class ActionScopedSettingsTest extends TestCase
     {
         $withAction = $fromEventAction ? 'withEventAction' : 'withManualAction';
 
-        /** @var ActionSettings $actionSettings */
-        $scopedSettings = ActionScopedSettings::factory()->{$withAction}('send-email')->create();
+        /** @var DefaultSetting $defaultSetting */
+        $scopedSettings = ScopedSetting::factory()->{$withAction}('send-email')->create();
 
         /** @var User $user */
         $user = User::factory()->create();
@@ -337,23 +337,23 @@ class ActionScopedSettingsTest extends TestCase
             ->assertForbidden();
     }
 
-    #[DataProvider('providerActionLocalizedSettingsValidationSendEmail')]
+    #[DataProvider('providerLocalizedSettingValidationSendEmail')]
     public function test_action_localized_settings_validation_send_email($settings, $success)
     {
-        $actionSettings = ActionSettings::factory([
+        $defaultSetting = DefaultSetting::factory([
             'settings' => [],
         ])->withEventAction('send-email')->create();
 
         /** @var User $user */
         $user = User::factory()->hasConsumerAbility()->create();
-        $response = $this->actingAs($user)->postJson("custom/action-settings/{$actionSettings->id}/localized-settings", [
+        $response = $this->actingAs($user)->postJson("custom/default-settings/{$defaultSetting->id}/localized-settings", [
             'locale' => 'en',
             'settings' => $settings,
         ]);
         $response->assertStatus($success ? 201 : 422);
     }
 
-    public static function providerActionLocalizedSettingsValidationSendEmail()
+    public static function providerLocalizedSettingValidationSendEmail()
     {
         return [
             [

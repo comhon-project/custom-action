@@ -3,9 +3,9 @@
 namespace Tests\Feature;
 
 use App\Models\User;
-use Comhon\CustomAction\Models\ActionLocalizedSettings;
-use Comhon\CustomAction\Models\ActionSettings;
+use Comhon\CustomAction\Models\DefaultSetting;
 use Comhon\CustomAction\Models\EventListener;
+use Comhon\CustomAction\Models\LocalizedSetting;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Tests\SetUpWithModelRegistrationTrait;
 use Tests\TestCase;
@@ -196,7 +196,7 @@ class EventListenerTest extends TestCase
             ->assertForbidden();
 
         $this->assertEquals(1, EventListener::count());
-        $this->assertEquals(1, ActionSettings::count());
-        $this->assertEquals(4, ActionLocalizedSettings::count());
+        $this->assertEquals(1, DefaultSetting::count());
+        $this->assertEquals(4, LocalizedSetting::count());
     }
 }

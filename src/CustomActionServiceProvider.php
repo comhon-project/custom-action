@@ -2,13 +2,12 @@
 
 namespace Comhon\CustomAction;
 
-use Comhon\CustomAction\ActionSettings\ActionScopedSettingsResolver;
+use Comhon\CustomAction\ActionSettings\ScopedSettingResolver;
 use Comhon\CustomAction\Bindings\BindingsContainer;
 use Comhon\CustomAction\Bindings\BindingsFinder;
 use Comhon\CustomAction\Bindings\BindingsScoper;
 use Comhon\CustomAction\Bindings\BindingsValidator;
 use Comhon\CustomAction\Commands\GenerateActionCommand;
-use Comhon\CustomAction\Contracts\ActionScopedSettingsResolverInterface;
 use Comhon\CustomAction\Contracts\BindingsContainerInterface;
 use Comhon\CustomAction\Contracts\BindingsFinderInterface;
 use Comhon\CustomAction\Contracts\BindingsScoperInterface;
@@ -16,16 +15,17 @@ use Comhon\CustomAction\Contracts\BindingsValidatorInterface;
 use Comhon\CustomAction\Contracts\CustomActionInterface;
 use Comhon\CustomAction\Contracts\CustomEventInterface;
 use Comhon\CustomAction\Contracts\MailableEntityInterface;
+use Comhon\CustomAction\Contracts\ScopedSettingResolverInterface;
 use Comhon\CustomAction\Facades\CustomActionModelResolver as FacadesCustomActionModelResolver;
 use Comhon\CustomAction\Files\StoredFileInterface;
 use Comhon\CustomAction\Listeners\EventActionDispatcher;
 use Comhon\CustomAction\Listeners\QueuedEventActionDispatcher;
-use Comhon\CustomAction\Models\ActionLocalizedSettings;
-use Comhon\CustomAction\Models\ActionScopedSettings;
-use Comhon\CustomAction\Models\ActionSettings;
+use Comhon\CustomAction\Models\DefaultSetting;
 use Comhon\CustomAction\Models\EventAction;
 use Comhon\CustomAction\Models\EventListener;
+use Comhon\CustomAction\Models\LocalizedSetting;
 use Comhon\CustomAction\Models\ManualAction;
+use Comhon\CustomAction\Models\ScopedSetting;
 use Comhon\CustomAction\Resolver\CustomActionModelResolver;
 use Comhon\CustomAction\Resolver\ModelResolver;
 use Comhon\CustomAction\Rules\HtmlTemplate;
@@ -65,7 +65,7 @@ class CustomActionServiceProvider extends PackageServiceProvider
         $this->app->singletonIf(BindingsFinderInterface::class, BindingsFinder::class);
         $this->app->singletonIf(BindingsValidatorInterface::class, BindingsValidator::class);
         $this->app->singletonIf(BindingsScoperInterface::class, BindingsScoper::class);
-        $this->app->singletonIf(ActionScopedSettingsResolverInterface::class, ActionScopedSettingsResolver::class);
+        $this->app->singletonIf(ScopedSettingResolverInterface::class, ScopedSettingResolver::class);
         $this->app->bind(BindingsContainerInterface::class, BindingsContainer::class);
     }
 
@@ -102,14 +102,14 @@ class CustomActionServiceProvider extends PackageServiceProvider
             if (! isset($policies[ManualAction::class])) {
                 Gate::policy(ManualAction::class, 'App\Policies\CustomAction\ManualActionPolicy');
             }
-            if (! isset($policies[ActionSettings::class])) {
-                Gate::policy(ActionSettings::class, 'App\Policies\CustomAction\ActionSettingsPolicy');
+            if (! isset($policies[DefaultSetting::class])) {
+                Gate::policy(DefaultSetting::class, 'App\Policies\CustomAction\DefaultSettingPolicy');
             }
-            if (! isset($policies[ActionScopedSettings::class])) {
-                Gate::policy(ActionScopedSettings::class, 'App\Policies\CustomAction\ActionScopedSettingsPolicy');
+            if (! isset($policies[ScopedSetting::class])) {
+                Gate::policy(ScopedSetting::class, 'App\Policies\CustomAction\ScopedSettingPolicy');
             }
-            if (! isset($policies[ActionLocalizedSettings::class])) {
-                Gate::policy(ActionLocalizedSettings::class, 'App\Policies\CustomAction\ActionLocalizedSettingsPolicy');
+            if (! isset($policies[LocalizedSetting::class])) {
+                Gate::policy(LocalizedSetting::class, 'App\Policies\CustomAction\LocalizedSettingPolicy');
             }
         }
     }
@@ -125,8 +125,8 @@ class CustomActionServiceProvider extends PackageServiceProvider
     public function registerMorphMapModels()
     {
         Relation::morphMap([
-            'action-settings' => ActionSettings::class,
-            'action-scoped-settings' => ActionScopedSettings::class,
+            'default-setting' => DefaultSetting::class,
+            'scoped-setting' => ScopedSetting::class,
             'event-action' => EventAction::class,
             'manual-action' => ManualAction::class,
         ]);

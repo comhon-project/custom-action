@@ -5,7 +5,7 @@ namespace Comhon\CustomAction\Actions;
 use Comhon\CustomAction\Bindings\BindingsHelper;
 use Comhon\CustomAction\Contracts\HasBindingsInterface;
 use Comhon\CustomAction\Facades\CustomActionModelResolver;
-use Comhon\CustomAction\Models\ActionLocalizedSettings;
+use Comhon\CustomAction\Models\LocalizedSetting;
 use Comhon\CustomAction\Rules\RuleHelper;
 use Illuminate\Mail\Mailables\Address;
 use Illuminate\Support\Arr;
@@ -52,7 +52,7 @@ class SendEmail extends AbstractSendEmail
     protected function getFrom(array $bindings): ?Address
     {
         $froms = [];
-        $settingsFrom = $this->settingsContainer->settings['from'] ?? null;
+        $settingsFrom = $this->setting->settings['from'] ?? null;
         if (! $settingsFrom) {
             return null;
         }
@@ -88,7 +88,7 @@ class SendEmail extends AbstractSendEmail
             return ['to' => is_array($this->to) ? $this->to : [$this->to]];
         }
         $recipients = [];
-        $settingsRecipients = $this->settingsContainer->settings['recipients'] ?? null;
+        $settingsRecipients = $this->setting->settings['recipients'] ?? null;
         $mailableEntities = $this->loadStaticMailableEntities();
 
         $recipientTypes ??= static::RECIPIENT_TYPES;
@@ -139,32 +139,32 @@ class SendEmail extends AbstractSendEmail
         return $recipients;
     }
 
-    protected function getSubject(array $bindings, ActionLocalizedSettings $localizedSettings): string
+    protected function getSubject(array $bindings, LocalizedSetting $localizedSetting): string
     {
-        return $localizedSettings->settings['subject']
+        return $localizedSetting->settings['subject']
             ?? throw new \Exception('localized settings subject is not defined');
     }
 
-    protected function getBody(array $bindings, ActionLocalizedSettings $localizedSettings): string
+    protected function getBody(array $bindings, LocalizedSetting $localizedSetting): string
     {
-        return $localizedSettings->settings['body']
+        return $localizedSetting->settings['body']
             ?? throw new \Exception('localized settings body is not defined');
     }
 
-    protected function getAttachments($bindings, ActionLocalizedSettings $localizedSettings): ?iterable
+    protected function getAttachments($bindings, LocalizedSetting $localizedSetting): ?iterable
     {
-        if (! isset($this->settingsContainer->settings['attachments'])) {
+        if (! isset($this->setting->settings['attachments'])) {
             return [];
         }
 
-        return collect($this->settingsContainer->settings['attachments'])
+        return collect($this->setting->settings['attachments'])
             ->map(fn ($property) => Arr::get($bindings, $property))
             ->filter(fn ($path) => $path != null);
     }
 
     protected function loadStaticMailableEntities(): array
     {
-        $recipients = $this->settingsContainer->settings['recipients'] ?? null;
+        $recipients = $this->setting->settings['recipients'] ?? null;
         $mailableEntities = [];
         $mailableIds = [];
 
@@ -178,7 +178,7 @@ class SendEmail extends AbstractSendEmail
                     }
                 }
             }
-            $mailable = $this->settingsContainer->settings['from']['static']['mailable'] ?? null;
+            $mailable = $this->setting->settings['from']['static']['mailable'] ?? null;
             if ($mailable) {
                 $mailableIds[$mailable['from_type']] ??= [];
                 $mailableIds[$mailable['from_type']][] = $mailable['from_id'];

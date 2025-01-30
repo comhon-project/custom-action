@@ -2,21 +2,21 @@
 
 namespace Database\Factories;
 
-use Comhon\CustomAction\Models\ActionLocalizedSettings;
-use Comhon\CustomAction\Models\ActionSettings;
+use Comhon\CustomAction\Models\DefaultSetting;
+use Comhon\CustomAction\Models\LocalizedSetting;
 use Illuminate\Database\Eloquent\Factories\Factory;
 
 /**
- * @extends \Illuminate\Database\Eloquent\Factories\Factory<\Comhon\CustomAction\Models\ActionLocalizedSettings>
+ * @extends \Illuminate\Database\Eloquent\Factories\Factory<\Comhon\CustomAction\Models\LocalizedSetting>
  */
-class ActionLocalizedSettingsFactory extends Factory
+class LocalizedSettingFactory extends Factory
 {
     /**
      * The name of the factory's corresponding model.
      *
      * @var class-string<\Illuminate\Database\Eloquent\Model>
      */
-    protected $model = ActionLocalizedSettings::class;
+    protected $model = LocalizedSetting::class;
 
     /**
      * Define the model's default state.
@@ -38,9 +38,9 @@ class ActionLocalizedSettingsFactory extends Factory
      */
     public function configure(): static
     {
-        return $this->afterMaking(function (ActionLocalizedSettings $actionLocalizedSettings) {
+        return $this->afterMaking(function (LocalizedSetting $actionLocalizedSettings) {
             if (! $actionLocalizedSettings->localizable) {
-                $actionLocalizedSettings->localizable()->associate(ActionSettings::factory()->create());
+                $actionLocalizedSettings->localizable()->associate(DefaultSetting::factory()->create());
             }
         });
     }

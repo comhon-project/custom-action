@@ -3,10 +3,9 @@
 namespace Comhon\CustomAction\Models;
 
 use Illuminate\Database\Eloquent\Factories\HasFactory;
-use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\SoftDeletes;
 
-class ActionLocalizedSettings extends Model
+class ScopedSetting extends Setting
 {
     use HasFactory;
     use SoftDeletes;
@@ -16,7 +15,7 @@ class ActionLocalizedSettings extends Model
      *
      * @var string
      */
-    protected $table = 'custom_action_localized_settings';
+    protected $table = 'custom_action_scoped_settings';
 
     /**
      * The attributes that should be cast to native types.
@@ -24,14 +23,18 @@ class ActionLocalizedSettings extends Model
      * @var array
      */
     protected $casts = [
+        'scope' => 'array',
         'settings' => 'array',
     ];
 
     /**
-     * @return \Illuminate\Database\Eloquent\Relations\MorphTo
+     * The attributes that are mass assignable.
+     *
+     * @var array<int, string>
      */
-    public function localizable()
-    {
-        return $this->morphTo();
-    }
+    protected $fillable = [
+        'name',
+        'settings',
+        'scope',
+    ];
 }

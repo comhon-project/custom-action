@@ -4,7 +4,7 @@ namespace App\Actions;
 
 use Comhon\CustomAction\Contracts\BindingsContainerInterface;
 use Comhon\CustomAction\Contracts\CustomActionInterface;
-use Comhon\CustomAction\Models\ActionSettingsContainer;
+use Comhon\CustomAction\Models\Setting;
 use Illuminate\Bus\Queueable;
 use Illuminate\Foundation\Bus\Dispatchable;
 use Illuminate\Queue\InteractsWithQueue;
@@ -16,7 +16,7 @@ class MyActionWithoutBindings implements CustomActionInterface
     use Dispatchable, InteractsWithQueue, Queueable, SerializesModels;
 
     public function __construct(
-        protected ActionSettingsContainer $settingsContainer,
+        protected Setting $setting,
         protected ?BindingsContainerInterface $bindingsContainer = null,
     ) {
         //
@@ -34,6 +34,6 @@ class MyActionWithoutBindings implements CustomActionInterface
 
     public function handle()
     {
-        app(Caller::class)->call($this->settingsContainer, $this->bindingsContainer);
+        app(Caller::class)->call($this->setting, $this->bindingsContainer);
     }
 }

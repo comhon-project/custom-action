@@ -2,22 +2,22 @@
 
 namespace Database\Factories;
 
-use Comhon\CustomAction\Models\ActionScopedSettings;
+use Comhon\CustomAction\Models\ScopedSetting;
 use Illuminate\Database\Eloquent\Factories\Factory;
 
 /**
- * @extends \Illuminate\Database\Eloquent\Factories\Factory<\Comhon\CustomAction\Models\ActionScopedSettings>
+ * @extends \Illuminate\Database\Eloquent\Factories\Factory<\Comhon\CustomAction\Models\ScopedSetting>
  */
-class ActionScopedSettingsFactory extends Factory
+class ScopedSettingFactory extends Factory
 {
-    use ActionSettingsContainerFactoryTrait;
+    use SettingFactoryTrait;
 
     /**
      * The name of the factory's corresponding model.
      *
      * @var class-string<\Illuminate\Database\Eloquent\Model>
      */
-    protected $model = ActionScopedSettings::class;
+    protected $model = ScopedSetting::class;
 
     /**
      * Define the model's default state.

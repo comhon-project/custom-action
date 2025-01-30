@@ -2,7 +2,7 @@
 
 namespace Comhon\CustomAction\Listeners;
 
-use Comhon\CustomAction\ActionSettings\SettingsContainerSelector;
+use Comhon\CustomAction\ActionSettings\SettingSelector;
 use Comhon\CustomAction\Contracts\BindingsContainerInterface;
 use Comhon\CustomAction\Contracts\CustomActionInterface;
 use Comhon\CustomAction\Contracts\CustomEventInterface;
@@ -21,7 +21,7 @@ class EventActionDispatcher
     public function handle(CustomEventInterface $event)
     {
         $eventUniqueName = CustomActionModelResolver::getUniqueName(get_class($event));
-        $query = EventListener::with('eventActions.actionSettings')
+        $query = EventListener::with('eventActions.defaultSetting')
             ->where('event', $eventUniqueName)->whereHas('eventActions');
 
         $bindingsContainer = $event instanceof HasBindingsInterface
@@ -40,9 +40,9 @@ class EventActionDispatcher
                 if (! is_subclass_of($actionClass, CustomActionInterface::class)) {
                     throw new \Exception("invalid action {$eventAction->type}, must be an action instance of CustomActionInterface");
                 }
-                $settingsContainer = SettingsContainerSelector::select($eventAction, $bindings);
+                $setting = SettingSelector::select($eventAction, $bindings);
 
-                $actionClass::dispatch($settingsContainer, $bindingsContainer);
+                $actionClass::dispatch($setting, $bindingsContainer);
             }
         }
     }

@@ -40,7 +40,7 @@ class EventController extends Controller
 
         $eventClass = CustomActionModelResolver::getClass($eventUniqueName);
         $schema = [
-            'binding_schema' => is_subclass_of($eventClass, HasBindingsInterface::class)
+            'bindings_schema' => is_subclass_of($eventClass, HasBindingsInterface::class)
                 ? $eventClass::getBindingSchema()
                 : [],
             'allowed_actions' => collect($eventClass::getAllowedActions())->map(function ($class) {

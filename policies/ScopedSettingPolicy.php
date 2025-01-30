@@ -4,14 +4,14 @@ namespace App\Policies\CustomAction;
 
 use App\Models\User;
 use Comhon\CustomAction\Models\Action;
-use Comhon\CustomAction\Models\ActionSettings;
+use Comhon\CustomAction\Models\ScopedSetting;
 
-class ActionSettingsPolicy
+class ScopedSettingPolicy
 {
     /**
      * Determine whether the user can view the model.
      */
-    public function view(User $user, ActionSettings $model)
+    public function view(User $user, ScopedSetting $model)
     {
         // TODO put your authorization logic here
     }
@@ -27,7 +27,15 @@ class ActionSettingsPolicy
     /**
      * Determine whether the user can update the model.
      */
-    public function update(User $user, ActionSettings $model)
+    public function update(User $user, ScopedSetting $model)
+    {
+        // TODO put your authorization logic here
+    }
+
+    /**
+     * Determine whether the user can delete the model.
+     */
+    public function delete(User $user, ScopedSetting $model)
     {
         // TODO put your authorization logic here
     }

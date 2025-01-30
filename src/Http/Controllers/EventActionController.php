@@ -4,10 +4,10 @@ namespace Comhon\CustomAction\Http\Controllers;
 
 use Comhon\CustomAction\Contracts\CustomActionInterface;
 use Comhon\CustomAction\Facades\CustomActionModelResolver;
-use Comhon\CustomAction\Models\ActionScopedSettings;
-use Comhon\CustomAction\Models\ActionSettings;
+use Comhon\CustomAction\Models\DefaultSetting;
 use Comhon\CustomAction\Models\EventAction;
 use Comhon\CustomAction\Models\EventListener;
+use Comhon\CustomAction\Models\ScopedSetting;
 use Comhon\CustomAction\Services\ActionService;
 use Illuminate\Http\Request;
 use Illuminate\Http\Resources\Json\JsonResource;
@@ -33,23 +33,23 @@ class EventActionController extends Controller
         $eventAction->type = $validated['type'];
         $eventAction->name = $validated['name'];
 
-        $actionSettings = null;
+        $defaultSetting = null;
         if ($request->filled('settings')) {
             $validated = $request->validate($actionService->getSettingsRules($eventAction, false));
-            $actionSettings = new ActionSettings;
-            $actionSettings->settings = $validated['settings'];
+            $defaultSetting = new DefaultSetting;
+            $defaultSetting->settings = $validated['settings'];
         }
 
-        DB::transaction(function () use ($eventAction, $actionSettings) {
+        DB::transaction(function () use ($eventAction, $defaultSetting) {
             $eventAction->save();
 
-            if ($actionSettings) {
-                $actionSettings->action()->associate($eventAction);
-                $actionSettings->save();
-                $actionSettings->unsetRelation('action'); // to avoid infinite loop
+            if ($defaultSetting) {
+                $defaultSetting->action()->associate($eventAction);
+                $defaultSetting->save();
+                $defaultSetting->unsetRelation('action'); // to avoid infinite loop
             }
 
-            $eventAction->setRelation('actionSettings', $actionSettings);
+            $eventAction->setRelation('defaultSetting', $defaultSetting);
         });
 
         return new JsonResource($eventAction);
@@ -62,7 +62,7 @@ class EventActionController extends Controller
     {
         $this->authorize('view', $eventAction);
 
-        return new JsonResource($eventAction->load('actionSettings'));
+        return new JsonResource($eventAction->load('defaultSetting'));
     }
 
     /**
@@ -95,27 +95,27 @@ class EventActionController extends Controller
         return response('', 204);
     }
 
-    public function listActionScopedSettings(Request $request, EventAction $eventAction)
+    public function listScopedSettings(Request $request, EventAction $eventAction)
     {
-        return $this->listCommonActionScopedSettings($request, $eventAction);
+        return $this->listActionScopedSettings($request, $eventAction);
     }
 
-    public function storeDefaultSettings(Request $request, ActionService $actionService, EventAction $eventAction): JsonResource
+    public function storeDefaultSetting(Request $request, ActionService $actionService, EventAction $eventAction): JsonResource
     {
-        $this->authorize('create', [ActionSettings::class, $eventAction]);
+        $this->authorize('create', [DefaultSetting::class, $eventAction]);
 
-        $defaultSettings = $actionService->storeDefaultSettings($eventAction, $request->input());
+        $defaultSetting = $actionService->storeDefaultSetting($eventAction, $request->input());
 
-        return new JsonResource($defaultSettings);
+        return new JsonResource($defaultSetting);
     }
 
-    public function storeScopedSettings(Request $request, ActionService $actionService, EventAction $eventAction): JsonResource
+    public function storeScopedSetting(Request $request, ActionService $actionService, EventAction $eventAction): JsonResource
     {
-        $this->authorize('create', [ActionScopedSettings::class, $eventAction]);
+        $this->authorize('create', [ScopedSetting::class, $eventAction]);
 
-        $defaultSettings = $actionService->storeScopedSettings($eventAction, $request->input());
+        $defaultSetting = $actionService->storeScopedSetting($eventAction, $request->input());
 
-        return new JsonResource($defaultSettings);
+        return new JsonResource($defaultSetting);
     }
 
     private function validateStoreRequest(Request $request, EventListener $eventListener)

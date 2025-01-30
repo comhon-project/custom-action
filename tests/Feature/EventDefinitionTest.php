@@ -41,7 +41,7 @@ class EventDefinitionTest extends TestCase
             ->assertOk()
             ->assertJson([
                 'data' => [
-                    'binding_schema' => [
+                    'bindings_schema' => [
                         'company.name' => 'string',
                         'logo' => 'is:stored-file',
                         'user' => 'is:mailable-entity',
@@ -64,7 +64,7 @@ class EventDefinitionTest extends TestCase
             ->assertOk()
             ->assertJson([
                 'data' => [
-                    'binding_schema' => [],
+                    'bindings_schema' => [],
                     'allowed_actions' => [
                         'my-action-without-bindings',
                     ],

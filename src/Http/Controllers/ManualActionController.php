@@ -4,9 +4,9 @@ namespace Comhon\CustomAction\Http\Controllers;
 
 use Comhon\CustomAction\Catalogs\ManualActionTypeCatalog;
 use Comhon\CustomAction\Facades\CustomActionModelResolver;
-use Comhon\CustomAction\Models\ActionScopedSettings;
-use Comhon\CustomAction\Models\ActionSettings;
+use Comhon\CustomAction\Models\DefaultSetting;
 use Comhon\CustomAction\Models\ManualAction;
+use Comhon\CustomAction\Models\ScopedSetting;
 use Comhon\CustomAction\Services\ActionService;
 use Illuminate\Http\Request;
 use Illuminate\Http\Resources\Json\JsonResource;
@@ -41,31 +41,31 @@ class ManualActionController extends Controller
         return new JsonResource($manualAction);
     }
 
-    public function listActionScopedSettings(Request $request, string $type)
+    public function listScopedSettings(Request $request, string $type)
     {
         $manualAction = $this->getOrCreateManualAction($type);
 
-        return $this->listCommonActionScopedSettings($request, $manualAction);
+        return $this->listActionScopedSettings($request, $manualAction);
     }
 
-    public function storeDefaultSettings(Request $request, ActionService $actionService, string $type): JsonResource
+    public function storeDefaultSetting(Request $request, ActionService $actionService, string $type): JsonResource
     {
         $manualAction = $this->getOrCreateManualAction($type);
-        $this->authorize('create', [ActionSettings::class, $manualAction]);
+        $this->authorize('create', [DefaultSetting::class, $manualAction]);
 
-        $defaultSettings = $actionService->storeDefaultSettings($manualAction, $request->input());
+        $defaultSetting = $actionService->storeDefaultSetting($manualAction, $request->input());
 
-        return new JsonResource($defaultSettings);
+        return new JsonResource($defaultSetting);
     }
 
-    public function storeScopedSettings(Request $request, ActionService $actionService, string $type): JsonResource
+    public function storeScopedSetting(Request $request, ActionService $actionService, string $type): JsonResource
     {
         $manualAction = $this->getOrCreateManualAction($type);
-        $this->authorize('create', [ActionScopedSettings::class, $manualAction]);
+        $this->authorize('create', [ScopedSetting::class, $manualAction]);
 
-        $defaultSettings = $actionService->storeScopedSettings($manualAction, $request->input());
+        $defaultSetting = $actionService->storeScopedSetting($manualAction, $request->input());
 
-        return new JsonResource($defaultSettings);
+        return new JsonResource($defaultSetting);
     }
 
     private function getOrCreateManualAction(string $type): ManualAction
@@ -74,13 +74,13 @@ class ManualActionController extends Controller
             throw new NotFoundHttpException('not found');
         }
 
-        $manualAction = ManualAction::with('actionSettings')->find($type);
+        $manualAction = ManualAction::with('defaultSetting')->find($type);
         if (! $manualAction) {
             $manualAction = new ManualAction;
             $manualAction->type = $type;
             $manualAction->save();
 
-            $manualAction->setRelation('actionSettings', null);
+            $manualAction->setRelation('defaultSetting', null);
         }
 
         return $manualAction;

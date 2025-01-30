@@ -43,7 +43,7 @@ class ActionDefinitionTest extends TestCase
         $response = $this->actingAs($user)->getJson('custom/actions/send-email/schema');
         $response->assertJson([
             'data' => [
-                'binding_schema' => [
+                'bindings_schema' => [
                     'to' => 'is:mailable-entity',
                     'default_timezone' => 'string',
                     'preferred_timezone' => 'string',
@@ -75,7 +75,7 @@ class ActionDefinitionTest extends TestCase
         $response = $this->actingAs($user)->getJson('custom/actions/send-company-email/schema');
         $response->assertJson([
             'data' => [
-                'binding_schema' => [
+                'bindings_schema' => [
                     'to' => 'is:mailable-entity',
                     'default_timezone' => 'string',
                     'preferred_timezone' => 'string',
@@ -118,7 +118,7 @@ class ActionDefinitionTest extends TestCase
             ->assertOk()
             ->assertJson([
                 'data' => [
-                    'binding_schema' => [
+                    'bindings_schema' => [
                         'to' => 'is:mailable-entity',
                         'default_timezone' => 'string',
                         'preferred_timezone' => 'string',
@@ -172,7 +172,7 @@ class ActionDefinitionTest extends TestCase
             ->assertOk()
             ->assertJson([
                 'data' => [
-                    'binding_schema' => [],
+                    'bindings_schema' => [],
                     'settings_schema' => [],
                     'localized_settings_schema' => [],
                 ],

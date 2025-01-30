@@ -2,12 +2,15 @@
 
 namespace Comhon\CustomAction\Actions;
 
-use Comhon\CustomAction\Models\ActionLocalizedSettings;
+use Comhon\CustomAction\Models\LocalizedSetting;
 use Illuminate\Contracts\Translation\HasLocalePreference;
 
+/**
+ * @property \Comhon\CustomAction\Models\Setting $setting
+ */
 trait InteractWithLocalizedSettingsTrait
 {
-    private $localizedSettingsCache = [];
+    private $localizedSettingCache = [];
 
     /**
      * Find action localized settings according given locale
@@ -18,25 +21,25 @@ trait InteractWithLocalizedSettingsTrait
      * @param  bool  $useCache  if true, cache bindings for the action instance,
      *                          and get value from it if exists.
      */
-    public function findActionLocalizedSettings(
+    public function findLocalizedSetting(
         HasLocalePreference|array|string|null $locale = null,
         bool $useCache = false
-    ): ?ActionLocalizedSettings {
+    ): ?LocalizedSetting {
         if ($locale instanceof HasLocalePreference) {
             $locale = $locale->preferredLocale();
         } elseif (is_array($locale)) {
             $locale = $locale['locale'] ?? $locale['preferred_locale'] ?? null;
         }
-        if ($useCache && isset($this->localizedSettingsCache[$locale])) {
-            return $this->localizedSettingsCache[$locale];
+        if ($useCache && isset($this->localizedSettingCache[$locale])) {
+            return $this->localizedSettingCache[$locale];
         }
-        $localizedSettings = $this->settingsContainer->getLocalizedSettings($locale);
+        $localizedSetting = $this->setting->getLocalizedSettings($locale);
 
         if ($useCache) {
-            $this->localizedSettingsCache[$locale] = $localizedSettings;
+            $this->localizedSettingCache[$locale] = $localizedSetting;
         }
 
-        return $localizedSettings;
+        return $localizedSetting;
     }
 
     /**
@@ -50,15 +53,15 @@ trait InteractWithLocalizedSettingsTrait
      * @param  bool  $useCache  if true, cache bindings for the action instance,
      *                          and get value from it if exists.
      */
-    public function findActionLocalizedSettingsOrFail(
+    public function findLocalizedSettingOrFail(
         HasLocalePreference|array|string|null $locale = null,
         bool $useCache = false
-    ): ActionLocalizedSettings {
-        $localizedSettings = $this->findActionLocalizedSettings($locale, $useCache);
-        if (! $localizedSettings) {
+    ): LocalizedSetting {
+        $localizedSetting = $this->findLocalizedSetting($locale, $useCache);
+        if (! $localizedSetting) {
             throw new \Exception('Action localized settings not found');
         }
 
-        return $localizedSettings;
+        return $localizedSetting;
     }
 }

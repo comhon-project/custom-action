@@ -22,18 +22,18 @@ class ManualActionTest extends TestCase
         $response->assertJson([
             'data' => [
                 'type' => 'send-company-email',
-                'action_settings' => null,
+                'default_setting' => null,
             ],
         ]);
     }
 
     public function test_get_manual_action_created()
     {
-        $actionSettings = ManualAction::factory([
+        $defaultSetting = ManualAction::factory([
             'type' => 'send-company-email',
         ])->sendMailRegistrationCompany()
             ->create()
-            ->actionSettings;
+            ->defaultSetting;
         /** @var User $user */
         $user = User::factory()->hasConsumerAbility()->create();
 
@@ -41,8 +41,8 @@ class ManualActionTest extends TestCase
         $response->assertJson([
             'data' => [
                 'type' => 'send-company-email',
-                'action_settings' => [
-                    'id' => $actionSettings->id,
+                'default_setting' => [
+                    'id' => $defaultSetting->id,
                     'settings' => [
                         'recipients' => ['to' => ['bindings' => ['mailables' => ['user']]]],
                         'attachments' => null,
@@ -51,10 +51,10 @@ class ManualActionTest extends TestCase
             ],
         ]);
 
-        $response = $this->actingAs($user)->getJson('custom/action-settings/'.$actionSettings->id);
+        $response = $this->actingAs($user)->getJson('custom/default-settings/'.$defaultSetting->id);
         $response->assertJson([
             'data' => [
-                'id' => $actionSettings->id,
+                'id' => $defaultSetting->id,
                 'settings' => [
                     'recipients' => ['to' => ['bindings' => ['mailables' => ['user']]]],
                     'attachments' => null,

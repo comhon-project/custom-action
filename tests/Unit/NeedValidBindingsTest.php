@@ -4,7 +4,7 @@ namespace Tests\Unit;
 
 use App\Actions\TestActionCache;
 use Comhon\CustomAction\Bindings\BindingsContainer;
-use Comhon\CustomAction\Models\ActionSettings;
+use Comhon\CustomAction\Models\DefaultSetting;
 use Tests\TestCase;
 
 class NeedValidBindingsTest extends TestCase
@@ -17,7 +17,7 @@ class NeedValidBindingsTest extends TestCase
         });
 
         return new TestActionCache(
-            ActionSettings::factory()->withManualAction()->create(),
+            DefaultSetting::factory()->withManualAction()->create(),
             $bindingsContainer
         );
     }
