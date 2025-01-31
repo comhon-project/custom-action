@@ -3,7 +3,7 @@
 namespace Comhon\CustomAction\Listeners;
 
 use Comhon\CustomAction\ActionSettings\SettingSelector;
-use Comhon\CustomAction\Contracts\BindingsContainerInterface;
+use Comhon\CustomAction\Bindings\EventBindingsContainer;
 use Comhon\CustomAction\Contracts\CustomActionInterface;
 use Comhon\CustomAction\Contracts\CustomEventInterface;
 use Comhon\CustomAction\Contracts\HasBindingsInterface;
@@ -25,7 +25,7 @@ class EventActionDispatcher
             ->where('event', $eventUniqueName)->whereHas('eventActions');
 
         $bindingsContainer = $event instanceof HasBindingsInterface
-            ? $this->instanciateBindingsContainer($event)
+            ? new EventBindingsContainer($event)
             : null;
         $bindings = $bindingsContainer?->getBindingValues();
 
@@ -45,17 +45,5 @@ class EventActionDispatcher
                 $actionClass::dispatch($setting, $bindingsContainer);
             }
         }
-    }
-
-    private function instanciateBindingsContainer(HasBindingsInterface $event): BindingsContainerInterface
-    {
-        return app(
-            BindingsContainerInterface::class,
-            [
-                'bindingValues' => \Closure::fromCallable([$event, 'getBindingValues']),
-                'bindingSchema' => $event->getBindingSchema(),
-                'event' => $event,
-            ]
-        );
     }
 }
