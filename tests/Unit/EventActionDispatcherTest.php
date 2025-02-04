@@ -6,10 +6,12 @@ use App\Events\CompanyRegistered;
 use App\Events\MyEventWithoutBindings;
 use App\Models\Company;
 use App\Models\User;
+use Comhon\CustomAction\Events\EventActionError;
 use Comhon\CustomAction\Listeners\EventActionDispatcher;
 use Comhon\CustomAction\Listeners\QueuedEventActionDispatcher;
 use Comhon\CustomAction\Models\EventListener;
 use Illuminate\Events\CallQueuedListener;
+use Illuminate\Support\Facades\Event;
 use Illuminate\Support\Facades\Queue;
 use Tests\SetUpWithModelRegistrationTrait;
 use Tests\TestCase;
@@ -65,8 +67,20 @@ class EventActionDispatcherTest extends TestCase
             $action->save();
         }
 
-        $this->expectExceptionMessage('Invalid action type foo');
+        Event::fake();
+
         $this->dispatcher()->handle($event);
+
+        Event::assertDispatched(EventActionError::class, 1);
+
+        Event::assertDispatched(function (EventActionError $event) {
+            $this->assertStringContainsString(
+                'Invalid action type foo on model Comhon\CustomAction\Models\EventAction',
+                $event->th->getMessage(),
+            );
+
+            return true;
+        });
     }
 
     public function test_handle_event_with_action_wrong_class()
@@ -78,8 +92,20 @@ class EventActionDispatcherTest extends TestCase
             $action->save();
         }
 
-        $this->expectExceptionMessage('Invalid action type company on model Comhon\CustomAction\Models\EventAction');
+        Event::fake();
+
         $this->dispatcher()->handle($event);
+
+        Event::assertDispatched(EventActionError::class, 1);
+
+        Event::assertDispatched(function (EventActionError $event) {
+            $this->assertStringContainsString(
+                'Invalid action type company on model Comhon\CustomAction\Models\EventAction',
+                $event->th->getMessage(),
+            );
+
+            return true;
+        });
     }
 
     public function test_should_not_queue_dispatcher()

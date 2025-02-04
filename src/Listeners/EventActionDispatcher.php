@@ -7,6 +7,7 @@ use Comhon\CustomAction\Bindings\EventBindingsContainer;
 use Comhon\CustomAction\Contracts\CustomActionInterface;
 use Comhon\CustomAction\Contracts\CustomEventInterface;
 use Comhon\CustomAction\Contracts\HasBindingsInterface;
+use Comhon\CustomAction\Events\EventActionError;
 use Comhon\CustomAction\Exceptions\InvalidActionTypeException;
 use Comhon\CustomAction\Facades\BindingsScoper;
 use Comhon\CustomAction\Facades\CustomActionModelResolver;
@@ -37,13 +38,17 @@ class EventActionDispatcher
         foreach ($listeners as $listener) {
             /** @var \Comhon\CustomAction\Models\EventAction $eventAction */
             foreach ($listener->eventActions as $eventAction) {
-                $actionClass = $eventAction->getActionClass();
-                if (! is_subclass_of($actionClass, CustomActionInterface::class)) {
-                    throw new InvalidActionTypeException($eventAction);
-                }
-                $setting = SettingSelector::select($eventAction, $bindings);
+                try {
+                    $actionClass = $eventAction->getActionClass();
+                    if (! is_subclass_of($actionClass, CustomActionInterface::class)) {
+                        throw new InvalidActionTypeException($eventAction);
+                    }
+                    $setting = SettingSelector::select($eventAction, $bindings);
 
-                $actionClass::dispatch($setting, $bindingsContainer);
+                    $actionClass::dispatch($setting, $bindingsContainer);
+                } catch (\Throwable $th) {
+                    EventActionError::dispatch($eventAction, $th);
+                }
             }
         }
     }

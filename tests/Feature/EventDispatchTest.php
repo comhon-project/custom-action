@@ -7,12 +7,14 @@ use App\Events\MyEventWithoutBindings;
 use App\Models\Company;
 use App\Models\User;
 use Comhon\CustomAction\Actions\QueueEmail;
+use Comhon\CustomAction\Events\EventActionError;
 use Comhon\CustomAction\Mail\Custom;
 use Comhon\CustomAction\Models\DefaultSetting;
 use Comhon\CustomAction\Models\EventListener;
 use Comhon\CustomAction\Models\LocalizedSetting;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Mail\Mailables\Attachment;
+use Illuminate\Support\Facades\Event;
 use Illuminate\Support\Facades\Mail;
 use Illuminate\Support\Facades\Queue;
 use Mockery\MockInterface;
@@ -419,7 +421,18 @@ class EventDispatchTest extends TestCase
         Queue::fake();
         Mail::fake();
 
-        $this->expectExceptionMessage("several 'from' defined");
+        /** @var EventActionError $event */
+        $event = null;
+        Event::listen(function (EventActionError $eventActionError) use (&$event) {
+            $event = $eventActionError;
+        });
+
         CompanyRegistered::dispatch($company, $targetUser);
+
+        $this->assertNotNull($event, 'event EventActionError not dispatched');
+        $this->assertStringContainsString(
+            "several 'from' defined",
+            $event->th->getMessage(),
+        );
     }
 }
