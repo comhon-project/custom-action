@@ -4,6 +4,7 @@ namespace Comhon\CustomAction\Actions;
 
 use Comhon\CustomAction\Bindings\BindingsHelper;
 use Comhon\CustomAction\Contracts\HasBindingsInterface;
+use Comhon\CustomAction\Exceptions\SendEmailActionException;
 use Comhon\CustomAction\Facades\CustomActionModelResolver;
 use Comhon\CustomAction\Models\LocalizedSetting;
 use Comhon\CustomAction\Rules\RuleHelper;
@@ -76,7 +77,7 @@ class SendEmail extends AbstractSendEmail
             }
         }
         if (count($froms) > 1) {
-            throw new \Exception("several 'from' defined");
+            throw new SendEmailActionException($this->setting, "several 'from' defined");
         }
 
         return count($froms) ? $this->normalizeAddress($froms[0]) : null;
@@ -128,7 +129,7 @@ class SendEmail extends AbstractSendEmail
             }
         }
         if (empty($recipients['to'] ?? null)) {
-            throw new \Exception('there is no mail recipients defined');
+            throw new SendEmailActionException($this->setting, 'there is no mail recipients defined');
         }
         foreach (array_diff(static::RECIPIENT_TYPES, ['to']) as $recipientType) {
             if ($recipients[$recipientType] ?? null) {
@@ -142,13 +143,13 @@ class SendEmail extends AbstractSendEmail
     protected function getSubject(array $bindings, LocalizedSetting $localizedSetting): string
     {
         return $localizedSetting->settings['subject']
-            ?? throw new \Exception('localized settings subject is not defined');
+            ?? throw new SendEmailActionException($this->setting, 'localized settings subject is not defined');
     }
 
     protected function getBody(array $bindings, LocalizedSetting $localizedSetting): string
     {
         return $localizedSetting->settings['body']
-            ?? throw new \Exception('localized settings body is not defined');
+            ?? throw new SendEmailActionException($this->setting, 'localized settings body is not defined');
     }
 
     protected function getAttachments($bindings, LocalizedSetting $localizedSetting): ?iterable

@@ -2,11 +2,12 @@
 
 namespace App\Models;
 
+use Illuminate\Contracts\Translation\HasLocalePreference;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Foundation\Auth\User as Authenticatable;
 use Illuminate\Notifications\Notifiable;
 
-class UserWithoutPreference extends Authenticatable
+class UserWithoutPreference extends Authenticatable implements HasLocalePreference
 {
     use HasFactory, Notifiable;
 
@@ -47,4 +48,9 @@ class UserWithoutPreference extends Authenticatable
         'email_verified_at' => 'datetime',
         'password' => 'hashed',
     ];
+
+    public function preferredLocale()
+    {
+        return $this->preferred_locale;
+    }
 }

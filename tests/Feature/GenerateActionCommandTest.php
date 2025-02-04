@@ -48,6 +48,8 @@ class GenerateActionCommandTest extends TestCase
                 <<<EOT
 <?php
 
+declare(strict_types=1);
+
 namespace App\Actions\CustomActions;
 
 use Comhon\CustomAction\Actions\InteractWithBindingsTrait;
@@ -112,6 +114,8 @@ EOT
                 <<<EOT
 <?php
 
+declare(strict_types=1);
+
 namespace App\Actions\CustomActions;
 
 use Comhon\CustomAction\Actions\SendEmail;
@@ -153,6 +157,8 @@ EOT
                 false,
                 <<<EOT
 <?php
+
+declare(strict_types=1);
 
 namespace App\Actions\CustomActions;
 
@@ -218,6 +224,8 @@ EOT
                 true,
                 <<<EOT
 <?php
+
+declare(strict_types=1);
 
 namespace App\Actions\CustomActions;
 

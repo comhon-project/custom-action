@@ -48,6 +48,6 @@ class EventListener extends Model
     public function getEventClass(): string
     {
         return CustomActionModelResolver::getClass($this->event)
-            ?? throw new InvalidEventTypeException("Invalid event $this->event");
+            ?? throw new InvalidEventTypeException($this);
     }
 }

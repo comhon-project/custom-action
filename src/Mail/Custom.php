@@ -2,6 +2,7 @@
 
 namespace Comhon\CustomAction\Mail;
 
+use Comhon\CustomAction\Exceptions\CustomMailableException;
 use Comhon\CustomAction\Files\StoredFileInterface;
 use Comhon\TemplateRenderer\Facades\Template;
 use Illuminate\Bus\Queueable;
@@ -33,7 +34,7 @@ class Custom extends Mailable
     ) {
         foreach (['subject', 'body'] as $property) {
             if (! isset($this->mail[$property])) {
-                throw new \Exception("missing required mail $property");
+                throw new CustomMailableException("missing required mail $property");
             }
         }
     }

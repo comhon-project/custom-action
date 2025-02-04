@@ -78,7 +78,7 @@ class EventActionDispatcherTest extends TestCase
             $action->save();
         }
 
-        $this->expectExceptionMessage('invalid action company, must be an action instance of CustomActionInterface');
+        $this->expectExceptionMessage('Invalid action type company on model Comhon\CustomAction\Models\EventAction');
         $this->dispatcher()->handle($event);
     }
 

@@ -23,6 +23,6 @@ abstract class Action extends Model
     public function getActionClass(): string
     {
         return CustomActionModelResolver::getClass($this->type)
-            ?? throw new InvalidActionTypeException("Invalid action type $this->type");
+            ?? throw new InvalidActionTypeException($this);
     }
 }

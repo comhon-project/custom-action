@@ -105,6 +105,8 @@ EOT;
         $fileContent = <<<EOT
 <?php
 
+declare(strict_types=1);
+
 namespace App\Actions\CustomActions;
 
 $imports

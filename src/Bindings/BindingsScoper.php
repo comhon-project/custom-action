@@ -21,7 +21,7 @@ class BindingsScoper implements BindingsScoperInterface
         return $listeners;
     }
 
-    public function getScopedSetting(Action $action, array $bindings): Collection|array
+    public function getScopedSettings(Action $action, array $bindings): Collection|array
     {
         $possibleSettings = [];
         foreach ($action->scopedSettings()->lazyById() as $scopedSettings) {

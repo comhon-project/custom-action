@@ -1,5 +1,7 @@
 <?php
 
+declare(strict_types=1);
+
 namespace Comhon\CustomAction\Actions;
 
 use Comhon\CustomAction\Contracts\BindingsContainerInterface;

@@ -199,4 +199,12 @@ class EventListenerTest extends TestCase
         $this->assertEquals(1, DefaultSetting::count());
         $this->assertEquals(4, LocalizedSetting::count());
     }
+
+    public function test_get_invalid_event_class()
+    {
+        $eventListener = EventListener::factory(['event' => 'foo'])->create();
+
+        $this->expectExceptionMessage('Invalid event foo');
+        $eventListener->getEventClass();
+    }
 }

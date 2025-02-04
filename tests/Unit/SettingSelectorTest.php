@@ -10,7 +10,7 @@ class SettingSelectorTest extends TestCase
 {
     public function test_select_with_missing_action_settings()
     {
-        $this->expectExceptionMessage('missing default setting');
+        $this->expectExceptionMessage("missing setting on action Comhon\CustomAction\Models\ManualAction with type 'send-company-email'");
         SettingSelector::select(ManualAction::factory()->create(), []);
     }
 }

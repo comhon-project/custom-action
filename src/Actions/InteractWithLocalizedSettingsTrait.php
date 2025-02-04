@@ -2,6 +2,7 @@
 
 namespace Comhon\CustomAction\Actions;
 
+use Comhon\CustomAction\Exceptions\LocalizedSettingNotFoundException;
 use Comhon\CustomAction\Models\LocalizedSetting;
 use Illuminate\Contracts\Translation\HasLocalePreference;
 
@@ -11,6 +12,17 @@ use Illuminate\Contracts\Translation\HasLocalePreference;
 trait InteractWithLocalizedSettingsTrait
 {
     private $localizedSettingCache = [];
+
+    protected function getLocaleString(HasLocalePreference|array|string|null $locale): ?string
+    {
+        if ($locale instanceof HasLocalePreference) {
+            $locale = $locale->preferredLocale();
+        } elseif (is_array($locale)) {
+            $locale = $locale['locale'] ?? $locale['preferred_locale'] ?? null;
+        }
+
+        return $locale;
+    }
 
     /**
      * Find action localized settings according given locale
@@ -25,11 +37,7 @@ trait InteractWithLocalizedSettingsTrait
         HasLocalePreference|array|string|null $locale = null,
         bool $useCache = false
     ): ?LocalizedSetting {
-        if ($locale instanceof HasLocalePreference) {
-            $locale = $locale->preferredLocale();
-        } elseif (is_array($locale)) {
-            $locale = $locale['locale'] ?? $locale['preferred_locale'] ?? null;
-        }
+        $locale = $this->getLocaleString($locale);
         if ($useCache && isset($this->localizedSettingCache[$locale])) {
             return $this->localizedSettingCache[$locale];
         }
@@ -57,11 +65,7 @@ trait InteractWithLocalizedSettingsTrait
         HasLocalePreference|array|string|null $locale = null,
         bool $useCache = false
     ): LocalizedSetting {
-        $localizedSetting = $this->findLocalizedSetting($locale, $useCache);
-        if (! $localizedSetting) {
-            throw new \Exception('Action localized settings not found');
-        }
-
-        return $localizedSetting;
+        return $this->findLocalizedSetting($locale, $useCache)
+            ?? throw new LocalizedSettingNotFoundException($this->setting, $this->getLocaleString($locale));
     }
 }

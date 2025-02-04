@@ -43,7 +43,7 @@ class ManualActionHandleTest extends TestCase
         Mail::fake();
 
         if (! $success) {
-            $this->expectExceptionMessage('Action localized settings not found');
+            $this->expectExceptionMessage('Localized setting for locale \'es\' not found');
         }
         SendCompanyRegistrationMail::handleManual(new BindingsContainer($bindings), $user);
 
@@ -85,7 +85,7 @@ class ManualActionHandleTest extends TestCase
         Mail::fake();
 
         if (! $success) {
-            $this->expectExceptionMessage('Action localized settings not found');
+            $this->expectExceptionMessage('Localized setting not found');
         }
         SendCompanyRegistrationMail::handleManual(new BindingsContainer($bindings), $user);
 
@@ -121,7 +121,7 @@ class ManualActionHandleTest extends TestCase
         Mail::fake();
 
         if (! $success) {
-            $this->expectExceptionMessage('Action localized settings not found');
+            $this->expectExceptionMessage('Localized setting not found');
         }
         SendCompanyRegistrationMail::handleManual(new BindingsContainer($bindings, $bindingSchema), $user);
 
@@ -167,7 +167,7 @@ class ManualActionHandleTest extends TestCase
         Mail::fake();
 
         if (! $success) {
-            $this->expectExceptionMessage('Action localized settings not found');
+            $this->expectExceptionMessage('Localized setting not found');
         }
         SendCompanyRegistrationMail::handleManual(null, $user);
 
@@ -215,7 +215,7 @@ class ManualActionHandleTest extends TestCase
         $copedSettings->name = 'foo';
         $copedSettings->save();
 
-        $this->expectExceptionMessage('cannot resolve conflict between several action scoped settings');
+        $this->expectExceptionMessage('cannot resolve conflict between several scoped settings');
         SendCompanyRegistrationMail::handleManual(new BindingsContainer(['company' => $company]), $user);
     }
 }
