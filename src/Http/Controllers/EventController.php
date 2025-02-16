@@ -15,8 +15,6 @@ class EventController extends Controller
 {
     /**
      * Display a listing of events.
-     *
-     * @return \Illuminate\Http\Resources\Json\JsonResource
      */
     public function listEvents(EventCatalog $catalog)
     {
@@ -27,8 +25,6 @@ class EventController extends Controller
 
     /**
      * Display event schema.
-     *
-     * @return \Illuminate\Http\Resources\Json\JsonResource
      */
     public function showEventSchema($eventUniqueName)
     {
@@ -53,8 +49,6 @@ class EventController extends Controller
 
     /**
      * Display event listeners.
-     *
-     * @return \Illuminate\Http\Resources\Json\AnonymousResourceCollection
      */
     public function listEventListeners(Request $request, $eventUniqueName)
     {

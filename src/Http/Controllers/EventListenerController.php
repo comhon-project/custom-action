@@ -13,8 +13,6 @@ class EventListenerController extends Controller
 {
     /**
      * Store event listener.
-     *
-     * @return \Illuminate\Http\Resources\Json\JsonResource
      */
     public function store(Request $request, $eventUniqueName)
     {
@@ -34,8 +32,6 @@ class EventListenerController extends Controller
 
     /**
      * Update event listener.
-     *
-     * @return \Illuminate\Http\Resources\Json\JsonResource
      */
     public function update(Request $request, EventListener $eventListener)
     {
@@ -50,8 +46,6 @@ class EventListenerController extends Controller
 
     /**
      * Delete event listener.
-     *
-     * @return \Illuminate\Http\Response
      */
     public function destroy(EventListener $eventListener)
     {
@@ -66,8 +60,6 @@ class EventListenerController extends Controller
 
     /**
      * Display event listener actions.
-     *
-     * @return \Illuminate\Http\Resources\Json\AnonymousResourceCollection
      */
     public function listEventListenerActions(Request $request, EventListener $eventListener)
     {

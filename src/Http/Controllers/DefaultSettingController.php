@@ -3,18 +3,15 @@
 namespace Comhon\CustomAction\Http\Controllers;
 
 use Comhon\CustomAction\Models\DefaultSetting;
+use Comhon\CustomAction\Models\LocalizedSetting;
 use Comhon\CustomAction\Services\ActionService;
 use Illuminate\Http\Request;
 use Illuminate\Http\Resources\Json\JsonResource;
 
 class DefaultSettingController extends Controller
 {
-    use SettingTrait;
-
     /**
      * Display action settings.
-     *
-     * @return \Illuminate\Http\Resources\Json\JsonResource
      */
     public function show(DefaultSetting $defaultSetting)
     {
@@ -25,8 +22,6 @@ class DefaultSettingController extends Controller
 
     /**
      * Update action settings.
-     *
-     * @return \Illuminate\Http\Resources\Json\JsonResource
      */
     public function update(Request $request, ActionService $actionService, DefaultSetting $defaultSetting)
     {
@@ -41,18 +36,16 @@ class DefaultSettingController extends Controller
 
     /**
      * Store localized settings.
-     *
-     * @return \Comhon\CustomAction\Resources\LocalizedSettingResource
      */
-    public function storeDefaultLocalizedSetting(Request $request, DefaultSetting $defaultSetting)
+    public function storeDefaultLocalizedSetting(Request $request, ActionService $actionService, DefaultSetting $defaultSetting)
     {
-        return $this->storeLocalizedSetting($request, $defaultSetting);
+        $this->authorize('create', [LocalizedSetting::class, $defaultSetting]);
+
+        return new JsonResource($actionService->storeLocalizedSetting($defaultSetting, $request->input()));
     }
 
     /**
      * Display list of localized settings.
-     *
-     * @return \Illuminate\Http\Resources\Json\AnonymousResourceCollection
      */
     public function listDefaultLocalizedSettings(DefaultSetting $defaultSetting)
     {

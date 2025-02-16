@@ -41,10 +41,8 @@ class Custom extends Mailable
 
     /**
      * Render template.
-     *
-     * @return string
      */
-    private function renderTemplate(string $template)
+    private function renderTemplate(string $template): string
     {
         return Template::render(
             $template,
@@ -57,10 +55,8 @@ class Custom extends Mailable
 
     /**
      * Get the message envelope.
-     *
-     * @return \Illuminate\Mail\Mailables\Envelope
      */
-    public function envelope()
+    public function envelope(): Envelope
     {
         return new Envelope(
             from: $this->mail['from'] ?? null,
@@ -70,20 +66,16 @@ class Custom extends Mailable
 
     /**
      * Get the message content definition.
-     *
-     * @return \Illuminate\Mail\Mailables\Content
      */
-    public function content()
+    public function content(): Content
     {
         return new Content(htmlString: $this->renderTemplate($this->mail['body']));
     }
 
     /**
      * Get the attachments for the message.
-     *
-     * @return array
      */
-    public function attachments()
+    public function attachments(): array
     {
         $attachments = [];
         if (isset($this->mail['attachments'])) {

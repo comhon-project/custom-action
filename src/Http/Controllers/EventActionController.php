@@ -19,8 +19,6 @@ class EventActionController extends Controller
 
     /**
      * Store event listener action.
-     *
-     * @return \Illuminate\Http\Resources\Json\JsonResource
      */
     public function store(Request $request, ActionService $actionService, EventListener $eventListener)
     {
@@ -113,9 +111,9 @@ class EventActionController extends Controller
     {
         $this->authorize('create', [ScopedSetting::class, $eventAction]);
 
-        $defaultSetting = $actionService->storeScopedSetting($eventAction, $request->input());
+        $scopedSetting = $actionService->storeScopedSetting($eventAction, $request->input());
 
-        return new JsonResource($defaultSetting);
+        return new JsonResource($scopedSetting);
     }
 
     private function validateStoreRequest(Request $request, EventListener $eventListener)

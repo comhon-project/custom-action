@@ -4,6 +4,7 @@ namespace Comhon\CustomAction\Models;
 
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
+use Illuminate\Database\Eloquent\Relations\MorphTo;
 use Illuminate\Database\Eloquent\SoftDeletes;
 
 class LocalizedSetting extends Model
@@ -27,10 +28,7 @@ class LocalizedSetting extends Model
         'settings' => 'array',
     ];
 
-    /**
-     * @return \Illuminate\Database\Eloquent\Relations\MorphTo
-     */
-    public function localizable()
+    public function localizable(): MorphTo
     {
         return $this->morphTo();
     }

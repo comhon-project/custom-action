@@ -49,7 +49,7 @@ class User extends Authenticatable implements HasLocalePreference, HasTimezonePr
         return $this->preferred_locale;
     }
 
-    public function preferredTimezone()
+    public function preferredTimezone(): ?string
     {
         return $this->preferred_timezone;
     }

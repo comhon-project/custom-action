@@ -18,8 +18,6 @@ class ManualActionController extends Controller
 
     /**
      * Display a listing of actions.
-     *
-     * @return \Illuminate\Http\Resources\Json\JsonResource
      */
     public function listTypes(ManualActionTypeCatalog $catalog)
     {
@@ -30,8 +28,6 @@ class ManualActionController extends Controller
 
     /**
      * Display action settings.
-     *
-     * @return \Illuminate\Http\Resources\Json\JsonResource
      */
     public function show(string $type)
     {
@@ -63,9 +59,9 @@ class ManualActionController extends Controller
         $manualAction = $this->getOrCreateManualAction($type);
         $this->authorize('create', [ScopedSetting::class, $manualAction]);
 
-        $defaultSetting = $actionService->storeScopedSetting($manualAction, $request->input());
+        $scopedSetting = $actionService->storeScopedSetting($manualAction, $request->input());
 
-        return new JsonResource($defaultSetting);
+        return new JsonResource($scopedSetting);
     }
 
     private function getOrCreateManualAction(string $type): ManualAction

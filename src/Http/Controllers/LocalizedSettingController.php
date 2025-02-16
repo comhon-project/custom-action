@@ -4,28 +4,24 @@ namespace Comhon\CustomAction\Http\Controllers;
 
 use Comhon\CustomAction\Models\EventAction;
 use Comhon\CustomAction\Models\LocalizedSetting;
-use Comhon\CustomAction\Resources\LocalizedSettingResource;
 use Comhon\CustomAction\Rules\RuleHelper;
 use Illuminate\Http\Request;
+use Illuminate\Http\Resources\Json\JsonResource;
 
 class LocalizedSettingController extends Controller
 {
     /**
      * Display localized settings.
-     *
-     * @return \Comhon\CustomAction\Resources\LocalizedSettingResource
      */
     public function show(LocalizedSetting $localizedSetting)
     {
         $this->authorize('view', $localizedSetting);
 
-        return new LocalizedSettingResource($localizedSetting);
+        return new JsonResource($localizedSetting);
     }
 
     /**
      * Update localized settings.
-     *
-     * @return \Comhon\CustomAction\Resources\LocalizedSettingResource
      */
     public function update(Request $request, LocalizedSetting $localizedSetting)
     {
@@ -49,13 +45,11 @@ class LocalizedSettingController extends Controller
         }
         $localizedSetting->save();
 
-        return new LocalizedSettingResource($localizedSetting->unsetRelations());
+        return new JsonResource($localizedSetting->unsetRelations());
     }
 
     /**
      * Delete localized settings.
-     *
-     * @return \Illuminate\Http\Response
      */
     public function destroy(LocalizedSetting $localizedSetting)
     {

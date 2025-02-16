@@ -14,8 +14,6 @@ class ActionSchemaController extends Controller
 {
     /**
      * Display action schema.
-     *
-     * @return \Illuminate\Http\Resources\Json\JsonResource
      */
     public function showActionSchema(Request $request, $type)
     {

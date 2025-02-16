@@ -2,6 +2,7 @@
 
 namespace Comhon\CustomAction\Http\Controllers;
 
+use Comhon\CustomAction\Models\LocalizedSetting;
 use Comhon\CustomAction\Models\ScopedSetting;
 use Comhon\CustomAction\Services\ActionService;
 use Illuminate\Http\Request;
@@ -10,12 +11,8 @@ use Illuminate\Support\Facades\DB;
 
 class ScopedSettingController extends Controller
 {
-    use SettingTrait;
-
     /**
      * Display action scoped settings.
-     *
-     * @return \Illuminate\Http\Resources\Json\JsonResource
      */
     public function show(ScopedSetting $scopedSetting)
     {
@@ -26,8 +23,6 @@ class ScopedSettingController extends Controller
 
     /**
      * Update action scoped settings.
-     *
-     * @return \Illuminate\Http\Resources\Json\JsonResource
      */
     public function update(Request $request, ActionService $actionService, ScopedSetting $scopedSetting)
     {
@@ -42,8 +37,6 @@ class ScopedSettingController extends Controller
 
     /**
      * Delete action scoped settings.
-     *
-     * @return \Illuminate\Http\Response
      */
     public function destroy(ScopedSetting $scopedSetting)
     {
@@ -58,18 +51,16 @@ class ScopedSettingController extends Controller
 
     /**
      * Store localized settings.
-     *
-     * @return \Comhon\CustomAction\Resources\LocalizedSettingResource
      */
-    public function storeScopedLocalizedSetting(Request $request, ScopedSetting $scopedSetting)
+    public function storeScopedLocalizedSetting(Request $request, ActionService $actionService, ScopedSetting $scopedSetting)
     {
-        return $this->storeLocalizedSetting($request, $scopedSetting);
+        $this->authorize('create', [LocalizedSetting::class, $scopedSetting]);
+
+        return new JsonResource($actionService->storeLocalizedSetting($scopedSetting, $request->input()));
     }
 
     /**
      * Display list of localized settings.
-     *
-     * @return \Illuminate\Http\Resources\Json\AnonymousResourceCollection
      */
     public function listScopedLocalizedSettings(ScopedSetting $scopedSetting)
     {

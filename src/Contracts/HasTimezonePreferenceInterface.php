@@ -6,8 +6,6 @@ interface HasTimezonePreferenceInterface
 {
     /**
      * Get the preferred timezone of the entity.
-     *
-     * @return string|null
      */
-    public function preferredTimezone();
+    public function preferredTimezone(): ?string;
 }
