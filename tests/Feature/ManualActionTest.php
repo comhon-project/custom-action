@@ -68,7 +68,7 @@ class ManualActionTest extends TestCase
         CustomActionModelResolver::register([], true);
         /** @var User $user */
         $user = User::factory()->hasConsumerAbility()->create();
-        $response = $this->actingAs($user)->getJson('custom/manual-actions/send-email');
+        $response = $this->actingAs($user)->getJson('custom/manual-actions/send-automatic-email');
         $response->assertNotFound();
         $response->assertJson([
             'message' => 'not found',

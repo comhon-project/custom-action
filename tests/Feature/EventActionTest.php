@@ -33,14 +33,14 @@ class EventActionTest extends TestCase
             'data' => [
                 [
                     'id' => $actions[0]->id,
-                    'type' => 'send-email',
+                    'type' => 'send-automatic-email',
                     'default_setting' => [
                         'id' => $actions[0]->defaultSetting->id,
                     ],
                 ],
                 [
                     'id' => $actions[1]->id,
-                    'type' => 'send-email',
+                    'type' => 'send-automatic-email',
                     'default_setting' => [
                         'id' => $actions[1]->defaultSetting->id,
                     ],
@@ -70,7 +70,7 @@ class EventActionTest extends TestCase
                 'data' => [
                     [
                         'id' => $eventAction->id,
-                        'type' => 'send-email',
+                        'type' => 'send-automatic-email',
                         'name' => 'my one',
                     ],
                 ],
@@ -100,7 +100,7 @@ class EventActionTest extends TestCase
         $user = User::factory()->hasConsumerAbility()->create();
         $actionValues = [
             'name' => 'my custom event listener',
-            'type' => 'send-email',
+            'type' => 'send-automatic-email',
             'settings' => [
                 'recipients' => ['to' => [
                     'static' => ['mailables' => [
@@ -129,7 +129,7 @@ class EventActionTest extends TestCase
                 ],
             ],
         ]);
-        $this->assertEquals('send-email', $eventAction->type);
+        $this->assertEquals('send-automatic-email', $eventAction->type);
         $this->assertEquals($actionValues['settings'], $eventAction->defaultSetting->settings);
     }
 

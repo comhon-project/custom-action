@@ -193,7 +193,7 @@ EOT
             ],
             [
                 false,
-                'SendEmail',
+                'SendAutomaticEmail',
                 'from-event',
                 true,
                 <<<EOT
@@ -203,10 +203,10 @@ declare(strict_types=1);
 
 namespace App\Actions\CustomActions;
 
-use Comhon\CustomAction\Actions\SendEmail;
+use Comhon\CustomAction\Actions\SendAutomaticEmail;
 use Illuminate\Contracts\Queue\ShouldQueue;
 
-class TestGenericSendEmail extends SendEmail
+class TestGenericSendEmail extends SendAutomaticEmail
 {
     /**
      * Get action settings schema

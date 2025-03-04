@@ -26,7 +26,7 @@ class LocalizedSettingTest extends TestCase
         /** @var Setting $setting */
         $setting = $settingClass::factory([
             'settings' => [],
-        ])->{$withAction}('send-email')->create();
+        ])->{$withAction}('send-automatic-email')->create();
         $originalSettingsEn = [
             'subject' => 'original subject',
             'body' => 'original body',
@@ -100,7 +100,7 @@ class LocalizedSettingTest extends TestCase
         /** @var Setting $setting */
         $setting = $settingClass::factory([
             'settings' => [],
-        ])->{$withAction}('send-email')->create();
+        ])->{$withAction}('send-automatic-email')->create();
         /** @var User $user */
         $user = User::factory()->hasConsumerAbility()->create();
 
@@ -182,7 +182,7 @@ class LocalizedSettingTest extends TestCase
 
         /** @var Setting $setting */
         $setting = $settingClass::factory()
-            ->{$withAction}('send-email')
+            ->{$withAction}('send-automatic-email')
             ->create();
 
         $localizedSetting = new LocalizedSetting;
@@ -265,7 +265,7 @@ class LocalizedSettingTest extends TestCase
         $withAction = $fromEventAction ? 'withEventAction' : 'withManualAction';
 
         /** @var Setting $setting */
-        $setting = $settingClass::factory()->{$withAction}('send-email')->create();
+        $setting = $settingClass::factory()->{$withAction}('send-automatic-email')->create();
         $localizedSetting = new LocalizedSetting;
         $localizedSetting->settings = [
             'subject' => 'original subject',
@@ -287,7 +287,7 @@ class LocalizedSettingTest extends TestCase
         $withAction = $fromEventAction ? 'withEventAction' : 'withManualAction';
 
         /** @var Setting $setting */
-        $setting = $settingClass::factory()->{$withAction}('send-email')->create();
+        $setting = $settingClass::factory()->{$withAction}('send-automatic-email')->create();
         $localizedSetting = new LocalizedSetting;
         $localizedSetting->settings = [];
         $localizedSetting->locale = 'en';
@@ -311,7 +311,7 @@ class LocalizedSettingTest extends TestCase
         $withAction = $fromEventAction ? 'withEventAction' : 'withManualAction';
 
         /** @var Setting $setting */
-        $setting = $settingClass::factory()->$withAction('send-email')->create();
+        $setting = $settingClass::factory()->$withAction('send-automatic-email')->create();
         $localizedSetting = new LocalizedSetting;
         $localizedSetting->settings = [];
         $localizedSetting->locale = 'en';

@@ -6,7 +6,7 @@ use App\Actions\SendAutomaticCompanyRegistrationMail;
 use App\Events\CompanyRegistered;
 use App\Models\Company;
 use App\Models\User;
-use Comhon\CustomAction\Actions\SendEmail;
+use Comhon\CustomAction\Actions\SendAutomaticEmail;
 use Comhon\CustomAction\Resolver\CustomActionModelResolver;
 use Comhon\ModelResolverContract\ModelResolverInterface;
 use Tests\TestCase;
@@ -20,7 +20,7 @@ class ModelResolverTest extends TestCase
         $resolver->register(
             [
                 'company' => Company::class,
-                'send-email' => SendEmail::class,
+                'send-automatic-email' => SendAutomaticEmail::class,
                 'send-automatic-company-email' => SendAutomaticCompanyRegistrationMail::class,
                 'company-registered' => CompanyRegistered::class,
             ]
@@ -30,15 +30,15 @@ class ModelResolverTest extends TestCase
         $this->assertInstanceOf(ModelResolverInterface::class, $resolver->getResolver());
         $this->assertEquals(Company::class, $resolver->getClass('company'));
         $this->assertEquals(User::class, $resolver->getClass('user'));
-        $this->assertEquals('send-email', $resolver->getUniqueName(SendEmail::class));
+        $this->assertEquals('send-automatic-email', $resolver->getUniqueName(SendAutomaticEmail::class));
         $this->assertNull($resolver->getClass('foo'));
         $this->assertNull($resolver->getUniqueName('bar'));
 
         $this->assertTrue($resolver->isAllowedAction('send-automatic-company-email'));
-        $this->assertTrue($resolver->isAllowedAction('send-email'));
+        $this->assertTrue($resolver->isAllowedAction('send-automatic-email'));
         $this->assertFalse($resolver->isAllowedAction('company-registered'));
 
         $this->assertTrue($resolver->isAllowedEvent('company-registered'));
-        $this->assertFalse($resolver->isAllowedEvent('send-email'));
+        $this->assertFalse($resolver->isAllowedEvent('send-automatic-email'));
     }
 }

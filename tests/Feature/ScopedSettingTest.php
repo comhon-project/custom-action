@@ -290,7 +290,7 @@ class ScopedSettingTest extends TestCase
     {
         $withAction = $fromEventAction ? 'withEventAction' : 'withManualAction';
 
-        $scopedSettings = ScopedSetting::factory()->{$withAction}('send-email')->create();
+        $scopedSettings = ScopedSetting::factory()->{$withAction}('send-automatic-email')->create();
 
         /** @var User $user */
         $user = User::factory()->create();
@@ -329,7 +329,7 @@ class ScopedSettingTest extends TestCase
         $withAction = $fromEventAction ? 'withEventAction' : 'withManualAction';
 
         /** @var DefaultSetting $defaultSetting */
-        $scopedSettings = ScopedSetting::factory()->{$withAction}('send-email')->create();
+        $scopedSettings = ScopedSetting::factory()->{$withAction}('send-automatic-email')->create();
 
         /** @var User $user */
         $user = User::factory()->create();
@@ -342,7 +342,7 @@ class ScopedSettingTest extends TestCase
     {
         $defaultSetting = DefaultSetting::factory([
             'settings' => [],
-        ])->withEventAction('send-email')->create();
+        ])->withEventAction('send-automatic-email')->create();
 
         /** @var User $user */
         $user = User::factory()->hasConsumerAbility()->create();

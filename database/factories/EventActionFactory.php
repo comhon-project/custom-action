@@ -30,7 +30,7 @@ class EventActionFactory extends Factory
     {
         return [
             'name' => 'My Custom Event Action',
-            'type' => 'send-email',
+            'type' => 'send-automatic-email',
             'event_listener_id' => EventListener::factory(),
         ];
     }
@@ -41,7 +41,7 @@ class EventActionFactory extends Factory
     public function sendMailRegistrationCompany(?array $toOtherUserIds = null, $withScopedSettings = false, $shoudQueue = false, $withAttachement = false): Factory
     {
         return $this->aftermaking(function (EventAction $eventAction) use ($shoudQueue) {
-            $eventAction->type = $shoudQueue ? 'queue-email' : 'send-email';
+            $eventAction->type = $shoudQueue ? 'queue-automatic-email' : 'send-automatic-email';
         })->afterCreating(function (EventAction $eventAction) use ($toOtherUserIds, $withScopedSettings, $withAttachement) {
             DefaultSetting::factory()->for($eventAction, 'action')
                 ->sendMailRegistrationCompany($toOtherUserIds, $withAttachement)

@@ -49,7 +49,7 @@ class EventDefinitionTest extends TestCase
                         'user.email' => 'email',
                     ],
                     'allowed_actions' => [
-                        'send-email',
+                        'send-automatic-email',
                         'send-automatic-company-email',
                     ],
                 ],

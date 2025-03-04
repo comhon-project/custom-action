@@ -2,8 +2,8 @@
 
 namespace Comhon\CustomAction\Resolver;
 
-use Comhon\CustomAction\Actions\QueueEmail;
-use Comhon\CustomAction\Actions\SendEmail;
+use Comhon\CustomAction\Actions\QueueAutomaticEmail;
+use Comhon\CustomAction\Actions\SendAutomaticEmail;
 use Comhon\ModelResolverContract\ModelResolverInterface;
 
 /**
@@ -12,8 +12,8 @@ use Comhon\ModelResolverContract\ModelResolverInterface;
 class ModelResolver implements ModelResolverInterface
 {
     private $map = [
-        'send-email' => SendEmail::class,
-        'queue-email' => QueueEmail::class,
+        'send-automatic-email' => SendAutomaticEmail::class,
+        'queue-automatic-email' => QueueAutomaticEmail::class,
     ];
 
     /**

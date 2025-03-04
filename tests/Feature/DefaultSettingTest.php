@@ -52,7 +52,7 @@ class DefaultSettingTest extends TestCase
     {
         $defaultSetting = DefaultSetting::factory([
             'settings' => [],
-        ])->withEventAction('send-email')->create();
+        ])->withEventAction('send-automatic-email')->create();
         $newSettings = [
             'recipients' => ['to' => ['static' => ['mailables' => [
                 ['recipient_id' => User::factory()->create()->id, 'recipient_type' => 'user'],
@@ -138,7 +138,7 @@ class DefaultSettingTest extends TestCase
     {
         $defaultSetting = DefaultSetting::factory([
             'settings' => [],
-        ])->withEventAction('send-email')->create();
+        ])->withEventAction('send-automatic-email')->create();
         $newSettings = [
             'recipients' => ['to' => ['bindings' => ['mailables' => ['user']]]],
         ];
@@ -162,7 +162,7 @@ class DefaultSettingTest extends TestCase
     {
         $defaultSetting = DefaultSetting::factory([
             'settings' => [],
-        ])->withEventAction('send-email')->create();
+        ])->withEventAction('send-automatic-email')->create();
 
         /** @var User $user */
         $user = User::factory()->create();

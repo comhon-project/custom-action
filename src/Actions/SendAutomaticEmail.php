@@ -12,7 +12,7 @@ use Comhon\CustomAction\Rules\RuleHelper;
 use Illuminate\Mail\Mailables\Address;
 use Illuminate\Support\Arr;
 
-class SendEmail extends AbstractSendEmail implements CallableFromEventInterface
+class SendAutomaticEmail extends AbstractSendEmail implements CallableFromEventInterface
 {
     use CallableFromEventTrait;
 

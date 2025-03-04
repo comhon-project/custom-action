@@ -40,7 +40,7 @@ class ActionDefinitionTest extends TestCase
         /** @var User $user */
         $user = User::factory()->hasConsumerAbility()->create();
 
-        $response = $this->actingAs($user)->getJson('custom/actions/send-email/schema');
+        $response = $this->actingAs($user)->getJson('custom/actions/send-automatic-email/schema');
         $response->assertJson([
             'data' => [
                 'bindings_schema' => [
@@ -102,7 +102,7 @@ class ActionDefinitionTest extends TestCase
         $user = User::factory()->hasConsumerAbility()->create();
 
         $params = http_build_query(['event_context' => 'company-registered']);
-        $this->actingAs($user)->getJson("custom/actions/send-email/schema?$params")
+        $this->actingAs($user)->getJson("custom/actions/send-automatic-email/schema?$params")
             ->assertOk()
             ->assertJson([
                 'data' => [
@@ -174,7 +174,7 @@ class ActionDefinitionTest extends TestCase
         $user = User::factory()->hasConsumerAbility()->create();
 
         $params = http_build_query(['event_context' => $eventContext]);
-        $this->actingAs($user)->getJson("custom/actions/send-email/schema?$params")
+        $this->actingAs($user)->getJson("custom/actions/send-automatic-email/schema?$params")
             ->assertUnprocessable()
             ->assertJson([
                 'message' => 'The event context is not subclass of custom-event.',
@@ -195,7 +195,7 @@ class ActionDefinitionTest extends TestCase
         /** @var User $user */
         $user = User::factory()->hasConsumerAbility()->create();
 
-        $response = $this->actingAs($user)->getJson('custom/actions/send-email/schema');
+        $response = $this->actingAs($user)->getJson('custom/actions/send-automatic-email/schema');
         $response->assertNotFound();
     }
 
@@ -203,7 +203,7 @@ class ActionDefinitionTest extends TestCase
     {
         /** @var User $user */
         $user = User::factory()->create();
-        $this->actingAs($user)->getJson('custom/actions/send-email/schema')
+        $this->actingAs($user)->getJson('custom/actions/send-automatic-email/schema')
             ->assertForbidden();
     }
 }

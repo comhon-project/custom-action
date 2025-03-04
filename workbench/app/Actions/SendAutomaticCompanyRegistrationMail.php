@@ -2,9 +2,9 @@
 
 namespace App\Actions;
 
-use Comhon\CustomAction\Actions\SendEmail;
+use Comhon\CustomAction\Actions\SendAutomaticEmail;
 
-class SendAutomaticCompanyRegistrationMail extends SendEmail
+class SendAutomaticCompanyRegistrationMail extends SendAutomaticEmail
 {
     protected static function getCommonBindingSchema(): array
     {
