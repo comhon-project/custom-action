@@ -21,7 +21,7 @@ trait InteractWithSettingsTrait
     {
         if (! isset($this->setting)) {
             $bindings = $this->getAllBindings(null, true);
-            $this->setting = SettingSelector::select($this->action, $bindings);
+            $this->setting = SettingSelector::select($this->getAction(), $bindings);
         }
 
         return $this->setting;

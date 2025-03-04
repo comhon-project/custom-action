@@ -6,20 +6,18 @@ use App\Models\Company;
 use App\Models\User;
 use App\Models\UserWithoutPreference;
 use Comhon\CustomAction\Actions\AbstractSendEmail;
-use Comhon\CustomAction\Actions\HandleManualActionTrait;
+use Comhon\CustomAction\Actions\CallableManually;
 use Comhon\CustomAction\Exceptions\SendEmailActionException;
 use Comhon\CustomAction\Files\SystemFile;
-use Comhon\CustomAction\Models\Action;
 use Comhon\CustomAction\Models\LocalizedSetting;
 use Comhon\CustomAction\Rules\RuleHelper;
 use Illuminate\Mail\Mailables\Address;
 
 class SendManualCompanyRegistrationMail extends AbstractSendEmail
 {
-    use HandleManualActionTrait;
+    use CallableManually;
 
     public function __construct(
-        protected Action $action,
         private Company $company,
         private SystemFile $logo,
         private User|UserWithoutPreference|null $to,

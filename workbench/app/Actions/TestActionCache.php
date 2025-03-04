@@ -9,6 +9,7 @@ use Comhon\CustomAction\Actions\InteractWithSettingsTrait;
 use Comhon\CustomAction\Contracts\CustomActionInterface;
 use Comhon\CustomAction\Contracts\HasBindingsInterface;
 use Comhon\CustomAction\Models\Action;
+use Comhon\CustomAction\Models\ManualAction;
 use Illuminate\Bus\Queueable;
 use Illuminate\Foundation\Bus\Dispatchable;
 use Illuminate\Queue\InteractsWithQueue;
@@ -25,7 +26,13 @@ class TestActionCache implements CustomActionInterface, HasBindingsInterface
 
     private $index = 0;
 
-    public function __construct(protected Action $action) {}
+    /**
+     * Dispatch the action with the given arguments.
+     */
+    public function getAction(): Action
+    {
+        return ManualAction::first();
+    }
 
     /**
      * Get action settings schema

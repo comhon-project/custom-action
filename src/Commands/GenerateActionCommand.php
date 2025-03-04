@@ -3,15 +3,13 @@
 namespace Comhon\CustomAction\Commands;
 
 use Comhon\CustomAction\Actions\CallableFromEventTrait;
-use Comhon\CustomAction\Actions\HandleManualActionTrait;
+use Comhon\CustomAction\Actions\CallableManually;
 use Comhon\CustomAction\Actions\InteractWithBindingsTrait;
 use Comhon\CustomAction\Actions\InteractWithSettingsTrait;
-use Comhon\CustomAction\Bindings\EventBindingsContainer;
 use Comhon\CustomAction\Contracts\CallableFromEventInterface;
 use Comhon\CustomAction\Contracts\CustomActionInterface;
 use Comhon\CustomAction\Contracts\HasBindingsInterface;
 use Comhon\CustomAction\Facades\CustomActionModelResolver;
-use Comhon\CustomAction\Models\Action;
 use Illuminate\Bus\Queueable;
 use Illuminate\Console\Command;
 use Illuminate\Contracts\Queue\ShouldQueue;
@@ -21,29 +19,22 @@ use Illuminate\Queue\SerializesModels;
 
 class GenerateActionCommand extends Command
 {
-    public $signature = 'custom-action:generate {name} {--extends=} {--manual} {--event} {--has-bindings}';
+    private const INVOKABLE_METHODS = [
+        'manually' => 'manually',
+        'from-event' => 'from event',
+    ];
+
+    public $signature = 'custom-action:generate
+        {name : The class name of your action}
+        {--callable= : How your action will be called (manually, from-event)}
+        {--extends= : The action (class name or unique name) that must be extended}
+        {--has-bindings : Whether the action has bindings}';
 
     public $description = 'generate a custom action class';
-
-    private $withoutEventConstructor = <<<'EOT'
-    public function __construct(protected Action $action) {}
-
-
-EOT;
-
-    private $withEventConstructor = <<<'EOT'
-    public function __construct(
-        protected Action $action,
-        protected ?EventBindingsContainer $eventBindingsContainer = null,
-    ) {}
-
-
-EOT;
 
     public function handle(): int
     {
         $name = $this->argument('name');
-        $extendsArg = $this->option('extends');
 
         $directory = app()->path('Actions'.DIRECTORY_SEPARATOR.'CustomActions');
         $imports = [];
@@ -66,12 +57,12 @@ EOT;
             InteractWithSettingsTrait::class,
         ];
 
-        $construct = '';
+        $callable = $this->getCallableFromOption();
+        $callableManually = $callable == 'manually';
 
-        if ($this->option('manual')) {
-            $traits[] = HandleManualActionTrait::class;
-        }
-        if ($this->option('event')) {
+        if ($callableManually) {
+            $traits[] = CallableManually::class;
+        } else {
             $interfaces[] = CallableFromEventInterface::class;
             $traits[] = CallableFromEventTrait::class;
         }
@@ -82,11 +73,8 @@ EOT;
         $returnSettingsSchema = '[]';
         $returnLocalizedSettingsSchema = '[]';
 
-        if ($extendsArg) {
-            $extendsClass = CustomActionModelResolver::getClass($extendsArg);
-            if (! $extendsClass) {
-                throw new \Exception("invalid extends parameter '{$extendsArg}'");
-            }
+        $extendsClass = $this->getExtendsClassFromOption();
+        if ($extendsClass) {
             $imports[] = $extendsClass;
             $explode = explode('\\', $extendsClass);
             $extends = ' extends '.$explode[count($explode) - 1];
@@ -118,65 +106,21 @@ EOT;
             }
         }
 
-        $hasConstruct = ($extendsClass && method_exists($extendsClass, '__construct'))
-            || in_array(CallableFromEventTrait::class, $traits)
-            || in_array(CallableFromEventTrait::class, $parentTraits);
-
-        if (! $hasConstruct) {
-            $imports[] = Action::class;
-
-            if ($this->option('event') || ($extendsClass && is_subclass_of($extendsClass, CallableFromEventInterface::class))) {
-                $imports[] = EventBindingsContainer::class;
-                $construct = $this->withEventConstructor;
-            } else {
-                $construct = $this->withoutEventConstructor;
-            }
-        }
-
         $imports = collect($imports)->sort()->map(fn ($import) => "use $import;")->implode(PHP_EOL);
         $implements = count($implements) ? ' implements '.collect($implements)->implode(', ') : '';
         $uses = count($uses)
             ? '    use '.collect($uses)->implode(','.PHP_EOL.'        ').';'.PHP_EOL.PHP_EOL
             : '';
 
-        $fileContent = <<<EOT
-<?php
-
-declare(strict_types=1);
-
-namespace App\Actions\CustomActions;
-
-$imports
-
-class {$name}{$extends}{$implements}
-{
-{$uses}{$construct}    /**
-     * Get action settings schema
-     */
-    public static function getSettingsSchema(?string \$eventClassContext = null): array
-    {
-        return $returnSettingsSchema;
-    }
-
-    /**
-     * Get action localized settings schema
-     */
-    public static function getLocalizedSettingsSchema(?string \$eventClassContext = null): array
-    {
-        return $returnLocalizedSettingsSchema;
-    }
-
-
-    /**
-     * execute action
-     */
-    public function handle(): void
-    {
-        //
-    }
-}
-
-EOT;
+        $fileContent = $this->generateFileContent(
+            $imports,
+            $name,
+            $extends,
+            $implements,
+            $uses,
+            $returnSettingsSchema,
+            $returnLocalizedSettingsSchema,
+        );
 
         if (! file_exists($directory)) {
             mkdir($directory, 0775, true);
@@ -184,5 +128,101 @@ EOT;
         file_put_contents("$directory/$name.php", $fileContent);
 
         return self::SUCCESS;
+    }
+
+    private function getCallableFromOption(): string
+    {
+        $callable = $this->option('callable');
+        if (! isset(self::INVOKABLE_METHODS[$callable])) {
+            if ($callable) {
+                $this->error("invalid input callable '{$callable}'");
+            }
+            $input = $this->choice(
+                'How will you invoke your action?',
+                array_values(self::INVOKABLE_METHODS),
+            );
+            $callable = array_search($input, self::INVOKABLE_METHODS);
+            if ($callable === false) {
+                throw new \Exception("invalid input callable '$input'");
+            }
+        }
+
+        return $callable;
+    }
+
+    private function getExtendsClassFromOption(): ?string
+    {
+        $extends = $this->option('extends');
+        if (! $extends) {
+            return null;
+        }
+        $nameSpaces = [
+            'App\Actions\CustomActions',
+            'App\Actions',
+            'Comhon\CustomAction\Actions',
+            '',
+        ];
+        foreach ($nameSpaces as $nameSpace) {
+            $class = $nameSpace.'\\'.$extends;
+            if (class_exists($class)) {
+                return $class;
+            }
+        }
+
+        $extendsClass = CustomActionModelResolver::getClass($extends);
+        if ($extendsClass) {
+            return $extendsClass;
+        }
+
+        throw new \Exception("invalid extends parameter '{$extends}'");
+    }
+
+    private function generateFileContent(
+        $imports,
+        $name,
+        $extends,
+        $implements,
+        $uses,
+        $returnSettingsSchema,
+        $returnLocalizedSettingsSchema,
+    ): string {
+        return <<<EOT
+        <?php
+        
+        declare(strict_types=1);
+        
+        namespace App\Actions\CustomActions;
+        
+        $imports
+        
+        class {$name}{$extends}{$implements}
+        {
+        {$uses}    /**
+             * Get action settings schema
+             */
+            public static function getSettingsSchema(?string \$eventClassContext = null): array
+            {
+                return $returnSettingsSchema;
+            }
+        
+            /**
+             * Get action localized settings schema
+             */
+            public static function getLocalizedSettingsSchema(?string \$eventClassContext = null): array
+            {
+                return $returnLocalizedSettingsSchema;
+            }
+        
+        
+            /**
+             * execute action
+             */
+            public function handle(): void
+            {
+                //
+            }
+        }
+        
+        EOT;
     }
 }

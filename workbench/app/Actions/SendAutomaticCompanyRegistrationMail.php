@@ -2,13 +2,10 @@
 
 namespace App\Actions;
 
-use Comhon\CustomAction\Actions\HandleManualActionTrait;
 use Comhon\CustomAction\Actions\SendEmail;
 
 class SendAutomaticCompanyRegistrationMail extends SendEmail
 {
-    use HandleManualActionTrait;
-
     protected static function getCommonBindingSchema(): array
     {
         return [];

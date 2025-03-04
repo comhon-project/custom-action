@@ -12,6 +12,11 @@ trait CallableFromEventTrait
         protected ?EventBindingsContainer $eventBindingsContainer = null,
     ) {}
 
+    public function getAction(): Action
+    {
+        return $this->action;
+    }
+
     public function getEventBindingsContainer(): ?EventBindingsContainer
     {
         return $this->eventBindingsContainer;

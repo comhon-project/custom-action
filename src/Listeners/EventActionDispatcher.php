@@ -3,6 +3,7 @@
 namespace Comhon\CustomAction\Listeners;
 
 use Comhon\CustomAction\Bindings\EventBindingsContainer;
+use Comhon\CustomAction\Contracts\CallableFromEventInterface;
 use Comhon\CustomAction\Contracts\CustomActionInterface;
 use Comhon\CustomAction\Contracts\CustomEventInterface;
 use Comhon\CustomAction\Contracts\HasBindingsInterface;
@@ -40,6 +41,9 @@ class EventActionDispatcher
                 try {
                     $actionClass = $eventAction->getActionClass();
                     if (! is_subclass_of($actionClass, CustomActionInterface::class)) {
+                        throw new InvalidActionTypeException($eventAction);
+                    }
+                    if (! is_subclass_of($actionClass, CallableFromEventInterface::class)) {
                         throw new InvalidActionTypeException($eventAction);
                     }
 

@@ -22,7 +22,7 @@ class CustomActionTest extends TestCase
         ManualAction::factory()->sendMailRegistrationCompany([], false, false)->create();
 
         $this->expectExceptionMessage('there is no mail recipients defined');
-        SendManualCompanyRegistrationMail::handleManual(
+        SendManualCompanyRegistrationMail::dispatch(
             Company::factory()->create(),
             new SystemFile(Utils::joinPaths(Utils::getTestPath('Data'), 'jc.jpeg')),
             null,

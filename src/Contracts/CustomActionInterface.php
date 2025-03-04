@@ -2,12 +2,14 @@
 
 namespace Comhon\CustomAction\Contracts;
 
+use Comhon\CustomAction\Models\Action;
+
 interface CustomActionInterface
 {
     /**
-     * Dispatch the action with the given arguments.
+     * Get action model
      */
-    public static function dispatch(...$arguments);
+    public function getAction(): Action;
 
     /**
      * Get action settings schema

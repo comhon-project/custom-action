@@ -42,7 +42,7 @@ class ManualActionHandleTest extends TestCase
         if (! $success) {
             $this->expectExceptionMessage('Localized setting for locale \'es\' not found');
         }
-        SendManualCompanyRegistrationMail::handleManual(
+        SendManualCompanyRegistrationMail::dispatch(
             $company,
             new SystemFile($this->getAssetPath()),
             $user,
@@ -86,7 +86,7 @@ class ManualActionHandleTest extends TestCase
         if (! $success) {
             $this->expectExceptionMessage('Localized setting not found');
         }
-        SendManualCompanyRegistrationMail::handleManual(
+        SendManualCompanyRegistrationMail::dispatch(
             $company,
             new SystemFile($this->getAssetPath()),
             $user,
@@ -114,7 +114,7 @@ class ManualActionHandleTest extends TestCase
         ManualAction::factory()->sendMailRegistrationCompany(null, false, true)->create();
 
         $this->expectExceptionMessage('The company.name field must be a string.');
-        SendManualCompanyRegistrationMail::handleManual(
+        SendManualCompanyRegistrationMail::dispatch(
             $company,
             new SystemFile($this->getAssetPath()),
             $user,
@@ -136,8 +136,8 @@ class ManualActionHandleTest extends TestCase
         $user = User::factory()->create();
         $company = Company::factory()->create();
 
-        $this->expectExceptionMessage('No query results for model');
-        SendManualCompanyRegistrationMail::handleManual(
+        $this->expectExceptionMessage('manual action send-manual-company-email not found');
+        SendManualCompanyRegistrationMail::dispatch(
             $company,
             new SystemFile($this->getAssetPath()),
             $user,
@@ -156,7 +156,7 @@ class ManualActionHandleTest extends TestCase
         $copedSettings->save();
 
         $this->expectExceptionMessage('cannot resolve conflict between several scoped settings');
-        SendManualCompanyRegistrationMail::handleManual(
+        SendManualCompanyRegistrationMail::dispatch(
             $company,
             new SystemFile($this->getAssetPath()),
             $user,

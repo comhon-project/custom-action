@@ -13,6 +13,7 @@ use Comhon\CustomAction\Models\EventListener;
 use Illuminate\Events\CallQueuedListener;
 use Illuminate\Support\Facades\Event;
 use Illuminate\Support\Facades\Queue;
+use PHPUnit\Framework\Attributes\DataProvider;
 use Tests\SetUpWithModelRegistrationTrait;
 use Tests\TestCase;
 
@@ -58,12 +59,13 @@ class EventActionDispatcherTest extends TestCase
         $this->assertEquals('bar', $this->queuedDispatcher()->viaQueue());
     }
 
-    public function test_handle_event_with_not_existing_action()
+    #[DataProvider('providerBadActionTypes')]
+    public function test_handle_event_with_not_existing_action($actionType)
     {
         $listener = EventListener::factory()->genericRegistrationCompany()->create();
         $event = new CompanyRegistered(Company::factory()->create(), User::factory()->create());
         foreach ($listener->eventActions as $action) {
-            $action->type = 'foo';
+            $action->type = $actionType;
             $action->save();
         }
 
@@ -73,9 +75,9 @@ class EventActionDispatcherTest extends TestCase
 
         Event::assertDispatched(EventActionError::class, 1);
 
-        Event::assertDispatched(function (EventActionError $event) {
+        Event::assertDispatched(function (EventActionError $event) use ($actionType) {
             $this->assertStringContainsString(
-                'Invalid action type foo on model Comhon\CustomAction\Models\EventAction',
+                "Invalid action type $actionType on model Comhon\CustomAction\Models\EventAction",
                 $event->th->getMessage(),
             );
 
@@ -83,29 +85,13 @@ class EventActionDispatcherTest extends TestCase
         });
     }
 
-    public function test_handle_event_with_action_wrong_class()
+    public static function providerBadActionTypes()
     {
-        $listener = EventListener::factory()->genericRegistrationCompany()->create();
-        $event = new CompanyRegistered(Company::factory()->create(), User::factory()->create());
-        foreach ($listener->eventActions as $action) {
-            $action->type = 'company';
-            $action->save();
-        }
-
-        Event::fake();
-
-        $this->dispatcher()->handle($event);
-
-        Event::assertDispatched(EventActionError::class, 1);
-
-        Event::assertDispatched(function (EventActionError $event) {
-            $this->assertStringContainsString(
-                'Invalid action type company on model Comhon\CustomAction\Models\EventAction',
-                $event->th->getMessage(),
-            );
-
-            return true;
-        });
+        return [
+            ['foo'], // doesn't exists
+            ['company'], // doesn't implements of CustomActionInterface
+            ['send-manual-company-email'], // doesn't implements of CallableFromEventInterface
+        ];
     }
 
     public function test_should_not_queue_dispatcher()
