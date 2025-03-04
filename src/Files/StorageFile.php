@@ -11,7 +11,7 @@ class StorageFile implements StoredFileInterface
         //
     }
 
-    public function getAttachmentInstance(): Attachment
+    public function toMailAttachment(): Attachment
     {
         return Attachment::fromStorageDisk($this->disk, $this->path);
     }

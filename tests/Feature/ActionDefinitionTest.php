@@ -22,7 +22,7 @@ class ActionDefinitionTest extends TestCase
         $response = $this->actingAs($user)->getJson('custom/manual-actions');
         $response->assertJson([
             'data' => [
-                'send-company-email',
+                'send-manual-company-email',
             ],
         ]);
     }
@@ -72,7 +72,7 @@ class ActionDefinitionTest extends TestCase
             ],
         ]);
 
-        $response = $this->actingAs($user)->getJson('custom/actions/send-company-email/schema');
+        $response = $this->actingAs($user)->getJson('custom/actions/send-manual-company-email/schema');
         $response->assertJson([
             'data' => [
                 'bindings_schema' => [
@@ -83,20 +83,8 @@ class ActionDefinitionTest extends TestCase
                     'logo' => 'is:stored-file',
                 ],
                 'settings_schema' => [
-                    'from.static.mailable' => 'model_reference:mailable-entity,from',
-                    'from.static.email' => 'email',
                     'recipients.to.static.mailables' => 'array',
                     'recipients.to.static.mailables.*' => 'model_reference:mailable-entity,recipient',
-                    'recipients.to.static.emails' => 'array',
-                    'recipients.to.static.emails.*' => 'email',
-                    'recipients.cc.static.mailables' => 'array',
-                    'recipients.cc.static.mailables.*' => 'model_reference:mailable-entity,recipient',
-                    'recipients.cc.static.emails' => 'array',
-                    'recipients.cc.static.emails.*' => 'email',
-                    'recipients.bcc.static.mailables' => 'array',
-                    'recipients.bcc.static.mailables.*' => 'model_reference:mailable-entity,recipient',
-                    'recipients.bcc.static.emails' => 'array',
-                    'recipients.bcc.static.emails.*' => 'email',
                     'test' => 'required|string',
                 ],
                 'localized_settings_schema' => [

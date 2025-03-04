@@ -2,7 +2,7 @@
 
 namespace App\Events;
 
-use App\Actions\SendCompanyRegistrationMail;
+use App\Actions\SendAutomaticCompanyRegistrationMail;
 use App\Models\Company;
 use App\Models\User;
 use Comhon\CustomAction\Actions\SendEmail;
@@ -33,7 +33,7 @@ class CompanyRegistered implements CustomEventInterface, HasBindingsInterface
     {
         return [
             SendEmail::class,
-            SendCompanyRegistrationMail::class,
+            SendAutomaticCompanyRegistrationMail::class,
         ];
     }
 

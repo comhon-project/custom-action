@@ -11,7 +11,7 @@ class SystemFile implements StoredFileInterface
         //
     }
 
-    public function getAttachmentInstance(): Attachment
+    public function toMailAttachment(): Attachment
     {
         return Attachment::fromPath($this->path);
     }

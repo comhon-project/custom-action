@@ -2,9 +2,6 @@
 
 namespace Comhon\CustomAction\Files;
 
-use Illuminate\Mail\Mailables\Attachment;
+use Illuminate\Contracts\Mail\Attachable;
 
-interface StoredFileInterface
-{
-    public function getAttachmentInstance(): Attachment;
-}
+interface StoredFileInterface extends Attachable {}

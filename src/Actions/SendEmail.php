@@ -3,6 +3,7 @@
 namespace Comhon\CustomAction\Actions;
 
 use Comhon\CustomAction\Bindings\BindingsHelper;
+use Comhon\CustomAction\Contracts\CallableFromEventInterface;
 use Comhon\CustomAction\Contracts\HasBindingsInterface;
 use Comhon\CustomAction\Exceptions\SendEmailActionException;
 use Comhon\CustomAction\Facades\CustomActionModelResolver;
@@ -11,8 +12,10 @@ use Comhon\CustomAction\Rules\RuleHelper;
 use Illuminate\Mail\Mailables\Address;
 use Illuminate\Support\Arr;
 
-class SendEmail extends AbstractSendEmail
+class SendEmail extends AbstractSendEmail implements CallableFromEventInterface
 {
+    use CallableFromEventTrait;
+
     public static function getSettingsSchema(?string $eventClassContext = null): array
     {
         $schema = [
@@ -53,7 +56,7 @@ class SendEmail extends AbstractSendEmail
     protected function getFrom(array $bindings): ?Address
     {
         $froms = [];
-        $settingsFrom = $this->setting->settings['from'] ?? null;
+        $settingsFrom = $this->getSetting()->settings['from'] ?? null;
         if (! $settingsFrom) {
             return null;
         }
@@ -77,7 +80,7 @@ class SendEmail extends AbstractSendEmail
             }
         }
         if (count($froms) > 1) {
-            throw new SendEmailActionException($this->setting, "several 'from' defined");
+            throw new SendEmailActionException($this->getSetting(), "several 'from' defined");
         }
 
         return count($froms) ? $this->normalizeAddress($froms[0]) : null;
@@ -85,11 +88,8 @@ class SendEmail extends AbstractSendEmail
 
     protected function getRecipients(array $bindings, ?array $recipientTypes = null): array
     {
-        if ($this->to) {
-            return ['to' => is_array($this->to) ? $this->to : [$this->to]];
-        }
         $recipients = [];
-        $settingsRecipients = $this->setting->settings['recipients'] ?? null;
+        $settingsRecipients = $this->getSetting()->settings['recipients'] ?? null;
         $mailableEntities = $this->loadStaticMailableEntities();
 
         $recipientTypes ??= static::RECIPIENT_TYPES;
@@ -128,9 +128,6 @@ class SendEmail extends AbstractSendEmail
                 }
             }
         }
-        if (empty($recipients['to'] ?? null)) {
-            throw new SendEmailActionException($this->setting, 'there is no mail recipients defined');
-        }
         foreach (array_diff(static::RECIPIENT_TYPES, ['to']) as $recipientType) {
             if ($recipients[$recipientType] ?? null) {
                 $recipients[$recipientType] = $this->normalizeAddresses($recipients[$recipientType]);
@@ -143,29 +140,29 @@ class SendEmail extends AbstractSendEmail
     protected function getSubject(array $bindings, LocalizedSetting $localizedSetting): string
     {
         return $localizedSetting->settings['subject']
-            ?? throw new SendEmailActionException($this->setting, 'localized settings subject is not defined');
+            ?? throw new SendEmailActionException($this->getSetting(), 'localized settings subject is not defined');
     }
 
     protected function getBody(array $bindings, LocalizedSetting $localizedSetting): string
     {
         return $localizedSetting->settings['body']
-            ?? throw new SendEmailActionException($this->setting, 'localized settings body is not defined');
+            ?? throw new SendEmailActionException($this->getSetting(), 'localized settings body is not defined');
     }
 
     protected function getAttachments($bindings, LocalizedSetting $localizedSetting): ?iterable
     {
-        if (! isset($this->setting->settings['attachments'])) {
+        if (! isset($this->getSetting()->settings['attachments'])) {
             return [];
         }
 
-        return collect($this->setting->settings['attachments'])
+        return collect($this->getSetting()->settings['attachments'])
             ->map(fn ($property) => Arr::get($bindings, $property))
             ->filter(fn ($path) => $path != null);
     }
 
     protected function loadStaticMailableEntities(): array
     {
-        $recipients = $this->setting->settings['recipients'] ?? null;
+        $recipients = $this->getSetting()->settings['recipients'] ?? null;
         $mailableEntities = [];
         $mailableIds = [];
 
@@ -179,7 +176,7 @@ class SendEmail extends AbstractSendEmail
                     }
                 }
             }
-            $mailable = $this->setting->settings['from']['static']['mailable'] ?? null;
+            $mailable = $this->getSetting()->settings['from']['static']['mailable'] ?? null;
             if ($mailable) {
                 $mailableIds[$mailable['from_type']] ??= [];
                 $mailableIds[$mailable['from_type']][] = $mailable['from_id'];

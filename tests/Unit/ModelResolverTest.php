@@ -2,7 +2,7 @@
 
 namespace Tests\Unit;
 
-use App\Actions\SendCompanyRegistrationMail;
+use App\Actions\SendAutomaticCompanyRegistrationMail;
 use App\Events\CompanyRegistered;
 use App\Models\Company;
 use App\Models\User;
@@ -21,7 +21,7 @@ class ModelResolverTest extends TestCase
             [
                 'company' => Company::class,
                 'send-email' => SendEmail::class,
-                'send-company-email' => SendCompanyRegistrationMail::class,
+                'send-automatic-company-email' => SendAutomaticCompanyRegistrationMail::class,
                 'company-registered' => CompanyRegistered::class,
             ]
         );
@@ -34,7 +34,7 @@ class ModelResolverTest extends TestCase
         $this->assertNull($resolver->getClass('foo'));
         $this->assertNull($resolver->getUniqueName('bar'));
 
-        $this->assertTrue($resolver->isAllowedAction('send-company-email'));
+        $this->assertTrue($resolver->isAllowedAction('send-automatic-company-email'));
         $this->assertTrue($resolver->isAllowedAction('send-email'));
         $this->assertFalse($resolver->isAllowedAction('company-registered'));
 

@@ -2,9 +2,10 @@
 
 namespace App\Actions;
 
-use Comhon\CustomAction\Contracts\BindingsContainerInterface;
+use Comhon\CustomAction\Actions\CallableFromEventTrait;
+use Comhon\CustomAction\Actions\InteractWithBindingsTrait;
+use Comhon\CustomAction\Actions\InteractWithSettingsTrait;
 use Comhon\CustomAction\Contracts\CustomActionInterface;
-use Comhon\CustomAction\Models\Setting;
 use Illuminate\Bus\Queueable;
 use Illuminate\Foundation\Bus\Dispatchable;
 use Illuminate\Queue\InteractsWithQueue;
@@ -13,14 +14,13 @@ use Tests\Support\Caller;
 
 class MyActionWithoutBindings implements CustomActionInterface
 {
-    use Dispatchable, InteractsWithQueue, Queueable, SerializesModels;
-
-    public function __construct(
-        protected Setting $setting,
-        protected ?BindingsContainerInterface $bindingsContainer = null,
-    ) {
-        //
-    }
+    use CallableFromEventTrait,
+        Dispatchable,
+        InteractsWithQueue,
+        InteractWithBindingsTrait,
+        InteractWithSettingsTrait,
+        Queueable,
+        SerializesModels;
 
     public static function getSettingsSchema(?string $eventClassContext = null): array
     {
@@ -34,6 +34,6 @@ class MyActionWithoutBindings implements CustomActionInterface
 
     public function handle()
     {
-        app(Caller::class)->call($this->setting, $this->bindingsContainer);
+        app(Caller::class)->call($this->getSetting(), $this->eventBindingsContainer);
     }
 }

@@ -2,11 +2,10 @@
 
 namespace Tests\Feature;
 
-use App\Actions\SendCompanyRegistrationMail;
+use App\Actions\SendManualCompanyRegistrationMail;
 use App\Models\Company;
 use App\Models\User;
 use App\Models\UserWithoutPreference;
-use Comhon\CustomAction\Bindings\BindingsContainer;
 use Comhon\CustomAction\Files\SystemFile;
 use Comhon\CustomAction\Mail\Custom;
 use Comhon\CustomAction\Models\ManualAction;
@@ -38,14 +37,16 @@ class ManualActionHandleTest extends TestCase
         $company = Company::factory()->create();
         ManualAction::factory()->sendMailRegistrationCompany(null, false, true)->create();
 
-        $bindings = ['company' => $company, 'logo' => new SystemFile($this->getAssetPath())];
-
         Mail::fake();
 
         if (! $success) {
             $this->expectExceptionMessage('Localized setting for locale \'es\' not found');
         }
-        SendCompanyRegistrationMail::handleManual(new BindingsContainer($bindings), $user);
+        SendManualCompanyRegistrationMail::handleManual(
+            $company,
+            new SystemFile($this->getAssetPath()),
+            $user,
+        );
 
         $mails = [];
         Mail::assertSent(Custom::class, 1);
@@ -80,50 +81,16 @@ class ManualActionHandleTest extends TestCase
         $company = Company::factory()->create();
         ManualAction::factory()->sendMailRegistrationCompany(null, false, true)->create();
 
-        $bindings = ['company' => $company, 'logo' => new SystemFile($this->getAssetPath())];
-
         Mail::fake();
 
         if (! $success) {
             $this->expectExceptionMessage('Localized setting not found');
         }
-        SendCompanyRegistrationMail::handleManual(new BindingsContainer($bindings), $user);
-
-        $mails = [];
-        Mail::assertSent(Custom::class, 1);
-        Mail::assertSent(Custom::class, function (Custom $mail) use (&$mails) {
-            $mails[] = $mail;
-
-            return true;
-        });
-        $mails[0]->assertHasTo($user->email);
-        $mails[0]->assertHasSubject(
-            "Dear $user->first_name, company $company->name  (login: December 12, 2022 at 12:00 AM (UTC) December 12, 2022 at 12:00 AM (UTC))"
+        SendManualCompanyRegistrationMail::handleManual(
+            $company,
+            new SystemFile($this->getAssetPath()),
+            $user,
         );
-        $this->assertTrue($mails[0]->hasAttachment(Attachment::fromPath($this->getAssetPath())));
-    }
-
-    #[DataProvider('providerHandleManualActionUserWithoutPreferencesSuccess')]
-    public function test_handle_manual_action_user_with_bindings_container_with_schema_all_valid($appLocale, $fallbackLocale, $success)
-    {
-        App::setLocale($appLocale);
-        App::setFallbackLocale($fallbackLocale);
-        $user = UserWithoutPreference::factory()->create();
-        $company = Company::factory()->create();
-        ManualAction::factory()->sendMailRegistrationCompany(null, false, true)->create();
-
-        $bindings = ['company' => $company, 'logo' => new SystemFile($this->getAssetPath())];
-        $bindingSchema = [
-            'company' => 'is:company',
-            'logo' => 'is:stored-file',
-        ];
-
-        Mail::fake();
-
-        if (! $success) {
-            $this->expectExceptionMessage('Localized setting not found');
-        }
-        SendCompanyRegistrationMail::handleManual(new BindingsContainer($bindings, $bindingSchema), $user);
 
         $mails = [];
         Mail::assertSent(Custom::class, 1);
@@ -142,45 +109,15 @@ class ManualActionHandleTest extends TestCase
     public function test_handle_manual_action_user_with_bindings_container_with_schema_with_invalid()
     {
         $user = UserWithoutPreference::factory()->create();
-        ManualAction::factory()->sendMailRegistrationCompany(null, false, true)->create();
-
-        $bindings = ['company' => $user, 'logo' => new SystemFile($this->getAssetPath())];
-        $bindingSchema = [
-            'company' => 'is:company',
-            'logo' => 'is:stored-file',
-        ];
-
-        $this->expectExceptionMessage('The company is not instance of company.');
-        SendCompanyRegistrationMail::handleManual(new BindingsContainer($bindings, $bindingSchema), $user);
-
-    }
-
-    #[DataProvider('providerHandleManualActionUserWithoutPreferencesSuccess')]
-    public function test_handle_manual_action_user_without_bindings_container($appLocale, $fallbackLocale, $success)
-    {
-        App::setLocale($appLocale);
-        App::setFallbackLocale($fallbackLocale);
-        $user = UserWithoutPreference::factory()->create();
         $company = Company::factory()->create();
+        $company->name = ['foo'];
         ManualAction::factory()->sendMailRegistrationCompany(null, false, true)->create();
 
-        Mail::fake();
-
-        if (! $success) {
-            $this->expectExceptionMessage('Localized setting not found');
-        }
-        SendCompanyRegistrationMail::handleManual(null, $user);
-
-        $mails = [];
-        Mail::assertSent(Custom::class, 1);
-        Mail::assertSent(Custom::class, function (Custom $mail) use (&$mails) {
-            $mails[] = $mail;
-
-            return true;
-        });
-        $mails[0]->assertHasTo($user->email);
-        $mails[0]->assertHasSubject(
-            "Dear $user->first_name, company   (login: December 12, 2022 at 12:00 AM (UTC) December 12, 2022 at 12:00 AM (UTC))"
+        $this->expectExceptionMessage('The company.name field must be a string.');
+        SendManualCompanyRegistrationMail::handleManual(
+            $company,
+            new SystemFile($this->getAssetPath()),
+            $user,
         );
     }
 
@@ -199,9 +136,12 @@ class ManualActionHandleTest extends TestCase
         $user = User::factory()->create();
         $company = Company::factory()->create();
 
-        $bindings = ['company' => $company, 'logo' => new SystemFile($this->getAssetPath())];
         $this->expectExceptionMessage('No query results for model');
-        SendCompanyRegistrationMail::handleManual(new BindingsContainer($bindings), $user);
+        SendManualCompanyRegistrationMail::handleManual(
+            $company,
+            new SystemFile($this->getAssetPath()),
+            $user,
+        );
     }
 
     public function test_handle_manual_action_with_scoped_settings_conflicts()
@@ -216,6 +156,10 @@ class ManualActionHandleTest extends TestCase
         $copedSettings->save();
 
         $this->expectExceptionMessage('cannot resolve conflict between several scoped settings');
-        SendCompanyRegistrationMail::handleManual(new BindingsContainer(['company' => $company]), $user);
+        SendManualCompanyRegistrationMail::handleManual(
+            $company,
+            new SystemFile($this->getAssetPath()),
+            $user,
+        );
     }
 }

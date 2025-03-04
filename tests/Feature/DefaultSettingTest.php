@@ -77,7 +77,7 @@ class DefaultSettingTest extends TestCase
     public function test_update_manual_action_settings()
     {
         $defaultSetting = ManualAction::factory([
-            'type' => 'send-company-email',
+            'type' => 'send-manual-company-email',
         ])->sendMailRegistrationCompany()
             ->create()
             ->defaultSetting;
@@ -107,7 +107,7 @@ class DefaultSettingTest extends TestCase
     public function test_update_manual_action_settings_missing_required()
     {
         $defaultSetting = ManualAction::factory([
-            'type' => 'send-company-email',
+            'type' => 'send-manual-company-email',
         ])->sendMailRegistrationCompany()
             ->create()
             ->defaultSetting;

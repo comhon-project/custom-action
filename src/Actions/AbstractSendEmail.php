@@ -4,14 +4,13 @@ declare(strict_types=1);
 
 namespace Comhon\CustomAction\Actions;
 
-use Comhon\CustomAction\Contracts\BindingsContainerInterface;
 use Comhon\CustomAction\Contracts\CustomActionInterface;
 use Comhon\CustomAction\Contracts\HasBindingsInterface;
 use Comhon\CustomAction\Contracts\HasTimezonePreferenceInterface;
 use Comhon\CustomAction\Contracts\MailableEntityInterface;
+use Comhon\CustomAction\Exceptions\SendEmailActionException;
 use Comhon\CustomAction\Mail\Custom;
 use Comhon\CustomAction\Models\LocalizedSetting;
-use Comhon\CustomAction\Models\Setting;
 use Comhon\CustomAction\Rules\RuleHelper;
 use Illuminate\Bus\Queueable;
 use Illuminate\Foundation\Bus\Dispatchable;
@@ -25,22 +24,11 @@ abstract class AbstractSendEmail implements CustomActionInterface, HasBindingsIn
     use Dispatchable,
         InteractsWithQueue,
         InteractWithBindingsTrait,
-        InteractWithLocalizedSettingsTrait,
+        InteractWithSettingsTrait,
         Queueable,
         SerializesModels;
 
     const RECIPIENT_TYPES = ['to', 'cc', 'bcc'];
-
-    /**
-     * @param  mixed  $to  force the email recipient(s) and ignore recipients defined in settings.
-     */
-    public function __construct(
-        protected Setting $setting,
-        protected ?BindingsContainerInterface $bindingsContainer = null,
-        protected mixed $to = null,
-    ) {
-        //
-    }
 
     /**
      * Indicates if each mail should be sent asynchronously.
@@ -117,22 +105,23 @@ abstract class AbstractSendEmail implements CustomActionInterface, HasBindingsIn
     {
         $localizedMailInfos = [];
 
-        $validatedReceivers = $this->getRecipients($this->getValidatedBindings(), ['to']);
+        $validatedReceivers = $this->getRecipients($this->getAllValidatedBindings(), ['to']);
 
         // we use not validated and not localized bindings to find recipients.
         // by using not validating bindings, we keep original object instances.
         // (usefull for models that implement MailableEntityInterface)
-        $bindings = [
-            ...$this->bindingsContainer?->getBindingValues() ?? [],
-            ...$this->getBindingValues(),
-        ];
+        $bindings = $this->getAllBindings(null, true);
 
         $from = $this->getFrom($bindings);
         $recipients = $this->getRecipients($bindings);
-        $tos = $recipients['to'];
+        $tos = $recipients['to'] ?? null;
+
+        if (empty($tos)) {
+            throw new SendEmailActionException($this->getSetting(), 'there is no mail recipients defined');
+        }
 
         foreach ($tos as $index => $to) {
-            $localizedSetting = $this->findLocalizedSettingOrFail($to, true);
+            $localizedSetting = $this->getLocalizedSettingOrFail($to, true);
             $locale = $localizedSetting->locale;
             $localizedMailInfos[$locale] ??= $this->getLocalizedMailInfos($localizedSetting, $from);
             $mailInfos = &$localizedMailInfos[$locale];
@@ -164,7 +153,7 @@ abstract class AbstractSendEmail implements CustomActionInterface, HasBindingsIn
 
     protected function getLocalizedMailInfos(LocalizedSetting $localizedSetting, ?Address $from)
     {
-        $bindings = $this->getValidatedBindings($localizedSetting->locale, true);
+        $bindings = $this->getAllValidatedBindings($localizedSetting->locale, true);
 
         return [
             'bindings' => $bindings,
@@ -189,14 +178,11 @@ abstract class AbstractSendEmail implements CustomActionInterface, HasBindingsIn
 
     protected function normalizeAddress($value): Address
     {
-        if (is_string($value)) {
-            return new Address($value);
-        } elseif (is_array($value)) {
-            return new Address($value['email'], $value['name'] ?? null);
-        } elseif ($value instanceof MailableEntityInterface) {
-            return new Address($value->getEmail(), $value->getEmailName());
-        } elseif (is_object($value)) {
-            return new Address($value->email, $value->name ?? null);
-        }
+        return match (true) {
+            is_string($value) => new Address($value),
+            is_array($value) => new Address($value['email'], $value['name'] ?? null),
+            $value instanceof MailableEntityInterface => new Address($value->getEmail(), $value->getEmailName()),
+            is_object($value) => new Address($value->email, $value->name ?? null),
+        };
     }
 }

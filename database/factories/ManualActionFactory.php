@@ -28,7 +28,7 @@ class ManualActionFactory extends Factory
     public function definition()
     {
         return [
-            'type' => 'send-company-email',
+            'type' => 'send-manual-company-email',
         ];
     }
 

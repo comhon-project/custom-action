@@ -16,7 +16,7 @@ class WorkbenchServiceProvider extends ServiceProvider
     {
         $this->app->singleton(ManualActionTypeCatalog::class, function ($app) {
             return new ManualActionTypeCatalog([
-                'send-company-email',
+                'send-manual-company-email',
             ]);
         });
         $this->app->singleton(EventCatalog::class, function ($app) {

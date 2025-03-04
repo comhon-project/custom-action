@@ -2,16 +2,30 @@
 
 namespace Comhon\CustomAction\Actions;
 
+use Comhon\CustomAction\ActionSettings\SettingSelector;
 use Comhon\CustomAction\Exceptions\LocalizedSettingNotFoundException;
 use Comhon\CustomAction\Models\LocalizedSetting;
+use Comhon\CustomAction\Models\Setting;
 use Illuminate\Contracts\Translation\HasLocalePreference;
 
 /**
- * @property \Comhon\CustomAction\Models\Setting $setting
+ * @property \Comhon\CustomAction\Models\Action $action
  */
-trait InteractWithLocalizedSettingsTrait
+trait InteractWithSettingsTrait
 {
-    private $localizedSettingCache = [];
+    protected Setting $setting;
+
+    private array $localizedSettingCache = [];
+
+    public function getSetting(): Setting
+    {
+        if (! isset($this->setting)) {
+            $bindings = $this->getAllBindings(null, true);
+            $this->setting = SettingSelector::select($this->action, $bindings);
+        }
+
+        return $this->setting;
+    }
 
     protected function getLocaleString(HasLocalePreference|array|string|null $locale): ?string
     {
@@ -25,7 +39,7 @@ trait InteractWithLocalizedSettingsTrait
     }
 
     /**
-     * Find action localized settings according given locale
+     * Get action localized settings according given locale
      *
      * If there is no localized settings found with given locale,
      * it try to find localized settings with fallback locales defined on your app
@@ -33,7 +47,7 @@ trait InteractWithLocalizedSettingsTrait
      * @param  bool  $useCache  if true, cache bindings for the action instance,
      *                          and get value from it if exists.
      */
-    public function findLocalizedSetting(
+    public function getLocalizedSetting(
         HasLocalePreference|array|string|null $locale = null,
         bool $useCache = false
     ): ?LocalizedSetting {
@@ -41,7 +55,7 @@ trait InteractWithLocalizedSettingsTrait
         if ($useCache && isset($this->localizedSettingCache[$locale])) {
             return $this->localizedSettingCache[$locale];
         }
-        $localizedSetting = $this->setting->getLocalizedSettings($locale);
+        $localizedSetting = $this->getSetting()->getLocalizedSettings($locale);
 
         if ($useCache) {
             $this->localizedSettingCache[$locale] = $localizedSetting;
@@ -51,7 +65,7 @@ trait InteractWithLocalizedSettingsTrait
     }
 
     /**
-     * Find action localized settings according given locale
+     * Get action localized settings according given locale
      *
      * If there is no localized settings found with given locale,
      * it try to find localized settings with fallback locales defined on your app.
@@ -61,11 +75,11 @@ trait InteractWithLocalizedSettingsTrait
      * @param  bool  $useCache  if true, cache bindings for the action instance,
      *                          and get value from it if exists.
      */
-    public function findLocalizedSettingOrFail(
+    public function getLocalizedSettingOrFail(
         HasLocalePreference|array|string|null $locale = null,
         bool $useCache = false
     ): LocalizedSetting {
-        return $this->findLocalizedSetting($locale, $useCache)
-            ?? throw new LocalizedSettingNotFoundException($this->setting, $this->getLocaleString($locale));
+        return $this->getLocalizedSetting($locale, $useCache)
+            ?? throw new LocalizedSettingNotFoundException($this->getSetting(), $this->getLocaleString($locale));
     }
 }

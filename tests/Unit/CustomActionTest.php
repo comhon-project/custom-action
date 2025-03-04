@@ -2,14 +2,15 @@
 
 namespace Tests\Unit;
 
-use App\Actions\SendCompanyRegistrationMail;
+use App\Actions\SendManualCompanyRegistrationMail;
 use App\Events\CompanyRegistered;
 use App\Models\Company;
 use App\Models\User;
-use Comhon\CustomAction\Bindings\BindingsContainer;
 use Comhon\CustomAction\Bindings\EventBindingsContainer;
+use Comhon\CustomAction\Files\SystemFile;
 use Comhon\CustomAction\Models\ManualAction;
 use Tests\SetUpWithModelRegistrationTrait;
+use Tests\Support\Utils;
 use Tests\TestCase;
 
 class CustomActionTest extends TestCase
@@ -21,15 +22,11 @@ class CustomActionTest extends TestCase
         ManualAction::factory()->sendMailRegistrationCompany([], false, false)->create();
 
         $this->expectExceptionMessage('there is no mail recipients defined');
-        SendCompanyRegistrationMail::handleManual(new BindingsContainer([]));
-    }
-
-    public function test_handle_without_bindings_container()
-    {
-        ManualAction::factory()->sendMailRegistrationCompany([], false, false)->create();
-
-        $this->expectExceptionMessage('there is no mail recipients defined');
-        SendCompanyRegistrationMail::handleManual();
+        SendManualCompanyRegistrationMail::handleManual(
+            Company::factory()->create(),
+            new SystemFile(Utils::joinPaths(Utils::getTestPath('Data'), 'jc.jpeg')),
+            null,
+        );
     }
 
     public function test_get_events_bindings_container()

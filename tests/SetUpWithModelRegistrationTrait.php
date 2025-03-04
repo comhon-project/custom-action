@@ -4,7 +4,8 @@ namespace Tests;
 
 use App\Actions\BadAction;
 use App\Actions\MyActionWithoutBindings;
-use App\Actions\SendCompanyRegistrationMail;
+use App\Actions\SendAutomaticCompanyRegistrationMail;
+use App\Actions\SendManualCompanyRegistrationMail;
 use App\Events\BadEvent;
 use App\Events\CompanyRegistered;
 use App\Events\MyEventWithoutBindings;
@@ -27,7 +28,8 @@ trait SetUpWithModelRegistrationTrait
             'company-registered' => CompanyRegistered::class,
             'send-email' => SendEmail::class,
             'queue-email' => QueueEmail::class,
-            'send-company-email' => SendCompanyRegistrationMail::class,
+            'send-automatic-company-email' => SendAutomaticCompanyRegistrationMail::class,
+            'send-manual-company-email' => SendManualCompanyRegistrationMail::class,
 
             'my-event-without-bindings' => MyEventWithoutBindings::class,
             'my-action-without-bindings' => MyActionWithoutBindings::class,

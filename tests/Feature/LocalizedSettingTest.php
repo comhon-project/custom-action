@@ -126,10 +126,11 @@ class LocalizedSettingTest extends TestCase
     {
         $resource = $settingClass == DefaultSetting::class ? 'default-settings' : 'scoped-settings';
         $withAction = $fromEventAction ? 'withEventAction' : 'withManualAction';
+        $typeAction = $fromEventAction ? 'send-automatic-company-email' : 'send-manual-company-email';
 
         /** @var Setting $setting */
         $setting = $settingClass::factory()
-            ->{$withAction}('send-company-email')
+            ->{$withAction}($typeAction)
             ->create();
         $originalSettingsEn = [
             'subject' => 'original subject',
@@ -162,10 +163,11 @@ class LocalizedSettingTest extends TestCase
     {
         $resource = $settingClass == DefaultSetting::class ? 'default-settings' : 'scoped-settings';
         $withAction = $fromEventAction ? 'withEventAction' : 'withManualAction';
+        $typeAction = $fromEventAction ? 'send-automatic-company-email' : 'send-manual-company-email';
 
         /** @var Setting $setting */
         $setting = $settingClass::factory()
-            ->{$withAction}('send-company-email')->create();
+            ->{$withAction}($typeAction)->create();
 
         /** @var User $user */
         $user = User::factory()->create();
@@ -218,10 +220,11 @@ class LocalizedSettingTest extends TestCase
     public function test_update_action_localized_settings_with_action_localized_setting($settingClass, $fromEventAction)
     {
         $withAction = $fromEventAction ? 'withEventAction' : 'withManualAction';
+        $typeAction = $fromEventAction ? 'send-automatic-company-email' : 'send-manual-company-email';
 
         /** @var Setting $setting */
         $setting = $settingClass::factory()
-            ->{$withAction}('send-company-email')
+            ->{$withAction}($typeAction)
             ->create();
         $localizedSetting = new LocalizedSetting;
         $localizedSetting->settings = [

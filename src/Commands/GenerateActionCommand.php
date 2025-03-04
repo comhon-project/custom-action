@@ -2,13 +2,16 @@
 
 namespace Comhon\CustomAction\Commands;
 
+use Comhon\CustomAction\Actions\CallableFromEventTrait;
 use Comhon\CustomAction\Actions\HandleManualActionTrait;
 use Comhon\CustomAction\Actions\InteractWithBindingsTrait;
-use Comhon\CustomAction\Actions\InteractWithLocalizedSettingsTrait;
-use Comhon\CustomAction\Contracts\BindingsContainerInterface;
+use Comhon\CustomAction\Actions\InteractWithSettingsTrait;
+use Comhon\CustomAction\Bindings\EventBindingsContainer;
+use Comhon\CustomAction\Contracts\CallableFromEventInterface;
 use Comhon\CustomAction\Contracts\CustomActionInterface;
+use Comhon\CustomAction\Contracts\HasBindingsInterface;
 use Comhon\CustomAction\Facades\CustomActionModelResolver;
-use Comhon\CustomAction\Models\Setting;
+use Comhon\CustomAction\Models\Action;
 use Illuminate\Bus\Queueable;
 use Illuminate\Console\Command;
 use Illuminate\Contracts\Queue\ShouldQueue;
@@ -18,9 +21,24 @@ use Illuminate\Queue\SerializesModels;
 
 class GenerateActionCommand extends Command
 {
-    public $signature = 'custom-action:generate {name} {--extends=} {--manual}';
+    public $signature = 'custom-action:generate {name} {--extends=} {--manual} {--event} {--has-bindings}';
 
     public $description = 'generate a custom action class';
+
+    private $withoutEventConstructor = <<<'EOT'
+    public function __construct(protected Action $action) {}
+
+
+EOT;
+
+    private $withEventConstructor = <<<'EOT'
+    public function __construct(
+        protected Action $action,
+        protected ?EventBindingsContainer $eventBindingsContainer = null,
+    ) {}
+
+
+EOT;
 
     public function handle(): int
     {
@@ -29,11 +47,37 @@ class GenerateActionCommand extends Command
 
         $directory = app()->path('Actions'.DIRECTORY_SEPARATOR.'CustomActions');
         $imports = [];
+
         $extends = '';
-        $implements = '';
-        $uses = [];
-        $construct = '';
         $extendsClass = null;
+
+        $implements = [];
+        $interfaces = [
+            CustomActionInterface::class,
+        ];
+
+        $uses = [];
+        $traits = [
+            Dispatchable::class,
+            Queueable::class,
+            InteractsWithQueue::class,
+            SerializesModels::class,
+            InteractWithBindingsTrait::class,
+            InteractWithSettingsTrait::class,
+        ];
+
+        $construct = '';
+
+        if ($this->option('manual')) {
+            $traits[] = HandleManualActionTrait::class;
+        }
+        if ($this->option('event')) {
+            $interfaces[] = CallableFromEventInterface::class;
+            $traits[] = CallableFromEventTrait::class;
+        }
+        if ($this->option('has-bindings')) {
+            $interfaces[] = HasBindingsInterface::class;
+        }
 
         $returnSettingsSchema = '[]';
         $returnLocalizedSettingsSchema = '[]';
@@ -48,11 +92,7 @@ class GenerateActionCommand extends Command
             $extends = ' extends '.$explode[count($explode) - 1];
         }
 
-        if (! $extendsClass || ! is_subclass_of($extendsClass, CustomActionInterface::class)) {
-            $imports[] = CustomActionInterface::class;
-            $explode = explode('\\', CustomActionInterface::class);
-            $implements = ' implements '.$explode[count($explode) - 1];
-        } else {
+        if ($extendsClass && is_subclass_of($extendsClass, CustomActionInterface::class)) {
             $returnSettingsSchema = 'parent::getSettingsSchema($eventClassContext)';
             $returnLocalizedSettingsSchema = 'parent::getLocalizedSettingsSchema($eventClassContext)';
         }
@@ -61,44 +101,41 @@ class GenerateActionCommand extends Command
             $imports[] = ShouldQueue::class;
         }
 
-        $traits = $extendsClass ? class_uses_recursive($extendsClass) : [];
-        $actionTraits = [
-            Dispatchable::class,
-            Queueable::class,
-            InteractsWithQueue::class,
-            SerializesModels::class,
-            InteractWithBindingsTrait::class,
-            InteractWithLocalizedSettingsTrait::class,
-        ];
-        if ($this->option('manual')) {
-            $actionTraits[] = HandleManualActionTrait::class;
-        }
-        foreach ($actionTraits as $actionTrait) {
-            if (! $extendsClass || ! in_array($actionTrait, $traits)) {
-                $imports[] = $actionTrait;
-                $explode = explode('\\', $actionTrait);
+        $parentTraits = $extendsClass ? class_uses_recursive($extendsClass) : [];
+        foreach ($traits as $trait) {
+            if (! $extendsClass || ! in_array($trait, $parentTraits)) {
+                $imports[] = $trait;
+                $explode = explode('\\', $trait);
                 $uses[] = $explode[count($explode) - 1];
             }
         }
 
-        if (! $extendsClass || ! method_exists($extendsClass, '__construct')) {
-            $imports[] = Setting::class;
-            $imports[] = BindingsContainerInterface::class;
+        foreach ($interfaces as $interface) {
+            if (! $extendsClass || ! is_subclass_of($extendsClass, $interface)) {
+                $imports[] = $interface;
+                $explode = explode('\\', $interface);
+                $implements[] = $explode[count($explode) - 1];
+            }
+        }
 
-            $construct = <<<'EOT'
-    public function __construct(
-        protected Setting $setting,
-        protected ?BindingsContainerInterface $bindingsContainer = null,
-    ) {
-        //
-    }
+        $hasConstruct = ($extendsClass && method_exists($extendsClass, '__construct'))
+            || in_array(CallableFromEventTrait::class, $traits)
+            || in_array(CallableFromEventTrait::class, $parentTraits);
 
+        if (! $hasConstruct) {
+            $imports[] = Action::class;
 
-EOT;
+            if ($this->option('event') || ($extendsClass && is_subclass_of($extendsClass, CallableFromEventInterface::class))) {
+                $imports[] = EventBindingsContainer::class;
+                $construct = $this->withEventConstructor;
+            } else {
+                $construct = $this->withoutEventConstructor;
+            }
         }
 
         $imports = collect($imports)->sort()->map(fn ($import) => "use $import;")->implode(PHP_EOL);
-        $uses = ! empty($uses)
+        $implements = count($implements) ? ' implements '.collect($implements)->implode(', ') : '';
+        $uses = count($uses)
             ? '    use '.collect($uses)->implode(','.PHP_EOL.'        ').';'.PHP_EOL.PHP_EOL
             : '';
 

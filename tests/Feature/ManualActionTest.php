@@ -18,10 +18,10 @@ class ManualActionTest extends TestCase
     {
         /** @var User $user */
         $user = User::factory()->hasConsumerAbility()->create();
-        $response = $this->actingAs($user)->getJson('custom/manual-actions/send-company-email');
+        $response = $this->actingAs($user)->getJson('custom/manual-actions/send-manual-company-email');
         $response->assertJson([
             'data' => [
-                'type' => 'send-company-email',
+                'type' => 'send-manual-company-email',
                 'default_setting' => null,
             ],
         ]);
@@ -30,17 +30,17 @@ class ManualActionTest extends TestCase
     public function test_get_manual_action_created()
     {
         $defaultSetting = ManualAction::factory([
-            'type' => 'send-company-email',
+            'type' => 'send-manual-company-email',
         ])->sendMailRegistrationCompany()
             ->create()
             ->defaultSetting;
         /** @var User $user */
         $user = User::factory()->hasConsumerAbility()->create();
 
-        $response = $this->actingAs($user)->getJson('custom/manual-actions/send-company-email');
+        $response = $this->actingAs($user)->getJson('custom/manual-actions/send-manual-company-email');
         $response->assertJson([
             'data' => [
-                'type' => 'send-company-email',
+                'type' => 'send-manual-company-email',
                 'default_setting' => [
                     'id' => $defaultSetting->id,
                     'settings' => [
@@ -79,7 +79,7 @@ class ManualActionTest extends TestCase
     {
         /** @var User $user */
         $user = User::factory()->create();
-        $this->actingAs($user)->getJson('custom/manual-actions/send-company-email')
+        $this->actingAs($user)->getJson('custom/manual-actions/send-manual-company-email')
             ->assertForbidden();
     }
 }

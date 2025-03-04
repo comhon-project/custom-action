@@ -4,18 +4,14 @@ namespace App\Actions;
 
 use Comhon\CustomAction\Actions\HandleManualActionTrait;
 use Comhon\CustomAction\Actions\SendEmail;
-use Comhon\CustomAction\Rules\RuleHelper;
 
-class SendCompanyRegistrationMail extends SendEmail
+class SendAutomaticCompanyRegistrationMail extends SendEmail
 {
     use HandleManualActionTrait;
 
     protected static function getCommonBindingSchema(): array
     {
-        return [
-            'company.name' => 'string',
-            'logo' => RuleHelper::getRuleName('is').':stored-file',
-        ];
+        return [];
     }
 
     public static function getSettingsSchema(?string $eventClassContext = null): array

@@ -50,7 +50,7 @@ class EventDefinitionTest extends TestCase
                     ],
                     'allowed_actions' => [
                         'send-email',
-                        'send-company-email',
+                        'send-automatic-company-email',
                     ],
                 ],
             ]);
