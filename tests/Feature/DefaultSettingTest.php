@@ -175,6 +175,7 @@ class DefaultSettingTest extends TestCase
     {
         $prefixAction = $fromEventAction ? 'event-actions' : 'manual-actions';
         $actionClass = $fromEventAction ? EventAction::class : ManualAction::class;
+        $uniqueProperty = $fromEventAction ? 'id' : 'type';
 
         /** @var Action $action */
         $action = $actionClass::factory()->create();
@@ -187,7 +188,7 @@ class DefaultSettingTest extends TestCase
         /** @var User $user */
         $user = User::factory()->hasConsumerAbility()->create();
 
-        $response = $this->actingAs($user)->postJson("custom/$prefixAction/{$action->getKey()}/default-settings", [
+        $response = $this->actingAs($user)->postJson("custom/$prefixAction/{$action->$uniqueProperty}/default-settings", [
             'settings' => $input,
         ]);
         $response->assertCreated();
@@ -201,7 +202,7 @@ class DefaultSettingTest extends TestCase
         ]);
         $this->assertEquals($input, $defaultSetting->settings);
 
-        $this->actingAs($user)->postJson("custom/$prefixAction/{$action->getKey()}/default-settings", [
+        $this->actingAs($user)->postJson("custom/$prefixAction/{$action->$uniqueProperty}/default-settings", [
             'settings' => $input,
         ])->assertForbidden()
             ->assertJson([

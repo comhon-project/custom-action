@@ -23,6 +23,7 @@ class ScopedSettingTest extends TestCase
     {
         $prefixAction = $fromEventAction ? 'event-actions' : 'manual-actions';
         $actionClass = $fromEventAction ? EventAction::class : ManualAction::class;
+        $uniqueProperty = $fromEventAction ? 'id' : 'type';
 
         /** @var Action $action */
         $action = $actionClass::factory()->create();
@@ -48,7 +49,7 @@ class ScopedSettingTest extends TestCase
         $user = User::factory()->hasConsumerAbility()->create();
 
         // add scope 1
-        $response = $this->actingAs($user)->postJson("custom/$prefixAction/{$action->getKey()}/scoped-settings", [
+        $response = $this->actingAs($user)->postJson("custom/$prefixAction/{$action->$uniqueProperty}/scoped-settings", [
             'scope' => $scope1,
             'settings' => $settingsScope1,
             'name' => 'Scoped Settings 1',
@@ -67,7 +68,7 @@ class ScopedSettingTest extends TestCase
         $this->assertEquals($settingsScope1, $scopedSettings1->settings);
 
         // add scope 2
-        $response = $this->actingAs($user)->postJson("custom/$prefixAction/{$action->getKey()}/scoped-settings", [
+        $response = $this->actingAs($user)->postJson("custom/$prefixAction/{$action->$uniqueProperty}/scoped-settings", [
             'scope' => $scope2,
             'settings' => $settingsScope2,
             'name' => 'Scoped Settings 2',
@@ -86,7 +87,7 @@ class ScopedSettingTest extends TestCase
         $this->assertEquals($settingsScope2, $scopedSettings2->settings);
 
         // get all
-        $response = $this->actingAs($user)->getJson("custom/$prefixAction/{$action->getKey()}/scoped-settings");
+        $response = $this->actingAs($user)->getJson("custom/$prefixAction/{$action->$uniqueProperty}/scoped-settings");
         $response->assertJson([
             'data' => [
                 [
@@ -127,7 +128,7 @@ class ScopedSettingTest extends TestCase
         /** @var User $user */
         $user = User::factory()->hasConsumerAbility()->create();
         $params = http_build_query(['name' => 'one']);
-        $this->actingAs($user)->getJson("custom/manual-actions/{$action->getKey()}/scoped-settings?$params")
+        $this->actingAs($user)->getJson("custom/manual-actions/{$action->type}/scoped-settings?$params")
             ->assertOk()
             ->assertJsonCount(1, 'data')
             ->assertJson([

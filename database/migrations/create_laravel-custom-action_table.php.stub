@@ -68,12 +68,11 @@ return new class extends Migration
             $table->softDeletes();
         });
         Schema::create('custom_manual_actions', function (Blueprint $table) {
-            $table->string('type', 63);
+            $table->id();
+            $table->string('type', 63)->unique();
 
             $table->timestamps();
             $table->softDeletes();
-
-            $table->primary('type');
         });
     }
 

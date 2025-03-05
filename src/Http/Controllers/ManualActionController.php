@@ -70,7 +70,7 @@ class ManualActionController extends Controller
             throw new NotFoundHttpException('not found');
         }
 
-        $manualAction = ManualAction::with('defaultSetting')->find($type);
+        $manualAction = ManualAction::with('defaultSetting')->firstWhere('type', $type);
         if (! $manualAction) {
             $manualAction = new ManualAction;
             $manualAction->type = $type;

@@ -11,7 +11,7 @@ trait CallableManually
     public function getAction(): Action
     {
         $type = CustomActionModelResolver::getUniqueName(static::class);
-        $action = ManualAction::find($type);
+        $action = ManualAction::firstWhere('type', $type);
         if (! $action) {
             throw new \Exception("manual action $type not found");
         }
