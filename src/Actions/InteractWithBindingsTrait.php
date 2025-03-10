@@ -2,9 +2,12 @@
 
 namespace Comhon\CustomAction\Actions;
 
+use Comhon\CustomAction\Bindings\Translatable;
 use Comhon\CustomAction\Contracts\CallableFromEventInterface;
 use Comhon\CustomAction\Contracts\HasBindingsInterface;
+use Comhon\CustomAction\Contracts\HasTranslatableBindingsInterface;
 use Comhon\CustomAction\Facades\BindingsValidator;
+use Illuminate\Support\Arr;
 
 trait InteractWithBindingsTrait
 {
@@ -69,10 +72,39 @@ trait InteractWithBindingsTrait
             }
             $bindings = array_merge($bindings, $bindingsFromAction);
         }
+
+        if ($this instanceof HasTranslatableBindingsInterface) {
+            $this->setTranslationValues($bindings, $this->getTranslatableBindings());
+        }
+
         if ($useCache) {
             $this->validatedBindingsCache[$locale] = $bindings;
         }
 
         return $bindings;
+    }
+
+    public static function setTranslationValues(array &$bindings, array $translationKeys)
+    {
+        $retrieveBindingRecursive = function (&$bindings, $path, $level, $prefix) use (&$retrieveBindingRecursive) {
+            $currentKey = $path[$level] ?? null;
+            if (! isset($currentKey)) {
+                $bindings = new Translatable($bindings, $prefix);
+            }
+            if (! Arr::accessible($bindings)) {
+                return;
+            }
+            if ($currentKey == '*') {
+                foreach ($bindings as &$subValue) {
+                    $retrieveBindingRecursive($subValue, $path, $level + 1, $prefix);
+                }
+            } elseif (Arr::exists($bindings, $currentKey)) {
+                $retrieveBindingRecursive($bindings[$currentKey], $path, $level + 1, $prefix);
+            }
+        };
+
+        foreach ($translationKeys as $bindingKey => $prefix) {
+            $retrieveBindingRecursive($bindings, explode('.', $bindingKey), 0, $prefix);
+        }
     }
 }

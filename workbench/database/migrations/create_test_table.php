@@ -28,6 +28,8 @@ return new class extends Migration
         Schema::create('companies', function (Blueprint $table) {
             $table->id();
             $table->string('name', 255);
+            $table->string('status', 15);
+            $table->json('languages');
             $table->timestamps();
         });
     }

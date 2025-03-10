@@ -23,5 +23,7 @@ class Company extends Model
      *
      * @var array<string, string>
      */
-    protected $casts = [];
+    protected $casts = [
+        'languages' => 'array',
+    ];
 }

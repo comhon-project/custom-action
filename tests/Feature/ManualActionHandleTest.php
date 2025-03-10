@@ -8,10 +8,12 @@ use App\Models\User;
 use App\Models\UserWithoutPreference;
 use Comhon\CustomAction\Files\SystemFile;
 use Comhon\CustomAction\Mail\Custom;
+use Comhon\CustomAction\Models\LocalizedSetting;
 use Comhon\CustomAction\Models\ManualAction;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Mail\Mailables\Attachment;
 use Illuminate\Support\Facades\App;
+use Illuminate\Support\Facades\Lang;
 use Illuminate\Support\Facades\Mail;
 use PHPUnit\Framework\Attributes\DataProvider;
 use Tests\SetUpWithModelRegistrationTrait;
@@ -161,5 +163,52 @@ class ManualActionHandleTest extends TestCase
             new SystemFile($this->getAssetPath()),
             $user,
         );
+    }
+
+    #[DataProvider('providerHandleManualActionWithTranslatatbleBindingsSuccess')]
+    public function test_handle_manual_action_with_translatable_bindings_success($locale, $expected)
+    {
+        Lang::addLines(['status.draft' => 'Draft!'], 'en');
+        Lang::addLines(['status.draft' => 'Brouillon!'], 'fr');
+        Lang::addLines(['languages.fr' => 'French!'], 'en');
+        Lang::addLines(['languages.fr' => 'Francais!'], 'fr');
+        App::setLocale($locale);
+        App::setFallbackLocale($locale);
+
+        $user = User::factory(['preferred_locale' => $locale])->create();
+        $company = Company::factory()->create();
+        ManualAction::factory()->sendMailRegistrationCompany()->create();
+
+        foreach (LocalizedSetting::all() as $localizedSetting) {
+            $settings = $localizedSetting->settings;
+            $settings['subject'] = '{{ company.status }} {{ company.status.translate() }} {{ company.languages.0.locale.translate() }}';
+            $localizedSetting->settings = $settings;
+            $localizedSetting->save();
+        }
+
+        Mail::fake();
+
+        SendManualCompanyRegistrationMail::dispatch(
+            $company,
+            new SystemFile($this->getAssetPath()),
+            $user,
+        );
+
+        $mails = [];
+        Mail::assertSent(Custom::class, 1);
+        Mail::assertSent(Custom::class, function (Custom $mail) use (&$mails) {
+            $mails[] = $mail;
+
+            return true;
+        });
+        $mails[0]->assertHasSubject($expected);
+    }
+
+    public static function providerHandleManualActionWithTranslatatbleBindingsSuccess()
+    {
+        return [
+            ['en', 'draft Draft! French!'],
+            ['fr', 'draft Brouillon! Francais!'],
+        ];
     }
 }

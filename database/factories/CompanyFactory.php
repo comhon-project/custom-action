@@ -26,6 +26,11 @@ class CompanyFactory extends Factory
     {
         return [
             'name' => str_replace("'", '', fake()->company()),
+            'status' => 'draft',
+            'languages' => [
+                ['locale' => 'fr'],
+                ['locale' => 'en'],
+            ],
         ];
     }
 }

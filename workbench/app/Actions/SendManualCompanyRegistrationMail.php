@@ -7,13 +7,14 @@ use App\Models\User;
 use App\Models\UserWithoutPreference;
 use Comhon\CustomAction\Actions\AbstractSendEmail;
 use Comhon\CustomAction\Actions\CallableManually;
+use Comhon\CustomAction\Contracts\HasTranslatableBindingsInterface;
 use Comhon\CustomAction\Exceptions\SendEmailActionException;
 use Comhon\CustomAction\Files\SystemFile;
 use Comhon\CustomAction\Models\LocalizedSetting;
 use Comhon\CustomAction\Rules\RuleHelper;
 use Illuminate\Mail\Mailables\Address;
 
-class SendManualCompanyRegistrationMail extends AbstractSendEmail
+class SendManualCompanyRegistrationMail extends AbstractSendEmail implements HasTranslatableBindingsInterface
 {
     use CallableManually;
 
@@ -45,7 +46,17 @@ class SendManualCompanyRegistrationMail extends AbstractSendEmail
     {
         return [
             'company.name' => 'string',
+            'company.status' => 'string',
+            'company.languages.*.locale' => 'string',
             'logo' => RuleHelper::getRuleName('is').':stored-file',
+        ];
+    }
+
+    public function getTranslatableBindings(): array
+    {
+        return [
+            'company.status' => 'status.',
+            'company.languages.*.locale' => 'languages.',
         ];
     }
 
