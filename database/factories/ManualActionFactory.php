@@ -47,4 +47,11 @@ class ManualActionFactory extends Factory
             }
         });
     }
+
+    public function withBindingsTranslations(): Factory
+    {
+        return $this->afterMaking(function (ManualAction $manualAction) {
+            $manualAction->type = 'send-manual-company-email-with-bindings-translations';
+        });
+    }
 }

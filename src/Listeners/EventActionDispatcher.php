@@ -2,7 +2,6 @@
 
 namespace Comhon\CustomAction\Listeners;
 
-use Comhon\CustomAction\Bindings\EventBindingsContainer;
 use Comhon\CustomAction\Contracts\CallableFromEventInterface;
 use Comhon\CustomAction\Contracts\CustomActionInterface;
 use Comhon\CustomAction\Contracts\CustomEventInterface;
@@ -26,13 +25,8 @@ class EventActionDispatcher
         $query = EventListener::with('eventActions.defaultSetting')
             ->where('event', $eventUniqueName)->whereHas('eventActions');
 
-        $bindingsContainer = $event instanceof HasBindingsInterface
-            ? new EventBindingsContainer($event)
-            : null;
-        $bindings = $bindingsContainer?->getBindingValues();
-
-        $listeners = $bindings !== null
-            ? BindingsScoper::getEventListeners($query, $bindings)
+        $listeners = $event instanceof HasBindingsInterface
+            ? BindingsScoper::getEventListeners($query, $event->getBindingValues())
             : $query->lazy();
 
         foreach ($listeners as $listener) {
@@ -47,7 +41,7 @@ class EventActionDispatcher
                         throw new InvalidActionTypeException($eventAction);
                     }
 
-                    $actionClass::dispatch($eventAction, $bindingsContainer);
+                    $actionClass::dispatch($eventAction, $event);
                 } catch (\Throwable $th) {
                     EventActionError::dispatch($eventAction, $th);
                 }

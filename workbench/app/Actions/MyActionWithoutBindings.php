@@ -11,12 +11,10 @@ use Illuminate\Bus\Queueable;
 use Illuminate\Foundation\Bus\Dispatchable;
 use Illuminate\Queue\InteractsWithQueue;
 use Illuminate\Queue\SerializesModels;
-use Tests\Support\Caller;
 
 class MyActionWithoutBindings implements CallableFromEventInterface, CustomActionInterface
 {
     use CallableFromEventTrait,
-        CallableFromEventTrait,
         Dispatchable,
         InteractsWithQueue,
         InteractWithBindingsTrait,
@@ -36,6 +34,6 @@ class MyActionWithoutBindings implements CallableFromEventInterface, CustomActio
 
     public function handle()
     {
-        app(Caller::class)->call($this->getSetting(), $this->eventBindingsContainer);
+        // do nothing
     }
 }

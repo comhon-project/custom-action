@@ -58,4 +58,11 @@ class EventListenerFactory extends Factory
             }
         });
     }
+
+    public function withBindingsTranslations(): Factory
+    {
+        return $this->afterMaking(function (EventListener $eventListener) {
+            $eventListener->event = 'company-registered-with-bindings-translations';
+        });
+    }
 }

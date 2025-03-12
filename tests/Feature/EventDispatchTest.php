@@ -3,7 +3,7 @@
 namespace Tests\Feature;
 
 use App\Events\CompanyRegistered;
-use App\Events\MyEventWithoutBindings;
+use App\Events\CompanyRegisteredWithBindingsTranslations;
 use App\Models\Company;
 use App\Models\User;
 use Comhon\CustomAction\Actions\QueueAutomaticEmail;
@@ -15,12 +15,11 @@ use Comhon\CustomAction\Models\LocalizedSetting;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Mail\Mailables\Attachment;
 use Illuminate\Support\Facades\Event;
+use Illuminate\Support\Facades\Lang;
 use Illuminate\Support\Facades\Mail;
 use Illuminate\Support\Facades\Queue;
-use Mockery\MockInterface;
 use PHPUnit\Framework\Attributes\DataProvider;
 use Tests\SetUpWithModelRegistrationTrait;
-use Tests\Support\Caller;
 use Tests\Support\Utils;
 use Tests\TestCase;
 
@@ -81,26 +80,6 @@ class EventDispatchTest extends TestCase
             [false],
             [true],
         ];
-    }
-
-    public function test_event_listener_with_event_without_bindings()
-    {
-        // create event listener for CompanyRegistered event
-        $setting = DefaultSetting::factory()
-            ->withEventAction('my-action-without-bindings')
-            ->create();
-
-        $eventListener = $setting->action->eventListener;
-        $eventListener->event = 'my-event-without-bindings';
-        $eventListener->save();
-
-        $this->partialMock(Caller::class, function (MockInterface $mock) use ($setting) {
-            $mock->shouldReceive('call')->once()->withArgs(function ($defaultSetting, $bindingsContainer) use ($setting) {
-                return $setting->is($defaultSetting) && $bindingsContainer === null;
-            });
-        });
-
-        MyEventWithoutBindings::dispatch();
     }
 
     public function test_event_listener_with_all_available_to_properties()
@@ -399,6 +378,51 @@ class EventDispatchTest extends TestCase
 
         $mails[0]->assertHasTo($targetUser->email);
         $mails[0]->assertFrom($targetUser->email);
+    }
+
+    public function test_event_listener_with_bindings_translations()
+    {
+        Lang::addLines(['status.draft' => 'Draft!'], 'en');
+        Lang::addLines(['status.draft' => 'Brouillon!'], 'fr');
+        Lang::addLines(['languages.fr' => 'French!'], 'en');
+        Lang::addLines(['languages.fr' => 'Francais!'], 'fr');
+
+        $targetUserEn = User::factory(['preferred_locale' => 'en'])->create();
+        $otherUserFr = User::factory(['preferred_locale' => 'fr'])->create();
+        $otherUserEn = User::factory(['preferred_locale' => 'en'])->create();
+        $company = Company::factory()->create();
+
+        // create event listener for CompanyRegistered event
+        EventListener::factory()->genericRegistrationCompany([$otherUserFr->id, $otherUserEn->id])
+            ->withBindingsTranslations()
+            ->create();
+
+        foreach (LocalizedSetting::all() as $localizedSetting) {
+            $settings = $localizedSetting->settings;
+            $settings['subject'] = '{{ company.status }} {{ company.status.translate() }} {{ company.languages.0.locale.translate() }}';
+            $localizedSetting->settings = $settings;
+            $localizedSetting->save();
+        }
+
+        Mail::fake();
+
+        CompanyRegisteredWithBindingsTranslations::dispatch($company, $targetUserEn);
+
+        $mails = [];
+        Mail::assertSent(Custom::class, 3);
+        Mail::assertSent(Custom::class, function (Custom $mail) use (&$mails) {
+            $mails[] = $mail;
+
+            return true;
+        });
+        $mails[0]->assertHasTo($targetUserEn->email);
+        $mails[0]->assertHasSubject('draft Draft! French!');
+
+        $mails[1]->assertHasTo($otherUserFr->email);
+        $mails[1]->assertHasSubject('draft Brouillon! Francais!');
+
+        $mails[2]->assertHasTo($otherUserEn->email);
+        $mails[2]->assertHasSubject('draft Draft! French!');
     }
 
     public function test_event_listener_with_bindings_from_email_failure()

@@ -7,14 +7,14 @@ use App\Models\User;
 use App\Models\UserWithoutPreference;
 use Comhon\CustomAction\Actions\AbstractSendEmail;
 use Comhon\CustomAction\Actions\CallableManually;
-use Comhon\CustomAction\Contracts\HasTranslatableBindingsInterface;
 use Comhon\CustomAction\Exceptions\SendEmailActionException;
+use Comhon\CustomAction\Facades\CustomActionModelResolver;
 use Comhon\CustomAction\Files\SystemFile;
 use Comhon\CustomAction\Models\LocalizedSetting;
 use Comhon\CustomAction\Rules\RuleHelper;
 use Illuminate\Mail\Mailables\Address;
 
-class SendManualCompanyRegistrationMail extends AbstractSendEmail implements HasTranslatableBindingsInterface
+class SendManualCompanyRegistrationMail extends AbstractSendEmail
 {
     use CallableManually;
 
@@ -52,14 +52,6 @@ class SendManualCompanyRegistrationMail extends AbstractSendEmail implements Has
         ];
     }
 
-    public function getTranslatableBindings(): array
-    {
-        return [
-            'company.status' => 'status.',
-            'company.languages.*.locale' => 'languages.',
-        ];
-    }
-
     public function getBindingValues(?string $locale = null): array
     {
         return [
@@ -93,9 +85,19 @@ class SendManualCompanyRegistrationMail extends AbstractSendEmail implements Has
 
     protected function getRecipients(array $bindings, ?array $recipientTypes = null): array
     {
-        return [
-            'to' => $this->to ? [$this->to] : [],
-        ];
+        if (! $this->to) {
+            return [];
+        }
+        $tos = [$this->to];
+        $mailables = $this->getSetting()->settings['recipients']['to']['static']['mailables'] ?? null;
+        if ($mailables) {
+            foreach ($mailables as $mailable) {
+                $class = CustomActionModelResolver::getClass($mailable['recipient_type']);
+                $tos[] = $class::findOrFail($mailable['recipient_id']);
+            }
+        }
+
+        return ['to' => $tos];
     }
 
     protected function getAttachments(array $bindings, LocalizedSetting $localizedSetting): ?iterable

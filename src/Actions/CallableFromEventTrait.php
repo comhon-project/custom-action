@@ -2,14 +2,14 @@
 
 namespace Comhon\CustomAction\Actions;
 
-use Comhon\CustomAction\Bindings\EventBindingsContainer;
+use Comhon\CustomAction\Contracts\CustomEventInterface;
 use Comhon\CustomAction\Models\Action;
 
 trait CallableFromEventTrait
 {
     public function __construct(
         protected Action $action,
-        protected ?EventBindingsContainer $eventBindingsContainer = null,
+        protected CustomEventInterface $event,
     ) {}
 
     public function getAction(): Action
@@ -17,8 +17,8 @@ trait CallableFromEventTrait
         return $this->action;
     }
 
-    public function getEventBindingsContainer(): ?EventBindingsContainer
+    public function getEvent(): CustomEventInterface
     {
-        return $this->eventBindingsContainer;
+        return $this->event;
     }
 }

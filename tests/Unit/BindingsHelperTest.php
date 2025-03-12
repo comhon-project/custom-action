@@ -13,7 +13,7 @@ class BindingsHelperTest extends TestCase
         $rules = BindingsHelper::getEventBindingRules(CompanyRegistered::class, ['my.key' => 'string']);
 
         $this->assertEquals([
-            'my.key' => 'string|in:company.name,user.name,localized',
+            'my.key' => 'string|in:company.name,company.status,company.languages.*.locale,user.name,localized',
         ], $rules);
     }
 
@@ -32,7 +32,7 @@ class BindingsHelperTest extends TestCase
 
         $this->assertEquals([
             'my.key' => 'array',
-            'my.key.*' => 'string|in:company.name,user.name,localized',
+            'my.key.*' => 'string|in:company.name,company.status,company.languages.*.locale,user.name,localized',
         ], $rules);
     }
 
@@ -44,7 +44,7 @@ class BindingsHelperTest extends TestCase
         ]);
 
         $this->assertEquals([
-            'my.key' => 'string|in:company.name,user.name,localized',
+            'my.key' => 'string|in:company.name,company.status,company.languages.*.locale,user.name,localized',
             'receivers' => 'string|in:user',
         ], $rules);
     }

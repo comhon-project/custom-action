@@ -28,8 +28,8 @@ trait InteractWithBindingsTrait
         }
 
         $bindings = [];
-        if ($this instanceof CallableFromEventInterface) {
-            $bindings = $this->getEventBindingsContainer()?->getBindingValues($locale) ?? [];
+        if ($this instanceof CallableFromEventInterface && $this->getEvent() instanceof HasBindingsInterface) {
+            $bindings = $this->getEvent()->getBindingValues($locale);
         }
         if ($this instanceof HasBindingsInterface) {
             $bindings = array_merge($bindings, $this->getBindingValues($locale));
@@ -53,28 +53,25 @@ trait InteractWithBindingsTrait
         if ($useCache && isset($this->validatedBindingsCache[$locale])) {
             return $this->validatedBindingsCache[$locale];
         }
-        $bindings = [];
 
-        if ($this instanceof CallableFromEventInterface) {
-            $bindingsContainer = $this->getEventBindingsContainer();
-            $bindings = $bindingsContainer?->getBindingValues($locale) ?? [];
-            $schemaFromContainer = $bindingsContainer?->getBindingSchema();
-            if ($schemaFromContainer !== null) {
-                $bindings = BindingsValidator::getValidatedBindings($bindings, $schemaFromContainer);
-            }
+        $hasBindingsObjects = [];
+        if ($this instanceof CallableFromEventInterface && $this->getEvent() instanceof HasBindingsInterface) {
+            $hasBindingsObjects[] = $this->getEvent();
         }
-
         if ($this instanceof HasBindingsInterface) {
-            $bindingsFromAction = $this->getBindingValues($locale);
-            $schemaFromAction = $this->getBindingSchema($this);
-            if ($schemaFromAction !== null) {
-                $bindingsFromAction = BindingsValidator::getValidatedBindings($bindingsFromAction, $schemaFromAction);
-            }
-            $bindings = array_merge($bindings, $bindingsFromAction);
+            $hasBindingsObjects[] = $this;
         }
 
-        if ($this instanceof HasTranslatableBindingsInterface) {
-            $this->setTranslationValues($bindings, $this->getTranslatableBindings());
+        $bindings = [];
+        foreach ($hasBindingsObjects as $hasBindings) {
+            $currentBindings = BindingsValidator::getValidatedBindings(
+                $hasBindings->getBindingValues($locale),
+                $hasBindings->getBindingSchema($this)
+            );
+            if ($hasBindings instanceof HasTranslatableBindingsInterface) {
+                $this->setTranslationValues($currentBindings, $hasBindings->getTranslatableBindings());
+            }
+            $bindings = empty($bindings) ? $currentBindings : array_merge($bindings, $currentBindings);
         }
 
         if ($useCache) {

@@ -3,7 +3,6 @@
 namespace Database\Factories;
 
 use Comhon\CustomAction\Models\DefaultSetting;
-use Comhon\CustomAction\Models\LocalizedSetting;
 use Illuminate\Database\Eloquent\Factories\Factory;
 
 /**
@@ -30,28 +29,5 @@ class DefaultSettingFactory extends Factory
         return [
             'settings' => [],
         ];
-    }
-
-    /**
-     * registration company mail.
-     */
-    public function sendMailRegistrationCompany(?array $toOtherUserIds = null, $withAttachement = false): Factory
-    {
-        $keyReceivers = $toOtherUserIds === null ? 'bindings' : 'static';
-        $valueReceivers = $toOtherUserIds === null
-            ? ['user']
-            : collect($toOtherUserIds)->map(fn ($id) => ['recipient_type' => 'user', 'recipient_id' => $id])->all();
-
-        return $this->state(function (array $attributes) use ($keyReceivers, $valueReceivers, $withAttachement) {
-            return [
-                'settings' => [
-                    'recipients' => ['to' => [$keyReceivers => ['mailables' => $valueReceivers]]],
-                    'attachments' => $withAttachement ? ['logo'] : null,
-                ],
-            ];
-        })->afterCreating(function (DefaultSetting $action) {
-            LocalizedSetting::factory()->for($action, 'localizable')->emailSettings('en', true)->create();
-            LocalizedSetting::factory()->for($action, 'localizable')->emailSettings('fr', true)->create();
-        });
     }
 }

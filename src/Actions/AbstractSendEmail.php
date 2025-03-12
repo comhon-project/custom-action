@@ -105,7 +105,7 @@ abstract class AbstractSendEmail implements CustomActionInterface, HasBindingsIn
     {
         $localizedMailInfos = [];
 
-        $validatedReceivers = $this->getRecipients($this->getAllValidatedBindings(), ['to']);
+        $validatedReceivers = $this->getRecipients($this->getAllValidatedBindings(null, true), ['to']);
 
         // we use not validated and not localized bindings to find recipients.
         // by using not validating bindings, we keep original object instances.
