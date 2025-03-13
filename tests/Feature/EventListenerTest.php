@@ -37,9 +37,7 @@ class EventListenerTest extends TestCase
                         'event' => 'company-registered',
                         'name' => 'My Custom Event Listener',
                         'scope' => [
-                            'company' => [
-                                'name' => 'my company',
-                            ],
+                            'company.name' => 'my company',
                         ],
                     ],
                 ],

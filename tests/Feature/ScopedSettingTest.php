@@ -33,18 +33,14 @@ class ScopedSettingTest extends TestCase
             ]]]],
             ...($fromEventAction ? [] : ['test' => 'foo']),
         ];
-        $scope1 = ['company' => [
-            'name' => 'my company scope 1',
-        ]];
+        $scope1 = ['company.name' => 'my company scope 1'];
         $settingsScope2 = [
             'recipients' => ['to' => ['static' => ['mailables' => [
                 ['recipient_id' => User::factory()->create()->id, 'recipient_type' => 'user'],
             ]]]],
             ...($fromEventAction ? [] : ['test' => 'bar']),
         ];
-        $scope2 = ['company' => [
-            'name' => 'my company scope 2',
-        ]];
+        $scope2 = ['company.name' => 'my company scope 2'];
         /** @var User $user */
         $user = User::factory()->hasConsumerAbility()->create();
 
@@ -148,9 +144,7 @@ class ScopedSettingTest extends TestCase
         $settingsScope1 = [
             'recipients' => ['to' => ['bindings' => ['mailables' => ['user']]]],
         ];
-        $scope1 = ['company' => [
-            'name' => 'my company scope 1',
-        ]];
+        $scope1 = ['company.name' => 'my company scope 1'];
         /** @var User $user */
         $user = User::factory()->hasConsumerAbility()->create();
 
@@ -194,11 +188,7 @@ class ScopedSettingTest extends TestCase
                     ['recipient_id' => 789, 'recipient_type' => 'user'],
                 ]]]],
             ],
-            'scope' => [
-                'company' => [
-                    'name' => 'my company scope 1',
-                ],
-            ],
+            'scope' => ['company.name' => 'my company scope 1'],
         ])->for($action, 'action')
             ->create();
 
@@ -207,9 +197,7 @@ class ScopedSettingTest extends TestCase
                 ['recipient_id' => User::factory()->create()->id, 'recipient_type' => 'user'],
             ]]]],
         ];
-        $updatedScope = ['company' => [
-            'name' => 'my company scope 2',
-        ]];
+        $updatedScope = ['company.name' => 'my company scope 2'];
         /** @var User $user */
         $user = User::factory()->hasConsumerAbility()->create();
         $this->actingAs($user)->putJson("custom/scoped-settings/{$scopedSettings->id}", [
@@ -246,11 +234,7 @@ class ScopedSettingTest extends TestCase
                     ['recipient_id' => 789, 'recipient_type' => 'user'],
                 ]]]],
             ],
-            'scope' => [
-                'company' => [
-                    'name' => 'my company scope 1',
-                ],
-            ],
+            'scope' => ['company.name' => 'my company scope 1'],
         ])->for($action, 'action')
             ->create();
 
@@ -260,9 +244,7 @@ class ScopedSettingTest extends TestCase
                 'emails' => ['responsibles.*.email'],
             ]]],
         ];
-        $scope1 = ['company' => [
-            'name' => 'my company scope 1',
-        ]];
+        $scope1 = ['company.name' => 'my company scope 1'];
         /** @var User $user */
         $user = User::factory()->hasConsumerAbility()->create();
 

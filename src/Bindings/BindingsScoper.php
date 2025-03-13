@@ -5,6 +5,7 @@ namespace Comhon\CustomAction\Bindings;
 use Comhon\CustomAction\Contracts\BindingsScoperInterface;
 use Comhon\CustomAction\Models\Action;
 use Illuminate\Database\Eloquent\Builder;
+use Illuminate\Support\Arr;
 use Illuminate\Support\Collection;
 
 class BindingsScoper implements BindingsScoperInterface
@@ -36,11 +37,9 @@ class BindingsScoper implements BindingsScoperInterface
     private function match(object $container, array $bindings): bool
     {
         if ($container->scope) {
-            foreach ($container->scope as $modelName => $filter) {
-                foreach ($filter as $property => $value) {
-                    if (($bindings[$modelName][$property] ?? null) != $value) {
-                        return false;
-                    }
+            foreach ($container->scope as $path => $value) {
+                if (Arr::get($bindings, $path) != $value) {
+                    return false;
                 }
             }
         }

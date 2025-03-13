@@ -19,7 +19,7 @@ trait ActionFactoryTrait
             : collect($toOtherUserIds)->map(fn ($id) => ['recipient_type' => 'user', 'recipient_id' => $id])->all();
 
         ScopedSetting::factory([
-            'scope' => ['company' => ['name' => 'My VIP company']],
+            'scope' => ['company.name' => 'My VIP company'],
             'settings' => [
                 'recipients' => ['to' => [$keyReceivers => ['mailables' => $valueReceivers]]],
             ],
