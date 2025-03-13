@@ -21,7 +21,7 @@ abstract class Setting extends Model
     /**
      * get localized settings according given locale
      */
-    public function getLocalizedSettings(?string $locale = null): ?LocalizedSetting
+    public function getLocalizedSetting(?string $locale = null): ?LocalizedSetting
     {
         if ($locale) {
             $localizedSetting = $this->localizedSettings()->where('locale', $locale)->first();

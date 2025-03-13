@@ -121,7 +121,7 @@ abstract class AbstractSendEmail implements CustomActionInterface, HasBindingsIn
         }
 
         foreach ($tos as $index => $to) {
-            $localizedSetting = $this->getLocalizedSettingOrFail($to, true);
+            $localizedSetting = $this->getLocalizedSettingOrFail($to);
             $locale = $localizedSetting->locale;
             $localizedMailInfos[$locale] ??= $this->getLocalizedMailInfos($localizedSetting, $from);
             $mailInfos = &$localizedMailInfos[$locale];
