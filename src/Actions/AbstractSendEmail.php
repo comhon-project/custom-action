@@ -96,7 +96,7 @@ abstract class AbstractSendEmail implements CustomActionInterface, HasBindingsIn
         return [];
     }
 
-    public function getBindingValues(?string $locale = null): array
+    public function getBindingValues(): array
     {
         return [];
     }
@@ -104,13 +104,13 @@ abstract class AbstractSendEmail implements CustomActionInterface, HasBindingsIn
     final public function handle()
     {
         $localizedMailInfos = [];
-
-        $validatedReceivers = $this->getRecipients($this->getAllValidatedBindings(null, true), ['to']);
+        $validatedBindings = $this->getAllValidatedBindings(true);
+        $validatedReceivers = $this->getRecipients($validatedBindings, ['to']);
 
         // we use not validated and not localized bindings to find recipients.
         // by using not validating bindings, we keep original object instances.
         // (usefull for models that implement MailableEntityInterface)
-        $bindings = $this->getAllBindings(null, true);
+        $bindings = $this->getAllBindings();
 
         $from = $this->getFrom($bindings);
         $recipients = $this->getRecipients($bindings);
@@ -123,7 +123,7 @@ abstract class AbstractSendEmail implements CustomActionInterface, HasBindingsIn
         foreach ($tos as $index => $to) {
             $localizedSetting = $this->getLocalizedSettingOrFail($to);
             $locale = $localizedSetting->locale;
-            $localizedMailInfos[$locale] ??= $this->getLocalizedMailInfos($localizedSetting, $from);
+            $localizedMailInfos[$locale] ??= $this->getLocalizedMailInfos($localizedSetting, $validatedBindings, $from);
             $mailInfos = &$localizedMailInfos[$locale];
 
             $mailInfos['bindings']['to'] = $to instanceof MailableEntityInterface
@@ -151,10 +151,8 @@ abstract class AbstractSendEmail implements CustomActionInterface, HasBindingsIn
         }
     }
 
-    protected function getLocalizedMailInfos(LocalizedSetting $localizedSetting, ?Address $from)
+    protected function getLocalizedMailInfos(LocalizedSetting $localizedSetting, array $bindings, ?Address $from)
     {
-        $bindings = $this->getAllValidatedBindings($localizedSetting->locale, true);
-
         return [
             'bindings' => $bindings,
             'mail' => [

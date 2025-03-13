@@ -60,7 +60,7 @@ class ManualActionHandleTest extends TestCase
         });
         $mails[0]->assertHasTo($user->email);
         $mails[0]->assertHasSubject(
-            "Dear $user->first_name, company $company->name  (login: December 12, 2022 at 12:00 AM (UTC) December 12, 2022 at 12:00 AM (UTC))"
+            "Dear $user->first_name, company $company->name (login: December 12, 2022 at 12:00 AM (UTC) December 12, 2022 at 12:00 AM (UTC))"
         );
         $this->assertTrue($mails[0]->hasAttachment(Attachment::fromPath($this->getAssetPath())));
     }
@@ -104,7 +104,7 @@ class ManualActionHandleTest extends TestCase
         });
         $mails[0]->assertHasTo($user->email);
         $mails[0]->assertHasSubject(
-            "Dear $user->first_name, company $company->name  (login: December 12, 2022 at 12:00 AM (UTC) December 12, 2022 at 12:00 AM (UTC))"
+            "Dear $user->first_name, company $company->name (login: December 12, 2022 at 12:00 AM (UTC) December 12, 2022 at 12:00 AM (UTC))"
         );
         $this->assertTrue($mails[0]->hasAttachment(Attachment::fromPath($this->getAssetPath())));
     }

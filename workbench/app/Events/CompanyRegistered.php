@@ -60,7 +60,7 @@ class CompanyRegistered implements CustomEventInterface, HasBindingsInterface
     /**
      * Get event binding values
      */
-    public function getBindingValues(?string $locale = null): array
+    public function getBindingValues(): array
     {
         return [
             'company' => $this->company,

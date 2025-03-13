@@ -53,11 +53,11 @@ class LocalizedSettingFactory extends Factory
         return $this->state(function (array $attributes) use ($locale, $withLastLogin) {
             $settings = $locale == 'fr'
                 ? [
-                    'subject' => 'Cher·ère {{ to.first_name }}, la société {{ company.name }} {{ localized }}',
+                    'subject' => 'Cher·ère {{ to.first_name }}, la société {{ company.name }}',
                     'body' => 'Cher·ère {{ to.name }}, la société <strong>{{ company.name }}</strong> à été inscrite !',
                 ]
                 : [
-                    'subject' => 'Dear {{ to.first_name }}, company {{ company.name }} {{ localized }}',
+                    'subject' => 'Dear {{ to.first_name }}, company {{ company.name }}',
                     'body' => 'Dear {{ to.name }}, company <strong>{{ company.name }}</strong> has been registered !',
                 ];
             if ($withLastLogin) {

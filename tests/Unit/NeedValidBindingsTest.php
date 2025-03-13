@@ -12,10 +12,10 @@ class NeedValidBindingsTest extends TestCase
     {
         ManualAction::factory()->create();
         $action = new TestActionCache;
-        $res = $action->getAllValidatedBindings('en');
+        $res = $action->getAllValidatedBindings('en', false);
         $this->assertEquals(1, $res['index']);
 
-        $res = $action->getAllValidatedBindings('en');
+        $res = $action->getAllValidatedBindings('en', false);
         $this->assertEquals(2, $res['index']);
     }
 

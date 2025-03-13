@@ -20,7 +20,7 @@ trait InteractWithSettingsTrait
     public function getSetting(): Setting
     {
         if (! isset($this->setting)) {
-            $bindings = $this->getAllBindings(null, true);
+            $bindings = $this->getAllBindings();
             $this->setting = SettingSelector::select($this->getAction(), $bindings);
         }
 

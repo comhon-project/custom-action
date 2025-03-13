@@ -62,15 +62,15 @@ class EventDispatchTest extends TestCase
         $firstActionAttachementPath = Utils::joinPaths(Utils::getTestPath('Data'), 'jc.jpeg');
 
         $mails[0]->assertHasTo($targetUser->email);
-        $mails[0]->assertHasSubject("Dear $targetUser->first_name, company $company->name en (login: December 12, 2022 at 12:00 AM (UTC) December 12, 2022 at 12:00 AM (UTC))");
+        $mails[0]->assertHasSubject("Dear $targetUser->first_name, company $company->name (login: December 12, 2022 at 12:00 AM (UTC) December 12, 2022 at 12:00 AM (UTC))");
         $this->assertTrue($mails[0]->hasAttachment(Attachment::fromPath($firstActionAttachementPath)));
 
         $mails[1]->assertHasTo($otherUserFr->email);
-        $mails[1]->assertHasSubject("Cher·ère $otherUserFr->first_name, la société $company->name fr (login: 12 décembre 2022 à 00:00 (UTC) 12 décembre 2022 à 00:00 (UTC))");
+        $mails[1]->assertHasSubject("Cher·ère $otherUserFr->first_name, la société $company->name (login: 12 décembre 2022 à 00:00 (UTC) 12 décembre 2022 à 00:00 (UTC))");
         $this->assertFalse($mails[1]->hasAttachment(Attachment::fromPath($firstActionAttachementPath)));
 
         $mails[2]->assertHasTo($otherUser->email);
-        $mails[2]->assertHasSubject("Dear $otherUser->first_name, company $company->name en (login: December 12, 2022 at 12:00 AM (UTC) December 12, 2022 at 1:00 AM (Europe/Paris))");
+        $mails[2]->assertHasSubject("Dear $otherUser->first_name, company $company->name (login: December 12, 2022 at 12:00 AM (UTC) December 12, 2022 at 1:00 AM (Europe/Paris))");
         $this->assertFalse($mails[1]->hasAttachment(Attachment::fromPath($firstActionAttachementPath)));
     }
 
@@ -126,19 +126,19 @@ class EventDispatchTest extends TestCase
         });
 
         $mails[0]->assertHasTo($receiver->email);
-        $mails[0]->assertHasSubject("Cher·ère $receiver->first_name, la société $company->name fr");
+        $mails[0]->assertHasSubject("Cher·ère $receiver->first_name, la société $company->name");
 
         $mails[1]->assertHasTo('john.doe@gmail.com');
-        $mails[1]->assertHasSubject("Dear , company $company->name en");
+        $mails[1]->assertHasSubject("Dear , company $company->name");
 
         $mails[2]->assertHasTo($user->email);
-        $mails[2]->assertHasSubject("Dear $user->first_name, company $company->name en");
+        $mails[2]->assertHasSubject("Dear $user->first_name, company $company->name");
 
         $mails[3]->assertHasTo('responsible_one@gmail.com');
-        $mails[3]->assertHasSubject("Dear , company $company->name en");
+        $mails[3]->assertHasSubject("Dear , company $company->name");
 
         $mails[4]->assertHasTo('responsible_two@gmail.com');
-        $mails[4]->assertHasSubject("Dear , company $company->name en");
+        $mails[4]->assertHasSubject("Dear , company $company->name");
     }
 
     public function test_event_listener_scope_no_match()
@@ -188,9 +188,9 @@ class EventDispatchTest extends TestCase
 
         // there is a scoped settings according company name so mail subject must contain the scoped settings.
         if ($useFr) {
-            $mail->assertHasSubject("Cher·ère $user->first_name, société VIP $company->name fr (vérifié à: 11 novembre 2022 (UTC))");
+            $mail->assertHasSubject("Cher·ère $user->first_name, société VIP $company->name (vérifié à: 11 novembre 2022 (UTC))");
         } else {
-            $mail->assertHasSubject("Dear $user->first_name, VIP company $company->name en (verified at: November 11, 2022 (UTC))");
+            $mail->assertHasSubject("Dear $user->first_name, VIP company $company->name (verified at: November 11, 2022 (UTC))");
         }
     }
 

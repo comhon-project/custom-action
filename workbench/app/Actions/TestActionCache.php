@@ -62,7 +62,7 @@ class TestActionCache implements CustomActionInterface, HasBindingsInterface
         ];
     }
 
-    public function getBindingValues(?string $locale = null): array
+    public function getBindingValues(): array
     {
         return [
             'index' => ++$this->index,

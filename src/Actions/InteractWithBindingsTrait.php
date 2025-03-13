@@ -13,45 +13,16 @@ trait InteractWithBindingsTrait
 {
     private $bindingsCache = [];
 
-    private $validatedBindingsCache = [];
-
     /**
-     * get validated bindings
+     * get bindings from action and from event if action is triggered from event
      *
      * @param  bool  $useCache  if true, cache bindings for the action instance,
      *                          and get value from it if exists.
      */
-    public function getAllBindings(?string $locale = null, bool $useCache = false): array
+    public function getAllBindings(bool $withTranslations = false, bool $validated = false, bool $useCache = true): array
     {
-        if ($useCache && isset($this->bindingsCache[$locale])) {
-            return $this->bindingsCache[$locale];
-        }
-
-        $bindings = [];
-        if ($this instanceof CallableFromEventInterface && $this->getEvent() instanceof HasBindingsInterface) {
-            $bindings = $this->getEvent()->getBindingValues($locale);
-        }
-        if ($this instanceof HasBindingsInterface) {
-            $bindings = array_merge($bindings, $this->getBindingValues($locale));
-        }
-
-        if ($useCache) {
-            $this->bindingsCache[$locale] = $bindings;
-        }
-
-        return $bindings;
-    }
-
-    /**
-     * get validated bindings
-     *
-     * @param  bool  $useCache  if true, cache bindings for the action instance,
-     *                          and get value from it if exists.
-     */
-    public function getAllValidatedBindings(?string $locale = null, bool $useCache = false): array
-    {
-        if ($useCache && isset($this->validatedBindingsCache[$locale])) {
-            return $this->validatedBindingsCache[$locale];
+        if ($useCache && isset($this->bindingsCache[$withTranslations][$validated])) {
+            return $this->bindingsCache[$withTranslations][$validated];
         }
 
         $hasBindingsObjects = [];
@@ -64,21 +35,35 @@ trait InteractWithBindingsTrait
 
         $bindings = [];
         foreach ($hasBindingsObjects as $hasBindings) {
-            $currentBindings = BindingsValidator::getValidatedBindings(
-                $hasBindings->getBindingValues($locale),
-                $hasBindings->getBindingSchema($this)
-            );
-            if ($hasBindings instanceof HasTranslatableBindingsInterface) {
+            $currentBindings = $validated
+                ? BindingsValidator::getValidatedBindings(
+                    $hasBindings->getBindingValues(),
+                    $hasBindings->getBindingSchema($this)
+                )
+                : $hasBindings->getBindingValues();
+
+            if ($withTranslations && $hasBindings instanceof HasTranslatableBindingsInterface) {
                 $this->setTranslationValues($currentBindings, $hasBindings->getTranslatableBindings());
             }
             $bindings = empty($bindings) ? $currentBindings : array_merge($bindings, $currentBindings);
         }
 
         if ($useCache) {
-            $this->validatedBindingsCache[$locale] = $bindings;
+            $this->bindingsCache[$withTranslations][$validated] = $bindings;
         }
 
         return $bindings;
+    }
+
+    /**
+     * get bindings from action and from event if action is triggered from event
+     *
+     * @param  bool  $useCache  if true, cache bindings for the action instance,
+     *                          and get value from it if exists.
+     */
+    public function getAllValidatedBindings(bool $withTranslations = false, bool $useCache = true): array
+    {
+        return $this->getAllBindings($withTranslations, true, $useCache);
     }
 
     public static function setTranslationValues(array &$bindings, array $translationKeys)

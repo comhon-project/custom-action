@@ -52,7 +52,7 @@ class SendManualCompanyRegistrationMail extends AbstractSendEmail
         ];
     }
 
-    public function getBindingValues(?string $locale = null): array
+    public function getBindingValues(): array
     {
         return [
             'company' => $this->company,
