@@ -9,7 +9,7 @@ class SendManualCompanyRegistrationMailWithBindingsTranslations extends SendManu
     public function getTranslatableBindings(): array
     {
         return [
-            'company.status' => 'status.',
+            'company.status' => fn ($value, $locale) => __('status.'.$value, [], $locale),
             'company.languages.*.locale' => 'languages.',
         ];
     }

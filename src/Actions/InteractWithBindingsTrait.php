@@ -66,27 +66,27 @@ trait InteractWithBindingsTrait
         return $this->getAllBindings($withTranslations, true, $useCache);
     }
 
-    public static function setTranslationValues(array &$bindings, array $translationKeys)
+    public static function setTranslationValues(array &$bindings, array $translations)
     {
-        $retrieveBindingRecursive = function (&$bindings, $path, $level, $prefix) use (&$retrieveBindingRecursive) {
+        $retrieveBindingRecursive = function (&$bindings, $path, $level, $translator) use (&$retrieveBindingRecursive) {
             $currentKey = $path[$level] ?? null;
             if (! isset($currentKey)) {
-                $bindings = new Translatable($bindings, $prefix);
+                $bindings = new Translatable($bindings, $translator);
             }
             if (! Arr::accessible($bindings)) {
                 return;
             }
             if ($currentKey == '*') {
                 foreach ($bindings as &$subValue) {
-                    $retrieveBindingRecursive($subValue, $path, $level + 1, $prefix);
+                    $retrieveBindingRecursive($subValue, $path, $level + 1, $translator);
                 }
             } elseif (Arr::exists($bindings, $currentKey)) {
-                $retrieveBindingRecursive($bindings[$currentKey], $path, $level + 1, $prefix);
+                $retrieveBindingRecursive($bindings[$currentKey], $path, $level + 1, $translator);
             }
         };
 
-        foreach ($translationKeys as $bindingKey => $prefix) {
-            $retrieveBindingRecursive($bindings, explode('.', $bindingKey), 0, $prefix);
+        foreach ($translations as $bindingKey => $translator) {
+            $retrieveBindingRecursive($bindings, explode('.', $bindingKey), 0, $translator);
         }
     }
 }
