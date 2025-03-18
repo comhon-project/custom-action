@@ -37,16 +37,22 @@ class EventDefinitionTest extends TestCase
     {
         /** @var User $user */
         $user = User::factory()->hasConsumerAbility()->create();
-        $this->actingAs($user)->getJson('custom/events/company-registered/schema')
+        $this->actingAs($user)->getJson('custom/events/company-registered-with-bindings-translations/schema')
             ->assertOk()
             ->assertJson([
                 'data' => [
                     'bindings_schema' => [
                         'company.name' => 'string',
+                        'company.status' => 'string',
+                        'company.languages.*.locale' => 'string',
                         'logo' => 'is:stored-file',
                         'user' => 'is:mailable-entity',
                         'user.name' => 'string',
                         'user.email' => 'email',
+                    ],
+                    'translatable_bindings' => [
+                        'company.status',
+                        'company.languages.*.locale',
                     ],
                     'allowed_actions' => [
                         'send-automatic-email',
@@ -65,6 +71,7 @@ class EventDefinitionTest extends TestCase
             ->assertJson([
                 'data' => [
                     'bindings_schema' => [],
+                    'translatable_bindings' => [],
                     'allowed_actions' => [
                         'my-action-without-bindings',
                     ],

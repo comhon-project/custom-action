@@ -37,8 +37,14 @@ class GenerateActionCommandTest extends TestCase
     }
 
     #[DataProvider('providerGenerateActionFileSuccess')]
-    public function test_generate_action_file_success($dirShouldExists, $extends, $callable, $hasBindings, $expectContent)
-    {
+    public function test_generate_action_file_success(
+        $dirShouldExists,
+        $extends,
+        $callable,
+        $hasBindings,
+        $hasTranslatableBindings,
+        $expectContent
+    ) {
         CustomActionModelResolver::bind('bad-action', BadAction::class);
         CustomActionModelResolver::bind('my-callable-from-event', MyCallableFromEvent::class);
 
@@ -53,8 +59,17 @@ class GenerateActionCommandTest extends TestCase
         $this->artisan('custom-action:generate', [
             'name' => 'TestGenericSendEmail',
             ...($extends ?
-                ['--extends' => $extends, '--callable' => $callable, '--has-bindings' => $hasBindings]
-                : ['--callable' => $callable, '--has-bindings' => $hasBindings]),
+                [
+                    '--extends' => $extends,
+                    '--callable' => $callable,
+                    '--has-bindings' => $hasBindings,
+                    '--has-translatable-bindings' => $hasTranslatableBindings,
+                ]
+                : [
+                    '--callable' => $callable,
+                    '--has-bindings' => $hasBindings,
+                    '--has-translatable-bindings' => $hasTranslatableBindings,
+                ]),
         ]);
 
         $path = Utils::joinPaths(Utils::getAppPath('Actions'), 'CustomActions', 'TestGenericSendEmail.php');
@@ -73,6 +88,7 @@ class GenerateActionCommandTest extends TestCase
                 true,
                 null,
                 'manually',
+                false,
                 false,
                 <<<EOT
 <?php
@@ -101,29 +117,19 @@ class TestGenericSendEmail implements CustomActionInterface
         InteractWithSettingsTrait,
         CallableManually;
 
-    /**
-     * Get action settings schema
-     */
     public static function getSettingsSchema(?string \$eventClassContext = null): array
     {
         return [];
     }
 
-    /**
-     * Get action localized settings schema
-     */
     public static function getLocalizedSettingsSchema(?string \$eventClassContext = null): array
     {
         return [];
     }
 
-
-    /**
-     * execute action
-     */
-    public function handle(): void
+    public function handle()
     {
-        //
+        return;
     }
 }
 
@@ -134,6 +140,7 @@ EOT
                 null,
                 'from-event',
                 true,
+                false,
                 <<<EOT
 <?php
 
@@ -163,29 +170,29 @@ class TestGenericSendEmail implements CustomActionInterface, CallableFromEventIn
         InteractWithSettingsTrait,
         CallableFromEventTrait;
 
-    /**
-     * Get action settings schema
-     */
     public static function getSettingsSchema(?string \$eventClassContext = null): array
     {
         return [];
     }
 
-    /**
-     * Get action localized settings schema
-     */
     public static function getLocalizedSettingsSchema(?string \$eventClassContext = null): array
     {
         return [];
     }
 
-
-    /**
-     * execute action
-     */
-    public function handle(): void
+    public static function getBindingSchema(): array
     {
-        //
+        return [];
+    }
+
+    public function getBindingValues(): array
+    {
+        return [];
+    }
+
+    public function handle()
+    {
+        return;
     }
 }
 
@@ -195,6 +202,7 @@ EOT
                 false,
                 'SendAutomaticEmail',
                 'from-event',
+                false,
                 true,
                 <<<EOT
 <?php
@@ -204,33 +212,34 @@ declare(strict_types=1);
 namespace App\Actions\CustomActions;
 
 use Comhon\CustomAction\Actions\SendAutomaticEmail;
+use Comhon\CustomAction\Contracts\HasTranslatableBindingsInterface;
 use Illuminate\Contracts\Queue\ShouldQueue;
 
-class TestGenericSendEmail extends SendAutomaticEmail
+class TestGenericSendEmail extends SendAutomaticEmail implements HasTranslatableBindingsInterface
 {
-    /**
-     * Get action settings schema
-     */
     public static function getSettingsSchema(?string \$eventClassContext = null): array
     {
         return parent::getSettingsSchema(\$eventClassContext);
     }
 
-    /**
-     * Get action localized settings schema
-     */
     public static function getLocalizedSettingsSchema(?string \$eventClassContext = null): array
     {
         return parent::getLocalizedSettingsSchema(\$eventClassContext);
     }
 
-
-    /**
-     * execute action
-     */
-    public function handle(): void
+    public static function getBindingSchema(): array
     {
-        //
+        return parent::getBindingSchema();
+    }
+
+    public function getBindingValues(): array
+    {
+        return parent::getBindingValues();
+    }
+
+    public static function getTranslatableBindings(): array
+    {
+        return [];
     }
 }
 
@@ -240,6 +249,7 @@ EOT
                 false,
                 'bad-action',
                 'manually',
+                false,
                 false,
                 <<<EOT
 <?php
@@ -269,29 +279,19 @@ class TestGenericSendEmail extends BadAction implements CustomActionInterface
         InteractWithSettingsTrait,
         CallableManually;
 
-    /**
-     * Get action settings schema
-     */
     public static function getSettingsSchema(?string \$eventClassContext = null): array
     {
         return [];
     }
 
-    /**
-     * Get action localized settings schema
-     */
     public static function getLocalizedSettingsSchema(?string \$eventClassContext = null): array
     {
         return [];
     }
 
-
-    /**
-     * execute action
-     */
-    public function handle(): void
+    public function handle()
     {
-        //
+        return;
     }
 }
 

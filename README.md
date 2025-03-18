@@ -5,7 +5,11 @@
 [![GitHub Code Style Action Status](https://img.shields.io/github/actions/workflow/status/comhon-project/custom-action/fix-php-code-style-issues.yml?branch=main&label=code%20style&style=flat-square)](https://github.com/comhon-project/custom-action/actions?query=workflow%3A"Fix+PHP+code+style+issues"+branch%3Amain)
 [![Total Downloads](https://img.shields.io/packagist/dt/comhon-project/custom-action.svg?style=flat-square)](https://packagist.org/packages/comhon-project/custom-action)
 
-Laravel library that permits to create and customize actions in a very easy way.
+Custom Action is a Laravel library that allows you to create and customize actions easily. This library provides a ready-to-use API for action customization, along with built-in interfaces and traits to help you implement actions as simply as possible.
+
+For example, suppose your application is a CRM. Your back-office users want to customize the emails sent to final clients. With Custom Action, you only need to implement the "send email" action in just a few lines of code. Back-office users will then be able to customize the action (email subject, content, recipients, and sender) via the API without requiring any additional development!
+
+This library can be used for any type of action that requires customization.
 
 ## Installation
 

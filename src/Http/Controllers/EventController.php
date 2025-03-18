@@ -5,6 +5,7 @@ namespace Comhon\CustomAction\Http\Controllers;
 use Comhon\CustomAction\Catalogs\EventCatalog;
 use Comhon\CustomAction\Contracts\CustomEventInterface;
 use Comhon\CustomAction\Contracts\HasBindingsInterface;
+use Comhon\CustomAction\Contracts\HasTranslatableBindingsInterface;
 use Comhon\CustomAction\Facades\CustomActionModelResolver;
 use Comhon\CustomAction\Models\EventListener;
 use Illuminate\Http\Request;
@@ -38,6 +39,9 @@ class EventController extends Controller
         $schema = [
             'bindings_schema' => is_subclass_of($eventClass, HasBindingsInterface::class)
                 ? $eventClass::getBindingSchema()
+                : [],
+            'translatable_bindings' => is_subclass_of($eventClass, HasTranslatableBindingsInterface::class)
+                ? array_keys($eventClass::getTranslatableBindings())
                 : [],
             'allowed_actions' => collect($eventClass::getAllowedActions())->map(function ($class) {
                 return CustomActionModelResolver::getUniqueName($class);

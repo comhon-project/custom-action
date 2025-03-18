@@ -9,6 +9,7 @@ use Comhon\CustomAction\Actions\InteractWithSettingsTrait;
 use Comhon\CustomAction\Contracts\CallableFromEventInterface;
 use Comhon\CustomAction\Contracts\CustomActionInterface;
 use Comhon\CustomAction\Contracts\HasBindingsInterface;
+use Comhon\CustomAction\Contracts\HasTranslatableBindingsInterface;
 use Comhon\CustomAction\Facades\CustomActionModelResolver;
 use Illuminate\Bus\Queueable;
 use Illuminate\Console\Command;
@@ -28,7 +29,8 @@ class GenerateActionCommand extends Command
         {name : The class name of your action}
         {--callable= : How your action will be called (manually, from-event)}
         {--extends= : The action (class name or unique name) that must be extended}
-        {--has-bindings : Whether the action has bindings}';
+        {--has-bindings : Whether the action has bindings}
+        {--has-translatable-bindings : Whether the action has translatable bindings}';
 
     public $description = 'generate a custom action class';
 
@@ -66,23 +68,18 @@ class GenerateActionCommand extends Command
             $interfaces[] = CallableFromEventInterface::class;
             $traits[] = CallableFromEventTrait::class;
         }
-        if ($this->option('has-bindings')) {
+        if ($this->option('has-translatable-bindings')) {
+            $interfaces[] = HasBindingsInterface::class;
+            $interfaces[] = HasTranslatableBindingsInterface::class;
+        } elseif ($this->option('has-bindings')) {
             $interfaces[] = HasBindingsInterface::class;
         }
-
-        $returnSettingsSchema = '[]';
-        $returnLocalizedSettingsSchema = '[]';
 
         $extendsClass = $this->getExtendsClassFromOption();
         if ($extendsClass) {
             $imports[] = $extendsClass;
             $explode = explode('\\', $extendsClass);
             $extends = ' extends '.$explode[count($explode) - 1];
-        }
-
-        if ($extendsClass && is_subclass_of($extendsClass, CustomActionInterface::class)) {
-            $returnSettingsSchema = 'parent::getSettingsSchema($eventClassContext)';
-            $returnLocalizedSettingsSchema = 'parent::getLocalizedSettingsSchema($eventClassContext)';
         }
 
         if (! $extendsClass || ! is_subclass_of($extendsClass, ShouldQueue::class)) {
@@ -106,6 +103,7 @@ class GenerateActionCommand extends Command
             }
         }
 
+        $functions = $this->getFunctions($extendsClass, $interfaces);
         $imports = collect($imports)->sort()->map(fn ($import) => "use $import;")->implode(PHP_EOL);
         $implements = count($implements) ? ' implements '.collect($implements)->implode(', ') : '';
         $uses = count($uses)
@@ -118,8 +116,7 @@ class GenerateActionCommand extends Command
             $extends,
             $implements,
             $uses,
-            $returnSettingsSchema,
-            $returnLocalizedSettingsSchema,
+            $functions,
         );
 
         if (! file_exists($directory)) {
@@ -177,14 +174,89 @@ class GenerateActionCommand extends Command
         throw new \Exception("invalid extends parameter '{$extends}'");
     }
 
+    private function getFunctions(?string $extendsClass, array $interfaces): string
+    {
+
+        $functions = [
+            'getSettingsSchema' => [
+                'static' => true,
+                'params' => ['$eventClassContext' => [
+                    'type' => '?string',
+                    'default' => 'null',
+                ]],
+                'return' => 'array',
+            ],
+            'getLocalizedSettingsSchema' => [
+                'static' => true,
+                'params' => ['$eventClassContext' => [
+                    'type' => '?string',
+                    'default' => 'null',
+                ]],
+                'return' => 'array',
+            ],
+        ];
+        if (in_array(HasBindingsInterface::class, $interfaces)) {
+            $functions = [
+                ...$functions,
+                'getBindingSchema' => [
+                    'static' => true,
+                    'return' => 'array',
+                ],
+                'getBindingValues' => [
+                    'return' => 'array',
+                ],
+            ];
+        }
+        if (in_array(HasTranslatableBindingsInterface::class, $interfaces)) {
+            $functions = [
+                ...$functions,
+                'getTranslatableBindings' => [
+                    'static' => true,
+                    'return' => 'array',
+                ],
+            ];
+        }
+        if (! $extendsClass || (! method_exists($extendsClass, 'handle') && ! method_exists($extendsClass, '__invoke'))) {
+            $functions['handle'] = [];
+        }
+
+        $stringifiedFunctions = [];
+        foreach ($functions as $function => $schemaFunc) {
+            $static = ($schemaFunc['static'] ?? false) ? 'static ' : '';
+            $returnType = ($schemaFunc['return'] ?? null) ? ": {$schemaFunc['return']}" : '';
+
+            $stringifiedParams = [];
+            foreach ($schemaFunc['params'] ?? [] as $param => $schemaParam) {
+                $type = ($schemaParam['type'] ?? null) ? "{$schemaParam['type']} " : '';
+                $default = ($schemaParam['default'] ?? null) ? " = {$schemaParam['default']}" : '';
+                $stringifiedParams[] = "{$type}{$param}{$default}";
+            }
+            $stringifiedParams = implode(', ', $stringifiedParams);
+
+            $return = ($schemaFunc['return'] ?? null) == 'array' ? ' []' : '';
+            if ($extendsClass && method_exists($extendsClass, $function)) {
+                $params = implode(', ', array_keys($schemaFunc['params'] ?? []));
+                $return = " parent::{$function}({$params})";
+            }
+
+            $stringifiedFunctions[] = <<<EOT
+                public {$static}function {$function}($stringifiedParams)$returnType
+                {
+                    return{$return};
+                }
+            EOT;
+        }
+
+        return implode(PHP_EOL.PHP_EOL, $stringifiedFunctions);
+    }
+
     private function generateFileContent(
         $imports,
         $name,
         $extends,
         $implements,
         $uses,
-        $returnSettingsSchema,
-        $returnLocalizedSettingsSchema,
+        $functions,
     ): string {
         return <<<EOT
         <?php
@@ -197,30 +269,7 @@ class GenerateActionCommand extends Command
         
         class {$name}{$extends}{$implements}
         {
-        {$uses}    /**
-             * Get action settings schema
-             */
-            public static function getSettingsSchema(?string \$eventClassContext = null): array
-            {
-                return $returnSettingsSchema;
-            }
-        
-            /**
-             * Get action localized settings schema
-             */
-            public static function getLocalizedSettingsSchema(?string \$eventClassContext = null): array
-            {
-                return $returnLocalizedSettingsSchema;
-            }
-        
-        
-            /**
-             * execute action
-             */
-            public function handle(): void
-            {
-                //
-            }
+        {$uses}{$functions}
         }
         
         EOT;

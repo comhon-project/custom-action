@@ -43,7 +43,7 @@ trait InteractWithBindingsTrait
                 : $hasBindings->getBindingValues();
 
             if ($withTranslations && $hasBindings instanceof HasTranslatableBindingsInterface) {
-                $this->setTranslationValues($currentBindings, $hasBindings->getTranslatableBindings());
+                $this->setTranslationValues($currentBindings, $hasBindings->getTranslatableBindings($this));
             }
             $bindings = empty($bindings) ? $currentBindings : array_merge($bindings, $currentBindings);
         }

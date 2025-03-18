@@ -7,5 +7,5 @@ interface HasTranslatableBindingsInterface
     /**
      * Get translation keys of translatable bindings
      */
-    public function getTranslatableBindings(): array;
+    public static function getTranslatableBindings(): array;
 }

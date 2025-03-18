@@ -47,8 +47,8 @@ class ActionDefinitionTest extends TestCase
                     'to' => 'is:mailable-entity',
                     'default_timezone' => 'string',
                     'preferred_timezone' => 'string',
-
                 ],
+                'translatable_bindings' => [],
                 'settings_schema' => [
                     'from.static.mailable' => 'model_reference:mailable-entity,from',
                     'from.static.email' => 'email',
@@ -72,7 +72,7 @@ class ActionDefinitionTest extends TestCase
             ],
         ]);
 
-        $response = $this->actingAs($user)->getJson('custom/actions/send-manual-company-email/schema');
+        $response = $this->actingAs($user)->getJson('custom/actions/send-manual-company-email-with-bindings-translations/schema');
         $response->assertJson([
             'data' => [
                 'bindings_schema' => [
@@ -80,7 +80,13 @@ class ActionDefinitionTest extends TestCase
                     'default_timezone' => 'string',
                     'preferred_timezone' => 'string',
                     'company.name' => 'string',
+                    'company.status' => 'string',
+                    'company.languages.*.locale' => 'string',
                     'logo' => 'is:stored-file',
+                ],
+                'translatable_bindings' => [
+                    'company.status',
+                    'company.languages.*.locale',
                 ],
                 'settings_schema' => [
                     'recipients.to.static.mailables' => 'array',
@@ -111,6 +117,7 @@ class ActionDefinitionTest extends TestCase
                         'default_timezone' => 'string',
                         'preferred_timezone' => 'string',
                     ],
+                    'translatable_bindings' => [],
                     'settings_schema' => [
                         'from.static.mailable' => 'model_reference:mailable-entity,from',
                         'from.static.email' => 'email',
@@ -161,6 +168,7 @@ class ActionDefinitionTest extends TestCase
             ->assertJson([
                 'data' => [
                     'bindings_schema' => [],
+                    'translatable_bindings' => [],
                     'settings_schema' => [],
                     'localized_settings_schema' => [],
                 ],

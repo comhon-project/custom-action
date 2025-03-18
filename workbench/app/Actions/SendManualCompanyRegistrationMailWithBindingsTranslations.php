@@ -6,7 +6,7 @@ use Comhon\CustomAction\Contracts\HasTranslatableBindingsInterface;
 
 class SendManualCompanyRegistrationMailWithBindingsTranslations extends SendManualCompanyRegistrationMail implements HasTranslatableBindingsInterface
 {
-    public function getTranslatableBindings(): array
+    public static function getTranslatableBindings(): array
     {
         return [
             'company.status' => fn ($value, $locale) => __('status.'.$value, [], $locale),
