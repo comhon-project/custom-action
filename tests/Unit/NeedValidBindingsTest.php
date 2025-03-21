@@ -4,10 +4,13 @@ namespace Tests\Unit;
 
 use App\Actions\TestActionCache;
 use Comhon\CustomAction\Models\ManualAction;
+use Illuminate\Foundation\Testing\RefreshDatabase;
 use Tests\TestCase;
 
 class NeedValidBindingsTest extends TestCase
 {
+    use RefreshDatabase;
+
     public function test_get_validated_bindings_without_cache()
     {
         ManualAction::factory()->create();

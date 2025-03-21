@@ -11,6 +11,7 @@ use Comhon\CustomAction\Listeners\EventActionDispatcher;
 use Comhon\CustomAction\Listeners\QueuedEventActionDispatcher;
 use Comhon\CustomAction\Models\EventListener;
 use Illuminate\Events\CallQueuedListener;
+use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Support\Facades\Event;
 use Illuminate\Support\Facades\Queue;
 use PHPUnit\Framework\Attributes\DataProvider;
@@ -19,6 +20,7 @@ use Tests\TestCase;
 
 class EventActionDispatcherTest extends TestCase
 {
+    use RefreshDatabase;
     use SetUpWithModelRegistrationTrait;
 
     public function dispatcher(): EventActionDispatcher

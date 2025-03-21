@@ -21,8 +21,8 @@ return new class extends Migration
             $table->boolean('has_consumer_ability')->default(false);
             $table->string('preferred_locale', 255)->nullable();
             $table->string('preferred_timezone', 255)->nullable();
-            $table->timestamp('last_login_at');
-            $table->timestamp('verified_at');
+            $table->timestamp('last_login_at')->nullable();
+            $table->timestamp('verified_at')->nullable();
             $table->timestamps();
         });
         Schema::create('companies', function (Blueprint $table) {

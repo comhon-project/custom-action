@@ -28,7 +28,7 @@ class UserWithoutPreferenceFactory extends Factory
             'name' => str_replace("'", '', fake()->lastName()),
             'first_name' => str_replace("'", '', fake()->firstName()),
             'email' => $this->faker->unique()->safeEmail,
-            'last_login_at' => '2022-12-12T00:00:00Z',
+            'last_login_at' => '2022-12-12 00:00:00',
             'verified_at' => '2022-11-11',
         ];
     }

@@ -7,6 +7,7 @@ use Comhon\CustomAction\CustomActionServiceProvider;
 use Comhon\TemplateRenderer\TemplateRendererServiceProvider;
 use Illuminate\Contracts\Config\Repository;
 use Illuminate\Database\Eloquent\Factories\Factory;
+use Illuminate\Support\Facades\Schema;
 use Orchestra\Testbench\TestCase as Orchestra;
 use Tests\Support\Utils;
 
@@ -41,12 +42,6 @@ class TestCase extends Orchestra
             $config->set('custom-action.event_action_dispatcher.should_queue', $shoudQueueDispatcher);
             $config->set('custom-action.use_policies', true);
             $config->set('custom-action.middleware', ['api']);
-            $config->set('database.default', 'testing');
-            $config->set('database.connections.testing', [
-                'driver' => 'sqlite',
-                'database' => ':memory:',
-                'route_prefix' => '',
-            ]);
 
             // Setup queue database connections.
             // $config([
@@ -57,10 +52,12 @@ class TestCase extends Orchestra
 
         $this->setPoliciesFiles();
 
-        $migration = include Utils::joinPaths(Utils::getBasePath(), 'database', 'migrations', 'create_laravel-custom-action_table.php.stub');
-        $migration->up();
-        $migration = include Utils::joinPaths(Utils::getBasePath(), 'workbench', 'database', 'migrations', 'create_test_table.php');
-        $migration->up();
+        if (! Schema::hasTable('custom_action_settings')) {
+            $migration = include Utils::joinPaths(Utils::getBasePath(), 'database', 'migrations', 'create_laravel-custom-action_table.php.stub');
+            $migration->up();
+            $migration = include Utils::joinPaths(Utils::getBasePath(), 'workbench', 'database', 'migrations', 'create_test_table.php');
+            $migration->up();
+        }
     }
 
     public function setPoliciesFiles()

@@ -6,12 +6,14 @@ use App\Actions\SendManualCompanyRegistrationMail;
 use App\Models\Company;
 use Comhon\CustomAction\Files\SystemFile;
 use Comhon\CustomAction\Models\ManualAction;
+use Illuminate\Foundation\Testing\RefreshDatabase;
 use Tests\SetUpWithModelRegistrationTrait;
 use Tests\Support\Utils;
 use Tests\TestCase;
 
 class EmailActionTest extends TestCase
 {
+    use RefreshDatabase;
     use SetUpWithModelRegistrationTrait;
 
     public function test_send_email_without_recipient()

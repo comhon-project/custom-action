@@ -26,9 +26,7 @@
         "laravel/pint": "^1.0",
         "nunomaduro/collision": "^7.0|^8.1",
         "orchestra/testbench": "^8.0|^9.0",
-        "pestphp/pest": "^2.20",
-        "pestphp/pest-plugin-arch": "^2.0",
-        "pestphp/pest-plugin-laravel": "^2.0"
+        "phpunit/phpunit": "^10.5"
     },
     "autoload": {
         "psr-4": {
@@ -56,14 +54,13 @@
             "@php vendor/bin/testbench serve"
         ],
         "analyse": "vendor/bin/phpstan analyse",
-        "test": "vendor/bin/pest",
-        "test-coverage": "vendor/bin/pest --coverage",
+        "test": "vendor/bin/phpunit --no-coverage",
+        "test-coverage": "vendor/bin/phpunit --coverage-text",
         "format": "vendor/bin/pint"
     },
     "config": {
         "sort-packages": true,
         "allow-plugins": {
-            "pestphp/pest-plugin": true,
             "phpstan/extension-installer": true
         }
     },
