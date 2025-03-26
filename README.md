@@ -31,12 +31,9 @@ You can publish the config file with:
 ```bash
 php artisan vendor:publish --tag="custom-action-config"
 ```
+## Documentation
 
-## Testing
-
-```bash
-composer test
-```
+To learn more about Custom Action, please the [wiki](https://github.com/comhon-project/custom-action/wiki).
 
 ## Changelog
 
