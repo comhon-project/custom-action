@@ -2,8 +2,10 @@
 
 namespace Comhon\CustomAction\Actions;
 
-use Comhon\CustomAction\ActionSettings\SettingSelector;
 use Comhon\CustomAction\Exceptions\LocalizedSettingNotFoundException;
+use Comhon\CustomAction\Exceptions\MissingSettingException;
+use Comhon\CustomAction\Exceptions\UnresolvableScopedSettingException;
+use Comhon\CustomAction\Facades\BindingsScoper;
 use Comhon\CustomAction\Models\LocalizedSetting;
 use Comhon\CustomAction\Models\Setting;
 use Illuminate\Contracts\Translation\HasLocalePreference;
@@ -20,8 +22,21 @@ trait InteractWithSettingsTrait
     public function getSetting(): Setting
     {
         if (! isset($this->setting)) {
+            $action = $this->getAction();
             $bindings = $this->getAllBindings();
-            $this->setting = SettingSelector::select($this->getAction(), $bindings);
+            if (empty($bindings)) {
+                $this->setting = $action->defaultSetting ?? throw new MissingSettingException($action, true);
+            } else {
+                $possibleSettings = BindingsScoper::getScopedSettings($action, $bindings);
+                $count = count($possibleSettings);
+
+                $this->setting = match (true) {
+                    $count == 0 => $action->defaultSetting ?? throw new MissingSettingException($action, false),
+                    $count == 1 => reset($possibleSettings),
+                    method_exists($this, 'resolveScopedSettings') => $this->resolveScopedSettings($possibleSettings),
+                    default => throw new UnresolvableScopedSettingException($possibleSettings, get_class($this))
+                };
+            }
         }
 
         return $this->setting;

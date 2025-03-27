@@ -4,6 +4,7 @@ namespace Tests;
 
 use App\Actions\BadAction;
 use App\Actions\MyActionWithoutBindings;
+use App\Actions\MyManualActionWithoutBindings;
 use App\Actions\SendAutomaticCompanyRegistrationMail;
 use App\Actions\SendManualCompanyRegistrationMail;
 use App\Actions\SendManualCompanyRegistrationMailWithBindingsTranslations;
@@ -37,6 +38,7 @@ trait SetUpWithModelRegistrationTrait
 
             'my-event-without-bindings' => MyEventWithoutBindings::class,
             'my-action-without-bindings' => MyActionWithoutBindings::class,
+            'my-manual-action-without-bindings' => MyManualActionWithoutBindings::class,
 
             'bad-event' => BadEvent::class,
             'bad-action' => BadAction::class,

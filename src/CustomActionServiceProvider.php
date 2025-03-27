@@ -2,7 +2,6 @@
 
 namespace Comhon\CustomAction;
 
-use Comhon\CustomAction\ActionSettings\ScopedSettingResolver;
 use Comhon\CustomAction\Bindings\BindingsFinder;
 use Comhon\CustomAction\Bindings\BindingsScoper;
 use Comhon\CustomAction\Bindings\BindingsValidator;
@@ -13,7 +12,6 @@ use Comhon\CustomAction\Contracts\BindingsValidatorInterface;
 use Comhon\CustomAction\Contracts\CustomActionInterface;
 use Comhon\CustomAction\Contracts\CustomEventInterface;
 use Comhon\CustomAction\Contracts\MailableEntityInterface;
-use Comhon\CustomAction\Contracts\ScopedSettingResolverInterface;
 use Comhon\CustomAction\Facades\CustomActionModelResolver as FacadesCustomActionModelResolver;
 use Comhon\CustomAction\Files\StoredFileInterface;
 use Comhon\CustomAction\Listeners\EventActionDispatcher;
@@ -63,7 +61,6 @@ class CustomActionServiceProvider extends PackageServiceProvider
         $this->app->singletonIf(BindingsFinderInterface::class, BindingsFinder::class);
         $this->app->singletonIf(BindingsValidatorInterface::class, BindingsValidator::class);
         $this->app->singletonIf(BindingsScoperInterface::class, BindingsScoper::class);
-        $this->app->singletonIf(ScopedSettingResolverInterface::class, ScopedSettingResolver::class);
     }
 
     public function packageBooted()
