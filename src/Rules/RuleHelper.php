@@ -12,7 +12,7 @@ class RuleHelper
     public static function getSettingsRules(array $schema): array
     {
         $rules = [
-            'settings' => 'required|array',
+            'settings' => 'present|array',
         ];
         foreach ($schema as $key => $rule) {
             $rules["settings.$key"] = $rule;
