@@ -29,7 +29,7 @@ class TestActionCache implements CustomActionInterface, HasBindingsInterface
     /**
      * Dispatch the action with the given arguments.
      */
-    public function getAction(): Action
+    public function getActionModel(): Action
     {
         return ManualAction::first();
     }

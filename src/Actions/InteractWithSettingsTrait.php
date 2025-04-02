@@ -22,7 +22,7 @@ trait InteractWithSettingsTrait
     public function getSetting(): Setting
     {
         if (! isset($this->setting)) {
-            $action = $this->getAction();
+            $action = $this->getActionModel();
             $bindings = $this->getAllBindings();
             if (empty($bindings)) {
                 $this->setting = $action->defaultSetting ?? throw new MissingSettingException($action, true);

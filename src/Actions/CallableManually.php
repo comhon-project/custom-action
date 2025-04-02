@@ -8,7 +8,7 @@ use Comhon\CustomAction\Models\ManualAction;
 
 trait CallableManually
 {
-    public function getAction(): Action
+    public function getActionModel(): Action
     {
         $type = CustomActionModelResolver::getUniqueName(static::class);
         $action = ManualAction::firstWhere('type', $type);

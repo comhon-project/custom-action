@@ -12,7 +12,7 @@ trait CallableFromEventTrait
         protected CustomEventInterface $event,
     ) {}
 
-    public function getAction(): Action
+    public function getActionModel(): Action
     {
         return $this->action;
     }

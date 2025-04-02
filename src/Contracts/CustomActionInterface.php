@@ -9,7 +9,7 @@ interface CustomActionInterface
     /**
      * Get action model
      */
-    public function getAction(): Action;
+    public function getActionModel(): Action;
 
     /**
      * Get action settings schema
