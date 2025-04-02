@@ -4,7 +4,12 @@ namespace Comhon\CustomAction\Bindings;
 
 class Translatable
 {
-    public function __construct(public int|string|null $value, private \Closure|string|null $translator) {}
+    public int|string|null $value;
+
+    public function __construct(int|string|Translatable|null $value, private \Closure|string|null $translator)
+    {
+        $this->value = $value instanceof Translatable ? $value->value : $value;
+    }
 
     public function translate()
     {
