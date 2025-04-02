@@ -2,7 +2,7 @@
 
 namespace Tests\Feature;
 
-use App\Actions\MyManualActionWithoutBindings;
+use App\Actions\MyManualActionWithoutContext;
 use App\Actions\SendManualCompanyRegistrationMail;
 use App\Models\Company;
 use App\Models\User;
@@ -102,13 +102,13 @@ class InteractWithSettingsTest extends TestCase
         ];
     }
 
-    public function test_get_setting_no_bindings()
+    public function test_get_setting_no_context()
     {
         DefaultSetting::factory()
-            ->for(ManualAction::factory(['type' => 'my-manual-action-without-bindings']), 'action')
+            ->for(ManualAction::factory(['type' => 'my-manual-action-without-context']), 'action')
             ->create();
 
-        $action = new MyManualActionWithoutBindings;
+        $action = new MyManualActionWithoutContext;
         $setting = $action->getSetting();
         $this->assertInstanceOf(DefaultSetting::class, $setting);
         $this->assertSame($setting, $action->getSetting());
@@ -116,10 +116,10 @@ class InteractWithSettingsTest extends TestCase
 
     public function test_missing_settings()
     {
-        $action = ManualAction::factory(['type' => 'my-manual-action-without-bindings'])->create();
+        $action = ManualAction::factory(['type' => 'my-manual-action-without-context'])->create();
 
         $this->expectExceptionMessage("missing default setting on action Comhon\CustomAction\Models\ManualAction with id '{$action->id}'");
-        $action = new MyManualActionWithoutBindings;
+        $action = new MyManualActionWithoutContext;
         $action->getSetting();
     }
 }

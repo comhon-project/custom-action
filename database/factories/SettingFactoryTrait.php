@@ -37,7 +37,7 @@ trait SettingFactoryTrait
      */
     public function sendMailRegistrationCompany(?array $toOtherUserIds = null, $withAttachement = false): Factory
     {
-        $keyReceivers = $toOtherUserIds === null ? 'bindings' : 'static';
+        $keyReceivers = $toOtherUserIds === null ? 'context' : 'static';
         $valueReceivers = $toOtherUserIds === null
             ? ['user']
             : collect($toOtherUserIds)->map(fn ($id) => ['recipient_type' => 'user', 'recipient_id' => $id])->all();

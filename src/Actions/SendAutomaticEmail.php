@@ -2,9 +2,9 @@
 
 namespace Comhon\CustomAction\Actions;
 
-use Comhon\CustomAction\Bindings\BindingsHelper;
+use Comhon\CustomAction\Context\ContextHelper;
 use Comhon\CustomAction\Contracts\CallableFromEventInterface;
-use Comhon\CustomAction\Contracts\HasBindingsInterface;
+use Comhon\CustomAction\Contracts\HasContextInterface;
 use Comhon\CustomAction\Exceptions\SendEmailActionException;
 use Comhon\CustomAction\Facades\CustomActionModelResolver;
 use Comhon\CustomAction\Models\LocalizedSetting;
@@ -28,17 +28,17 @@ class SendAutomaticEmail extends AbstractSendEmail implements CallableFromEventI
             $schema["recipients.{$recipientType}.static.emails"] = 'array';
             $schema["recipients.{$recipientType}.static.emails.*"] = 'email';
         }
-        if ($eventClassContext && is_subclass_of($eventClassContext, HasBindingsInterface::class)) {
+        if ($eventClassContext && is_subclass_of($eventClassContext, HasContextInterface::class)) {
             $contextTypes = [
                 'attachments' => 'array:stored-file',
-                'from.bindings.mailable' => 'mailable-entity',
-                'from.bindings.email' => 'email',
+                'from.context.mailable' => 'mailable-entity',
+                'from.context.email' => 'email',
             ];
             foreach (static::RECIPIENT_TYPES as $recipientType) {
-                $contextTypes["recipients.{$recipientType}.bindings.mailables"] = 'array:mailable-entity';
-                $contextTypes["recipients.{$recipientType}.bindings.emails"] = 'array:email';
+                $contextTypes["recipients.{$recipientType}.context.mailables"] = 'array:mailable-entity';
+                $contextTypes["recipients.{$recipientType}.context.emails"] = 'array:email';
             }
-            $rules = BindingsHelper::getEventContextRules($eventClassContext, $contextTypes);
+            $rules = ContextHelper::getEventContextRules($eventClassContext, $contextTypes);
             $schema = array_merge($schema, $rules);
         }
 
@@ -53,7 +53,7 @@ class SendAutomaticEmail extends AbstractSendEmail implements CallableFromEventI
         ];
     }
 
-    protected function getFrom(array $bindings): ?Address
+    protected function getFrom(array $context): ?Address
     {
         $froms = [];
         $settingsFrom = $this->getSetting()->settings['from'] ?? null;
@@ -70,9 +70,9 @@ class SendAutomaticEmail extends AbstractSendEmail implements CallableFromEventI
             $froms[] = $email;
         }
         foreach (['mailable', 'email'] as $key) {
-            $bindingsKey = $settingsFrom['bindings'][$key] ?? null;
-            if ($bindingsKey) {
-                foreach (BindingsHelper::getValues($bindings, $bindingsKey) as $value) {
+            $contextKey = $settingsFrom['context'][$key] ?? null;
+            if ($contextKey) {
+                foreach (ContextHelper::getValues($context, $contextKey) as $value) {
                     if ($value) {
                         $froms[] = $value;
                     }
@@ -86,7 +86,7 @@ class SendAutomaticEmail extends AbstractSendEmail implements CallableFromEventI
         return count($froms) ? $this->normalizeAddress($froms[0]) : null;
     }
 
-    protected function getRecipients(array $bindings, ?array $recipientTypes = null): array
+    protected function getRecipients(array $context, ?array $recipientTypes = null): array
     {
         $recipients = [];
         $settingsRecipients = $this->getSetting()->settings['recipients'] ?? null;
@@ -113,10 +113,10 @@ class SendAutomaticEmail extends AbstractSendEmail implements CallableFromEventI
                 }
             }
             foreach (['mailables', 'emails'] as $key) {
-                $bindingsKeys = $settingsRecipients[$recipientType]['bindings'][$key] ?? null;
-                if ($bindingsKeys) {
-                    foreach ($bindingsKeys as $bindingsKey) {
-                        foreach (BindingsHelper::getValues($bindings, $bindingsKey) as $recipient) {
+                $contextKeys = $settingsRecipients[$recipientType]['context'][$key] ?? null;
+                if ($contextKeys) {
+                    foreach ($contextKeys as $contextKey) {
+                        foreach (ContextHelper::getValues($context, $contextKey) as $recipient) {
                             if ($recipient) {
                                 $recipients[$recipientType] ??= [];
                                 $recipients[$recipientType][] = is_string($recipient)
@@ -137,26 +137,26 @@ class SendAutomaticEmail extends AbstractSendEmail implements CallableFromEventI
         return $recipients;
     }
 
-    protected function getSubject(array $bindings, LocalizedSetting $localizedSetting): string
+    protected function getSubject(array $context, LocalizedSetting $localizedSetting): string
     {
         return $localizedSetting->settings['subject']
             ?? throw new SendEmailActionException($this->getSetting(), 'localized settings subject is not defined');
     }
 
-    protected function getBody(array $bindings, LocalizedSetting $localizedSetting): string
+    protected function getBody(array $context, LocalizedSetting $localizedSetting): string
     {
         return $localizedSetting->settings['body']
             ?? throw new SendEmailActionException($this->getSetting(), 'localized settings body is not defined');
     }
 
-    protected function getAttachments($bindings, LocalizedSetting $localizedSetting): ?iterable
+    protected function getAttachments($context, LocalizedSetting $localizedSetting): ?iterable
     {
         if (! isset($this->getSetting()->settings['attachments'])) {
             return [];
         }
 
         return collect($this->getSetting()->settings['attachments'])
-            ->map(fn ($property) => Arr::get($bindings, $property))
+            ->map(fn ($property) => Arr::get($context, $property))
             ->filter(fn ($path) => $path != null);
     }
 

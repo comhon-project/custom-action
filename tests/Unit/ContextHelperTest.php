@@ -3,32 +3,32 @@
 namespace Tests\Unit;
 
 use App\Events\CompanyRegistered;
-use Comhon\CustomAction\Bindings\BindingsHelper;
+use Comhon\CustomAction\Context\ContextHelper;
 use Tests\TestCase;
 
-class BindingsHelperTest extends TestCase
+class ContextHelperTest extends TestCase
 {
-    public function test_get_bindings_string()
+    public function test_get_context_string()
     {
-        $rules = BindingsHelper::getEventContextRules(CompanyRegistered::class, ['my.key' => 'string']);
+        $rules = ContextHelper::getEventContextRules(CompanyRegistered::class, ['my.key' => 'string']);
 
         $this->assertEquals([
             'my.key' => 'string|in:company.name,company.status,company.languages.*.locale,user.name,localized',
         ], $rules);
     }
 
-    public function test_get_bindings_email_receiver()
+    public function test_get_context_email_receiver()
     {
-        $rules = BindingsHelper::getEventContextRules(CompanyRegistered::class, ['receivers' => 'mailable-entity']);
+        $rules = ContextHelper::getEventContextRules(CompanyRegistered::class, ['receivers' => 'mailable-entity']);
 
         $this->assertEquals([
             'receivers' => 'string|in:user',
         ], $rules);
     }
 
-    public function test_get_bindings_array()
+    public function test_get_context_array()
     {
-        $rules = BindingsHelper::getEventContextRules(CompanyRegistered::class, ['my.key' => 'array:string']);
+        $rules = ContextHelper::getEventContextRules(CompanyRegistered::class, ['my.key' => 'array:string']);
 
         $this->assertEquals([
             'my.key' => 'array',
@@ -36,9 +36,9 @@ class BindingsHelperTest extends TestCase
         ], $rules);
     }
 
-    public function test_get_bindings_several_types()
+    public function test_get_context_several_types()
     {
-        $rules = BindingsHelper::getEventContextRules(CompanyRegistered::class, [
+        $rules = ContextHelper::getEventContextRules(CompanyRegistered::class, [
             'receivers' => 'mailable-entity',
             'my.key' => 'string',
         ]);
@@ -49,16 +49,16 @@ class BindingsHelperTest extends TestCase
         ], $rules);
     }
 
-    public function test_get_bindings_invalid_event_class()
+    public function test_get_context_invalid_event_class()
     {
-        $this->expectExceptionMessage('first argument must be a subclass of HasBindingsInterface');
-        BindingsHelper::getEventContextRules('foo', ['my.key' => 'string']);
+        $this->expectExceptionMessage('first argument must be a subclass of HasContextInterface');
+        ContextHelper::getEventContextRules('foo', ['my.key' => 'string']);
 
     }
 
-    public function test_get_bindings_values_simple()
+    public function test_get_context_values_simple()
     {
-        $bindings = [
+        $context = [
             'my' => [
                 'sub' => [
                     'value' => 12,
@@ -67,46 +67,46 @@ class BindingsHelperTest extends TestCase
         ];
         $this->assertEquals(
             [12],
-            BindingsHelper::getValues($bindings, 'my.sub.value')
+            ContextHelper::getValues($context, 'my.sub.value')
         );
     }
 
-    public function test_get_bindings_values_simple_not_exist()
+    public function test_get_context_values_simple_not_exist()
     {
-        $bindings = [
+        $context = [
             'my' => [],
         ];
         $this->assertEquals(
             [null],
-            BindingsHelper::getValues($bindings, 'my.sub.value')
+            ContextHelper::getValues($context, 'my.sub.value')
         );
     }
 
-    public function test_get_bindings_values_simple_not_accessible()
+    public function test_get_context_values_simple_not_accessible()
     {
-        $bindings = [
+        $context = [
             'my' => 'foo',
         ];
         $this->assertEquals(
             [],
-            BindingsHelper::getValues($bindings, 'my.*.value')
+            ContextHelper::getValues($context, 'my.*.value')
         );
     }
 
-    public function test_get_bindings_values_wild_card_key()
+    public function test_get_context_values_wild_card_key()
     {
-        $bindings = [
+        $context = [
             12, 13,
         ];
         $this->assertEquals(
             [12, 13],
-            BindingsHelper::getValues($bindings, '*')
+            ContextHelper::getValues($context, '*')
         );
     }
 
-    public function test_get_bindings_values_nested_wild_card_key()
+    public function test_get_context_values_nested_wild_card_key()
     {
-        $bindings = [
+        $context = [
             'my' => [
                 [
                     'subs' => [
@@ -123,13 +123,13 @@ class BindingsHelperTest extends TestCase
         ];
         $this->assertEquals(
             [14, 15, 16],
-            BindingsHelper::getValues($bindings, 'my.*.subs.*.value')
+            ContextHelper::getValues($context, 'my.*.subs.*.value')
         );
     }
 
-    public function test_get_bindings_values_wild_card_key_ending()
+    public function test_get_context_values_wild_card_key_ending()
     {
-        $bindings = [
+        $context = [
             'my' => [
                 [
                     'values' => [20, 21],
@@ -141,7 +141,7 @@ class BindingsHelperTest extends TestCase
         ];
         $this->assertEquals(
             [20, 21, 22],
-            BindingsHelper::getValues($bindings, 'my.*.values.*')
+            ContextHelper::getValues($context, 'my.*.values.*')
         );
     }
 }

@@ -4,12 +4,12 @@ namespace Comhon\CustomAction\Commands;
 
 use Comhon\CustomAction\Actions\CallableFromEventTrait;
 use Comhon\CustomAction\Actions\CallableManually;
-use Comhon\CustomAction\Actions\InteractWithBindingsTrait;
+use Comhon\CustomAction\Actions\InteractWithContextTrait;
 use Comhon\CustomAction\Actions\InteractWithSettingsTrait;
 use Comhon\CustomAction\Contracts\CallableFromEventInterface;
 use Comhon\CustomAction\Contracts\CustomActionInterface;
-use Comhon\CustomAction\Contracts\HasBindingsInterface;
-use Comhon\CustomAction\Contracts\HasTranslatableBindingsInterface;
+use Comhon\CustomAction\Contracts\HasContextInterface;
+use Comhon\CustomAction\Contracts\HasTranslatableContextInterface;
 use Comhon\CustomAction\Facades\CustomActionModelResolver;
 use Illuminate\Bus\Queueable;
 use Illuminate\Console\Command;
@@ -29,8 +29,8 @@ class GenerateActionCommand extends Command
         {name : The class name of your action}
         {--callable= : How your action will be called (manually, from-event)}
         {--extends= : The action (class name or unique name) that must be extended}
-        {--has-bindings : Whether the action has bindings}
-        {--has-translatable-bindings : Whether the action has translatable bindings}';
+        {--has-context : Whether the action has context}
+        {--has-translatable-context : Whether the action has translatable context}';
 
     public $description = 'generate a custom action class';
 
@@ -55,7 +55,7 @@ class GenerateActionCommand extends Command
             Queueable::class,
             InteractsWithQueue::class,
             SerializesModels::class,
-            InteractWithBindingsTrait::class,
+            InteractWithContextTrait::class,
             InteractWithSettingsTrait::class,
         ];
 
@@ -68,11 +68,11 @@ class GenerateActionCommand extends Command
             $interfaces[] = CallableFromEventInterface::class;
             $traits[] = CallableFromEventTrait::class;
         }
-        if ($this->option('has-translatable-bindings')) {
-            $interfaces[] = HasBindingsInterface::class;
-            $interfaces[] = HasTranslatableBindingsInterface::class;
-        } elseif ($this->option('has-bindings')) {
-            $interfaces[] = HasBindingsInterface::class;
+        if ($this->option('has-translatable-context')) {
+            $interfaces[] = HasContextInterface::class;
+            $interfaces[] = HasTranslatableContextInterface::class;
+        } elseif ($this->option('has-context')) {
+            $interfaces[] = HasContextInterface::class;
         }
 
         $extendsClass = $this->getExtendsClassFromOption();
@@ -195,10 +195,10 @@ class GenerateActionCommand extends Command
                 'return' => 'array',
             ],
         ];
-        if (in_array(HasBindingsInterface::class, $interfaces)) {
+        if (in_array(HasContextInterface::class, $interfaces)) {
             $functions = [
                 ...$functions,
-                'getBindingSchema' => [
+                'getContextSchema' => [
                     'static' => true,
                     'return' => 'array',
                 ],
@@ -207,10 +207,10 @@ class GenerateActionCommand extends Command
                 ],
             ];
         }
-        if (in_array(HasTranslatableBindingsInterface::class, $interfaces)) {
+        if (in_array(HasTranslatableContextInterface::class, $interfaces)) {
             $functions = [
                 ...$functions,
-                'getTranslatableBindings' => [
+                'getTranslatableContext' => [
                     'static' => true,
                     'return' => 'array',
                 ],

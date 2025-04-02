@@ -5,10 +5,10 @@ namespace Comhon\CustomAction\Listeners;
 use Comhon\CustomAction\Contracts\CallableFromEventInterface;
 use Comhon\CustomAction\Contracts\CustomActionInterface;
 use Comhon\CustomAction\Contracts\CustomEventInterface;
-use Comhon\CustomAction\Contracts\HasBindingsInterface;
+use Comhon\CustomAction\Contracts\HasContextInterface;
 use Comhon\CustomAction\Events\EventActionError;
 use Comhon\CustomAction\Exceptions\InvalidActionTypeException;
-use Comhon\CustomAction\Facades\BindingsScoper;
+use Comhon\CustomAction\Facades\ContextScoper;
 use Comhon\CustomAction\Facades\CustomActionModelResolver;
 use Comhon\CustomAction\Models\EventListener;
 
@@ -25,8 +25,8 @@ class EventActionDispatcher
         $query = EventListener::with('eventActions.defaultSetting')
             ->where('event', $eventUniqueName)->whereHas('eventActions');
 
-        $listeners = $event instanceof HasBindingsInterface
-            ? BindingsScoper::getEventListeners($query, $event->getContext())
+        $listeners = $event instanceof HasContextInterface
+            ? ContextScoper::getEventListeners($query, $event->getContext())
             : $query->lazy();
 
         foreach ($listeners as $listener) {

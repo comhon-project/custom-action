@@ -2,7 +2,7 @@
 
 namespace App\Actions;
 
-use Comhon\CustomAction\Actions\InteractWithBindingsTrait;
+use Comhon\CustomAction\Actions\InteractWithContextTrait;
 use Comhon\CustomAction\Actions\InteractWithSettingsTrait;
 use Comhon\CustomAction\Contracts\CallableFromEventInterface;
 use Comhon\CustomAction\Contracts\CustomActionInterface;
@@ -15,7 +15,7 @@ abstract class MyCallableFromEvent implements CallableFromEventInterface, Custom
 {
     use Dispatchable,
         InteractsWithQueue,
-        InteractWithBindingsTrait,
+        InteractWithContextTrait,
         InteractWithSettingsTrait,
         Queueable,
         SerializesModels;

@@ -106,7 +106,7 @@ class EventActionTest extends TestCase
                     'static' => ['mailables' => [
                         ['recipient_type' => 'user', 'recipient_id' => User::factory()->create()->id],
                     ]],
-                    'bindings' => ['mailables' => ['user']],
+                    'context' => ['mailables' => ['user']],
                 ]],
                 'attachments' => ['logo'],
             ],

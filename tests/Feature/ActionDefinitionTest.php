@@ -43,12 +43,12 @@ class ActionDefinitionTest extends TestCase
         $response = $this->actingAs($user)->getJson('custom/actions/send-automatic-email/schema');
         $response->assertJson([
             'data' => [
-                'bindings_schema' => [
+                'context_schema' => [
                     'to' => 'is:mailable-entity',
                     'default_timezone' => 'string',
                     'preferred_timezone' => 'string',
                 ],
-                'translatable_bindings' => [],
+                'translatable_context' => [],
                 'settings_schema' => [
                     'from.static.mailable' => 'model_reference:mailable-entity,from',
                     'from.static.email' => 'email',
@@ -72,10 +72,10 @@ class ActionDefinitionTest extends TestCase
             ],
         ]);
 
-        $response = $this->actingAs($user)->getJson('custom/actions/send-manual-company-email-with-bindings-translations/schema');
+        $response = $this->actingAs($user)->getJson('custom/actions/send-manual-company-email-with-context-translations/schema');
         $response->assertJson([
             'data' => [
-                'bindings_schema' => [
+                'context_schema' => [
                     'to' => 'is:mailable-entity',
                     'default_timezone' => 'string',
                     'preferred_timezone' => 'string',
@@ -84,7 +84,7 @@ class ActionDefinitionTest extends TestCase
                     'company.languages.*.locale' => 'string',
                     'logo' => 'is:stored-file',
                 ],
-                'translatable_bindings' => [
+                'translatable_context' => [
                     'company.status',
                     'company.languages.*.locale',
                 ],
@@ -112,12 +112,12 @@ class ActionDefinitionTest extends TestCase
             ->assertOk()
             ->assertJson([
                 'data' => [
-                    'bindings_schema' => [
+                    'context_schema' => [
                         'to' => 'is:mailable-entity',
                         'default_timezone' => 'string',
                         'preferred_timezone' => 'string',
                     ],
-                    'translatable_bindings' => [],
+                    'translatable_context' => [],
                     'settings_schema' => [
                         'from.static.mailable' => 'model_reference:mailable-entity,from',
                         'from.static.email' => 'email',
@@ -135,20 +135,20 @@ class ActionDefinitionTest extends TestCase
                         'recipients.bcc.static.emails.*' => 'email',
                         'attachments' => 'array',
                         'attachments.*' => 'string|in:logo',
-                        'from.bindings.mailable' => 'string|in:user',
-                        'from.bindings.email' => 'string|in:user.email,responsibles.*.email',
-                        'recipients.to.bindings.mailables' => 'array',
-                        'recipients.to.bindings.mailables.*' => 'string|in:user',
-                        'recipients.to.bindings.emails' => 'array',
-                        'recipients.to.bindings.emails.*' => 'string|in:user.email,responsibles.*.email',
-                        'recipients.cc.bindings.mailables' => 'array',
-                        'recipients.cc.bindings.mailables.*' => 'string|in:user',
-                        'recipients.cc.bindings.emails' => 'array',
-                        'recipients.cc.bindings.emails.*' => 'string|in:user.email,responsibles.*.email',
-                        'recipients.bcc.bindings.mailables' => 'array',
-                        'recipients.bcc.bindings.mailables.*' => 'string|in:user',
-                        'recipients.bcc.bindings.emails' => 'array',
-                        'recipients.bcc.bindings.emails.*' => 'string|in:user.email,responsibles.*.email',
+                        'from.context.mailable' => 'string|in:user',
+                        'from.context.email' => 'string|in:user.email,responsibles.*.email',
+                        'recipients.to.context.mailables' => 'array',
+                        'recipients.to.context.mailables.*' => 'string|in:user',
+                        'recipients.to.context.emails' => 'array',
+                        'recipients.to.context.emails.*' => 'string|in:user.email,responsibles.*.email',
+                        'recipients.cc.context.mailables' => 'array',
+                        'recipients.cc.context.mailables.*' => 'string|in:user',
+                        'recipients.cc.context.emails' => 'array',
+                        'recipients.cc.context.emails.*' => 'string|in:user.email,responsibles.*.email',
+                        'recipients.bcc.context.mailables' => 'array',
+                        'recipients.bcc.context.mailables.*' => 'string|in:user',
+                        'recipients.bcc.context.emails' => 'array',
+                        'recipients.bcc.context.emails.*' => 'string|in:user.email,responsibles.*.email',
                     ],
                     'localized_settings_schema' => [
                         'subject' => 'required|'.RuleHelper::getRuleName('text_template'),
@@ -158,17 +158,17 @@ class ActionDefinitionTest extends TestCase
             ]);
     }
 
-    public function test_get_action_shema_without_bindings_success()
+    public function test_get_action_shema_without_context_success()
     {
         /** @var User $user */
         $user = User::factory()->hasConsumerAbility()->create();
 
-        $this->actingAs($user)->getJson('custom/actions/my-action-without-bindings/schema')
+        $this->actingAs($user)->getJson('custom/actions/my-action-without-context/schema')
             ->assertOk()
             ->assertJson([
                 'data' => [
-                    'bindings_schema' => [],
-                    'translatable_bindings' => [],
+                    'context_schema' => [],
+                    'translatable_context' => [],
                     'settings_schema' => [],
                     'localized_settings_schema' => [],
                 ],

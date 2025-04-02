@@ -2,12 +2,12 @@
 
 namespace Comhon\CustomAction\Contracts;
 
-interface HasBindingsInterface
+interface HasContextInterface
 {
     /**
      * Get event context schema
      */
-    public static function getBindingSchema(): array;
+    public static function getContextSchema(): array;
 
     /**
      * Get event context values

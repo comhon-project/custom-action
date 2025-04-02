@@ -2,13 +2,13 @@
 
 namespace App\Events;
 
-use App\Actions\MyActionWithoutBindings;
+use App\Actions\MyActionWithoutContext;
 use Comhon\CustomAction\Contracts\CustomEventInterface;
 use Illuminate\Broadcasting\InteractsWithSockets;
 use Illuminate\Foundation\Events\Dispatchable;
 use Illuminate\Queue\SerializesModels;
 
-class MyEventWithoutBindings implements CustomEventInterface
+class MyEventWithoutContext implements CustomEventInterface
 {
     use Dispatchable, InteractsWithSockets, SerializesModels;
 
@@ -25,7 +25,7 @@ class MyEventWithoutBindings implements CustomEventInterface
     public static function getAllowedActions(): array
     {
         return [
-            MyActionWithoutBindings::class,
+            MyActionWithoutContext::class,
         ];
     }
 }

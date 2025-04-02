@@ -42,7 +42,7 @@ class SendManualCompanyRegistrationMail extends AbstractSendEmail
         ];
     }
 
-    protected static function getCommonBindingSchema(): array
+    protected static function getCommonContextSchema(): array
     {
         return [
             'company.name' => 'string',
@@ -60,30 +60,30 @@ class SendManualCompanyRegistrationMail extends AbstractSendEmail
         ];
     }
 
-    protected function getFrom(array $bindings): ?Address
+    protected function getFrom(array $context): ?Address
     {
-        $from = $bindings['from']
+        $from = $context['from']
             ?? $this->setting->settings['from']
             ?? null;
 
         return $from ? $this->normalizeAddress($from) : null;
     }
 
-    protected function getSubject(array $bindings, LocalizedSetting $localizedSetting): string
+    protected function getSubject(array $context, LocalizedSetting $localizedSetting): string
     {
-        return $bindings['subject']
+        return $context['subject']
             ?? $localizedSetting->settings['subject']
             ?? throw new SendEmailActionException($this->setting, 'localized settings subject is not defined');
     }
 
-    protected function getBody(array $bindings, LocalizedSetting $localizedSetting): string
+    protected function getBody(array $context, LocalizedSetting $localizedSetting): string
     {
-        return $bindings['body']
+        return $context['body']
             ?? $localizedSetting->settings['body']
             ?? throw new SendEmailActionException($this->setting, 'localized settings body is not defined');
     }
 
-    protected function getRecipients(array $bindings, ?array $recipientTypes = null): array
+    protected function getRecipients(array $context, ?array $recipientTypes = null): array
     {
         if (! $this->to) {
             return [];
@@ -100,7 +100,7 @@ class SendManualCompanyRegistrationMail extends AbstractSendEmail
         return ['to' => $tos];
     }
 
-    protected function getAttachments(array $bindings, LocalizedSetting $localizedSetting): ?iterable
+    protected function getAttachments(array $context, LocalizedSetting $localizedSetting): ?iterable
     {
         return [$this->logo];
     }

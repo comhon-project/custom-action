@@ -4,10 +4,10 @@ declare(strict_types=1);
 
 namespace App\Actions;
 
-use Comhon\CustomAction\Actions\InteractWithBindingsTrait;
+use Comhon\CustomAction\Actions\InteractWithContextTrait;
 use Comhon\CustomAction\Actions\InteractWithSettingsTrait;
 use Comhon\CustomAction\Contracts\CustomActionInterface;
-use Comhon\CustomAction\Contracts\HasBindingsInterface;
+use Comhon\CustomAction\Contracts\HasContextInterface;
 use Comhon\CustomAction\Models\Action;
 use Comhon\CustomAction\Models\ManualAction;
 use Illuminate\Bus\Queueable;
@@ -15,11 +15,11 @@ use Illuminate\Foundation\Bus\Dispatchable;
 use Illuminate\Queue\InteractsWithQueue;
 use Illuminate\Queue\SerializesModels;
 
-class TestActionCache implements CustomActionInterface, HasBindingsInterface
+class TestActionCache implements CustomActionInterface, HasContextInterface
 {
     use Dispatchable,
         InteractsWithQueue,
-        InteractWithBindingsTrait,
+        InteractWithContextTrait,
         InteractWithSettingsTrait,
         Queueable,
         SerializesModels;
@@ -53,9 +53,9 @@ class TestActionCache implements CustomActionInterface, HasBindingsInterface
     /**
      * Get action context schema.
      *
-     * Common bindings + recipient specific bindings
+     * Common context + recipient specific context
      */
-    final public static function getBindingSchema(): array
+    final public static function getContextSchema(): array
     {
         return [
             'index' => 'integer',

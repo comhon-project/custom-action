@@ -4,8 +4,8 @@ namespace Comhon\CustomAction\Http\Controllers;
 
 use Comhon\CustomAction\Catalogs\EventCatalog;
 use Comhon\CustomAction\Contracts\CustomEventInterface;
-use Comhon\CustomAction\Contracts\HasBindingsInterface;
-use Comhon\CustomAction\Contracts\HasTranslatableBindingsInterface;
+use Comhon\CustomAction\Contracts\HasContextInterface;
+use Comhon\CustomAction\Contracts\HasTranslatableContextInterface;
 use Comhon\CustomAction\Facades\CustomActionModelResolver;
 use Comhon\CustomAction\Models\EventListener;
 use Illuminate\Http\Request;
@@ -37,11 +37,11 @@ class EventController extends Controller
 
         $eventClass = CustomActionModelResolver::getClass($eventUniqueName);
         $schema = [
-            'bindings_schema' => is_subclass_of($eventClass, HasBindingsInterface::class)
-                ? $eventClass::getBindingSchema()
+            'context_schema' => is_subclass_of($eventClass, HasContextInterface::class)
+                ? $eventClass::getContextSchema()
                 : [],
-            'translatable_bindings' => is_subclass_of($eventClass, HasTranslatableBindingsInterface::class)
-                ? array_keys($eventClass::getTranslatableBindings())
+            'translatable_context' => is_subclass_of($eventClass, HasTranslatableContextInterface::class)
+                ? array_keys($eventClass::getTranslatableContext())
                 : [],
             'allowed_actions' => collect($eventClass::getAllowedActions())->map(function ($class) {
                 return CustomActionModelResolver::getUniqueName($class);

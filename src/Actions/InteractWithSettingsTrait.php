@@ -5,7 +5,7 @@ namespace Comhon\CustomAction\Actions;
 use Comhon\CustomAction\Exceptions\LocalizedSettingNotFoundException;
 use Comhon\CustomAction\Exceptions\MissingSettingException;
 use Comhon\CustomAction\Exceptions\UnresolvableScopedSettingException;
-use Comhon\CustomAction\Facades\BindingsScoper;
+use Comhon\CustomAction\Facades\ContextScoper;
 use Comhon\CustomAction\Models\LocalizedSetting;
 use Comhon\CustomAction\Models\Setting;
 use Illuminate\Contracts\Translation\HasLocalePreference;
@@ -23,11 +23,11 @@ trait InteractWithSettingsTrait
     {
         if (! isset($this->setting)) {
             $action = $this->getActionModel();
-            $bindings = $this->getAllBindings();
-            if (empty($bindings)) {
+            $context = $this->getAllContext();
+            if (empty($context)) {
                 $this->setting = $action->defaultSetting ?? throw new MissingSettingException($action, true);
             } else {
-                $possibleSettings = BindingsScoper::getScopedSettings($action, $bindings);
+                $possibleSettings = ContextScoper::getScopedSettings($action, $context);
                 $count = count($possibleSettings);
 
                 $this->setting = match (true) {
@@ -60,7 +60,7 @@ trait InteractWithSettingsTrait
      * - if a fallback is given, it tries to find localized setting with given fallback locale
      * - if no fallback is given, it tries to find localized setting with application defined locales
      *
-     * @param  bool  $useCache  if true, cache bindings for the action instance,
+     * @param  bool  $useCache  if true, cache localized setting for the action instance,
      *                          and get value from it if exists.
      */
     public function getLocalizedSetting(

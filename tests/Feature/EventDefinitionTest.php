@@ -37,11 +37,11 @@ class EventDefinitionTest extends TestCase
     {
         /** @var User $user */
         $user = User::factory()->hasConsumerAbility()->create();
-        $this->actingAs($user)->getJson('custom/events/company-registered-with-bindings-translations/schema')
+        $this->actingAs($user)->getJson('custom/events/company-registered-with-context-translations/schema')
             ->assertOk()
             ->assertJson([
                 'data' => [
-                    'bindings_schema' => [
+                    'context_schema' => [
                         'company.name' => 'string',
                         'company.status' => 'string',
                         'company.languages.*.locale' => 'string',
@@ -50,7 +50,7 @@ class EventDefinitionTest extends TestCase
                         'user.name' => 'string',
                         'user.email' => 'email',
                     ],
-                    'translatable_bindings' => [
+                    'translatable_context' => [
                         'company.status',
                         'company.languages.*.locale',
                     ],
@@ -62,18 +62,18 @@ class EventDefinitionTest extends TestCase
             ]);
     }
 
-    public function test_get_event_shema_without_bindings_success()
+    public function test_get_event_shema_without_context_success()
     {
         /** @var User $user */
         $user = User::factory()->hasConsumerAbility()->create();
-        $this->actingAs($user)->getJson('custom/events/my-event-without-bindings/schema')
+        $this->actingAs($user)->getJson('custom/events/my-event-without-context/schema')
             ->assertOk()
             ->assertJson([
                 'data' => [
-                    'bindings_schema' => [],
-                    'translatable_bindings' => [],
+                    'context_schema' => [],
+                    'translatable_context' => [],
                     'allowed_actions' => [
-                        'my-action-without-bindings',
+                        'my-action-without-context',
                     ],
                 ],
             ]);

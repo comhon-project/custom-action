@@ -3,7 +3,7 @@
 namespace Tests\Feature;
 
 use App\Events\CompanyRegistered;
-use App\Events\CompanyRegisteredWithBindingsTranslations;
+use App\Events\CompanyRegisteredWithContextTranslations;
 use App\Models\Company;
 use App\Models\User;
 use Comhon\CustomAction\Actions\QueueAutomaticEmail;
@@ -99,7 +99,7 @@ class EventDispatchTest extends TestCase
                         ],
                         'emails' => ['john.doe@gmail.com'],
                     ],
-                    'bindings' => [
+                    'context' => [
                         'mailables' => ['user'],
                         'emails' => ['responsibles.*.email'],
                     ],
@@ -224,7 +224,7 @@ class EventDispatchTest extends TestCase
                 'mailables' => [['recipient_type' => 'user', 'recipient_id' => $otherUser->id]],
                 'emails' => ['foo@cc.com'],
             ],
-            'bindings' => [
+            'context' => [
                 'mailables' => ['user'],
                 'emails' => ['responsibles.*.email'],
             ],
@@ -234,7 +234,7 @@ class EventDispatchTest extends TestCase
                 'mailables' => [['recipient_type' => 'user', 'recipient_id' => $otherUser->id]],
                 'emails' => ['foo@bcc.com'],
             ],
-            'bindings' => [
+            'context' => [
                 'mailables' => ['user'],
                 'emails' => ['responsibles.*.email'],
             ],
@@ -344,7 +344,7 @@ class EventDispatchTest extends TestCase
         $mails[0]->assertFrom('foo@cc.com');
     }
 
-    public function test_event_listener_with_bindings_from_mailable_success()
+    public function test_event_listener_with_context_from_mailable_success()
     {
         $targetUser = User::factory()->create();
         $company = Company::factory()->create();
@@ -354,7 +354,7 @@ class EventDispatchTest extends TestCase
         $defaultSetting = DefaultSetting::firstOrFail();
         $settings = $defaultSetting->settings;
         $settings['from'] = [
-            'bindings' => [
+            'context' => [
                 'mailable' => 'user',
             ],
         ];
@@ -380,7 +380,7 @@ class EventDispatchTest extends TestCase
         $mails[0]->assertFrom($targetUser->email);
     }
 
-    public function test_event_listener_with_bindings_translations()
+    public function test_event_listener_with_context_translations()
     {
         Lang::addLines(['status.draft' => 'Draft!'], 'en');
         Lang::addLines(['status.draft' => 'Brouillon!'], 'fr');
@@ -394,7 +394,7 @@ class EventDispatchTest extends TestCase
 
         // create event listener for CompanyRegistered event
         EventListener::factory()->genericRegistrationCompany([$otherUserFr->id, $otherUserEn->id])
-            ->withBindingsTranslations()
+            ->withContextTranslations()
             ->create();
 
         foreach (LocalizedSetting::all() as $localizedSetting) {
@@ -406,7 +406,7 @@ class EventDispatchTest extends TestCase
 
         Mail::fake();
 
-        CompanyRegisteredWithBindingsTranslations::dispatch($company, $targetUserEn);
+        CompanyRegisteredWithContextTranslations::dispatch($company, $targetUserEn);
 
         $mails = [];
         Mail::assertSent(Custom::class, 3);
@@ -425,7 +425,7 @@ class EventDispatchTest extends TestCase
         $mails[2]->assertHasSubject('draft Draft! French!');
     }
 
-    public function test_event_listener_with_bindings_from_email_failure()
+    public function test_event_listener_with_context_from_email_failure()
     {
         $targetUser = User::factory()->create();
         $company = Company::factory()->create();
@@ -435,7 +435,7 @@ class EventDispatchTest extends TestCase
         $defaultSetting = DefaultSetting::firstOrFail();
         $settings = $defaultSetting->settings;
         $settings['from'] = [
-            'bindings' => [
+            'context' => [
                 'email' => 'responsibles.*.email',
             ],
         ];

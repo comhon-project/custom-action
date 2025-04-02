@@ -3,8 +3,8 @@
 namespace Comhon\CustomAction\Http\Controllers;
 
 use Comhon\CustomAction\Contracts\CustomActionInterface;
-use Comhon\CustomAction\Contracts\HasBindingsInterface;
-use Comhon\CustomAction\Contracts\HasTranslatableBindingsInterface;
+use Comhon\CustomAction\Contracts\HasContextInterface;
+use Comhon\CustomAction\Contracts\HasTranslatableContextInterface;
 use Comhon\CustomAction\Facades\CustomActionModelResolver;
 use Comhon\CustomAction\Rules\RuleHelper;
 use Illuminate\Http\Request;
@@ -40,11 +40,11 @@ class ActionSchemaController extends Controller
         $actionSchema = [
             'settings_schema' => $actionClass::getSettingsSchema($eventClassContext),
             'localized_settings_schema' => $actionClass::getLocalizedSettingsSchema($eventClassContext),
-            'bindings_schema' => is_subclass_of($actionClass, HasBindingsInterface::class)
-                ? $actionClass::getBindingSchema()
+            'context_schema' => is_subclass_of($actionClass, HasContextInterface::class)
+                ? $actionClass::getContextSchema()
                 : [],
-            'translatable_bindings' => is_subclass_of($actionClass, HasTranslatableBindingsInterface::class)
-                ? array_keys($actionClass::getTranslatableBindings())
+            'translatable_context' => is_subclass_of($actionClass, HasTranslatableContextInterface::class)
+                ? array_keys($actionClass::getTranslatableContext())
                 : [],
         ];
 

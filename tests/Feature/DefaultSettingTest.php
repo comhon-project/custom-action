@@ -140,7 +140,7 @@ class DefaultSettingTest extends TestCase
             'settings' => [],
         ])->withEventAction('send-automatic-email')->create();
         $newSettings = [
-            'recipients' => ['to' => ['bindings' => ['mailables' => ['user']]]],
+            'recipients' => ['to' => ['context' => ['mailables' => ['user']]]],
         ];
 
         /** @var User $user */

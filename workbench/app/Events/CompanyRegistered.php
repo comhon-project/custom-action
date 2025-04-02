@@ -7,7 +7,7 @@ use App\Models\Company;
 use App\Models\User;
 use Comhon\CustomAction\Actions\SendAutomaticEmail;
 use Comhon\CustomAction\Contracts\CustomEventInterface;
-use Comhon\CustomAction\Contracts\HasBindingsInterface;
+use Comhon\CustomAction\Contracts\HasContextInterface;
 use Comhon\CustomAction\Files\SystemFile;
 use Comhon\CustomAction\Rules\RuleHelper;
 use Illuminate\Broadcasting\InteractsWithSockets;
@@ -15,7 +15,7 @@ use Illuminate\Foundation\Events\Dispatchable;
 use Illuminate\Queue\SerializesModels;
 use Tests\Support\Utils;
 
-class CompanyRegistered implements CustomEventInterface, HasBindingsInterface
+class CompanyRegistered implements CustomEventInterface, HasContextInterface
 {
     use Dispatchable, InteractsWithSockets, SerializesModels;
 
@@ -40,7 +40,7 @@ class CompanyRegistered implements CustomEventInterface, HasBindingsInterface
     /**
      * Get event context schema
      */
-    public static function getBindingSchema(): array
+    public static function getContextSchema(): array
     {
         return [
             'company.name' => 'string',

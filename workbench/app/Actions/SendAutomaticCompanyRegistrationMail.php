@@ -6,7 +6,7 @@ use Comhon\CustomAction\Actions\SendAutomaticEmail;
 
 class SendAutomaticCompanyRegistrationMail extends SendAutomaticEmail
 {
-    protected static function getCommonBindingSchema(): array
+    protected static function getCommonContextSchema(): array
     {
         return [];
     }

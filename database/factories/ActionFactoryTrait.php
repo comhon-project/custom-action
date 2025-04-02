@@ -13,7 +13,7 @@ trait ActionFactoryTrait
      */
     public function sendMailRegistrationCompanyScoped(Action $action, ?array $toOtherUserIds = null)
     {
-        $keyReceivers = $toOtherUserIds === null ? 'bindings' : 'static';
+        $keyReceivers = $toOtherUserIds === null ? 'context' : 'static';
         $valueReceivers = $toOtherUserIds === null
             ? ['user']
             : collect($toOtherUserIds)->map(fn ($id) => ['recipient_type' => 'user', 'recipient_id' => $id])->all();

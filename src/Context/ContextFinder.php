@@ -1,12 +1,12 @@
 <?php
 
-namespace Comhon\CustomAction\Bindings;
+namespace Comhon\CustomAction\Context;
 
-use Comhon\CustomAction\Contracts\BindingsFinderInterface;
+use Comhon\CustomAction\Contracts\ContextFinderInterface;
 use Comhon\CustomAction\Facades\CustomActionModelResolver;
 use Comhon\CustomAction\Rules\RuleHelper;
 
-class BindingsFinder implements BindingsFinderInterface
+class ContextFinder implements ContextFinderInterface
 {
     public function find(string $type, array $contextSchema): array
     {

@@ -142,7 +142,7 @@ class ScopedSettingTest extends TestCase
         /** @var EventAction $action */
         $action = EventAction::factory()->create();
         $settingsScope1 = [
-            'recipients' => ['to' => ['bindings' => ['mailables' => ['user']]]],
+            'recipients' => ['to' => ['context' => ['mailables' => ['user']]]],
         ];
         $scope1 = ['company.name' => 'my company scope 1'];
         /** @var User $user */
@@ -239,7 +239,7 @@ class ScopedSettingTest extends TestCase
             ->create();
 
         $settingsScope1 = [
-            'recipients' => ['to' => ['bindings' => [
+            'recipients' => ['to' => ['context' => [
                 'mailables' => ['user'],
                 'emails' => ['responsibles.*.email'],
             ]]],

@@ -3,7 +3,7 @@
 namespace Tests\Feature;
 
 use App\Actions\SendManualCompanyRegistrationMail;
-use App\Actions\SendManualCompanyRegistrationMailWithBindingsTranslations;
+use App\Actions\SendManualCompanyRegistrationMailWithContextTranslations;
 use App\Models\Company;
 use App\Models\User;
 use App\Models\UserWithoutPreference;
@@ -109,7 +109,7 @@ class ManualActionHandleTest extends TestCase
         $this->assertTrue($mails[0]->hasAttachment(Attachment::fromPath($this->getAssetPath())));
     }
 
-    public function test_handle_manual_action_user_with_bindings_container_with_schema_with_invalid()
+    public function test_handle_manual_action_user_with_context_container_with_schema_with_invalid()
     {
         $user = UserWithoutPreference::factory()->create();
         $company = Company::factory()->create();
@@ -166,7 +166,7 @@ class ManualActionHandleTest extends TestCase
         );
     }
 
-    public function test_handle_manual_action_with_translatable_bindings_success()
+    public function test_handle_manual_action_with_translatable_context_success()
     {
         Lang::addLines(['status.draft' => 'Draft!'], 'en');
         Lang::addLines(['status.draft' => 'Brouillon!'], 'fr');
@@ -179,7 +179,7 @@ class ManualActionHandleTest extends TestCase
 
         $company = Company::factory()->create();
         ManualAction::factory()->sendMailRegistrationCompany([$otherUserFr->id, $otherUserEn->id])
-            ->withBindingsTranslations()
+            ->withContextTranslations()
             ->create();
 
         foreach (LocalizedSetting::all() as $localizedSetting) {
@@ -191,7 +191,7 @@ class ManualActionHandleTest extends TestCase
 
         Mail::fake();
 
-        SendManualCompanyRegistrationMailWithBindingsTranslations::dispatch(
+        SendManualCompanyRegistrationMailWithContextTranslations::dispatch(
             $company,
             new SystemFile($this->getAssetPath()),
             $targetUserEn,

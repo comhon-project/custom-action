@@ -1,6 +1,6 @@
 <?php
 
-namespace Comhon\CustomAction\Bindings;
+namespace Comhon\CustomAction\Context;
 
 class Translatable
 {

@@ -3,7 +3,7 @@
 namespace App\Actions;
 
 use Comhon\CustomAction\Actions\CallableFromEventTrait;
-use Comhon\CustomAction\Actions\InteractWithBindingsTrait;
+use Comhon\CustomAction\Actions\InteractWithContextTrait;
 use Comhon\CustomAction\Actions\InteractWithSettingsTrait;
 use Comhon\CustomAction\Contracts\CallableFromEventInterface;
 use Comhon\CustomAction\Contracts\CustomActionInterface;
@@ -12,12 +12,12 @@ use Illuminate\Foundation\Bus\Dispatchable;
 use Illuminate\Queue\InteractsWithQueue;
 use Illuminate\Queue\SerializesModels;
 
-class MyActionWithoutBindings implements CallableFromEventInterface, CustomActionInterface
+class MyActionWithoutContext implements CallableFromEventInterface, CustomActionInterface
 {
     use CallableFromEventTrait,
         Dispatchable,
         InteractsWithQueue,
-        InteractWithBindingsTrait,
+        InteractWithContextTrait,
         InteractWithSettingsTrait,
         Queueable,
         SerializesModels;

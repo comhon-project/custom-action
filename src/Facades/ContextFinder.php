@@ -7,12 +7,12 @@ use Illuminate\Support\Facades\Facade;
 /**
  * @method static array find(string $type, array $contextSchema)
  *
- * @see \Comhon\CustomAction\Bindings\BindingsFinder
+ * @see \Comhon\CustomAction\Context\ContextFinder
  */
-class BindingsFinder extends Facade
+class ContextFinder extends Facade
 {
     protected static function getFacadeAccessor()
     {
-        return \Comhon\CustomAction\Contracts\BindingsFinderInterface::class;
+        return \Comhon\CustomAction\Contracts\ContextFinderInterface::class;
     }
 }

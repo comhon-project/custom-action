@@ -41,8 +41,8 @@ class GenerateActionCommandTest extends TestCase
         $dirShouldExists,
         $extends,
         $callable,
-        $hasBindings,
-        $hasTranslatableBindings,
+        $hasContext,
+        $hasTranslatableContext,
         $expectContent
     ) {
         CustomActionModelResolver::bind('bad-action', BadAction::class);
@@ -62,13 +62,13 @@ class GenerateActionCommandTest extends TestCase
                 [
                     '--extends' => $extends,
                     '--callable' => $callable,
-                    '--has-bindings' => $hasBindings,
-                    '--has-translatable-bindings' => $hasTranslatableBindings,
+                    '--has-context' => $hasContext,
+                    '--has-translatable-context' => $hasTranslatableContext,
                 ]
                 : [
                     '--callable' => $callable,
-                    '--has-bindings' => $hasBindings,
-                    '--has-translatable-bindings' => $hasTranslatableBindings,
+                    '--has-context' => $hasContext,
+                    '--has-translatable-context' => $hasTranslatableContext,
                 ]),
         ]);
 
@@ -98,7 +98,7 @@ declare(strict_types=1);
 namespace App\Actions\CustomActions;
 
 use Comhon\CustomAction\Actions\CallableManually;
-use Comhon\CustomAction\Actions\InteractWithBindingsTrait;
+use Comhon\CustomAction\Actions\InteractWithContextTrait;
 use Comhon\CustomAction\Actions\InteractWithSettingsTrait;
 use Comhon\CustomAction\Contracts\CustomActionInterface;
 use Illuminate\Bus\Queueable;
@@ -113,7 +113,7 @@ class TestGenericSendEmail implements CustomActionInterface
         Queueable,
         InteractsWithQueue,
         SerializesModels,
-        InteractWithBindingsTrait,
+        InteractWithContextTrait,
         InteractWithSettingsTrait,
         CallableManually;
 
@@ -149,24 +149,24 @@ declare(strict_types=1);
 namespace App\Actions\CustomActions;
 
 use Comhon\CustomAction\Actions\CallableFromEventTrait;
-use Comhon\CustomAction\Actions\InteractWithBindingsTrait;
+use Comhon\CustomAction\Actions\InteractWithContextTrait;
 use Comhon\CustomAction\Actions\InteractWithSettingsTrait;
 use Comhon\CustomAction\Contracts\CallableFromEventInterface;
 use Comhon\CustomAction\Contracts\CustomActionInterface;
-use Comhon\CustomAction\Contracts\HasBindingsInterface;
+use Comhon\CustomAction\Contracts\HasContextInterface;
 use Illuminate\Bus\Queueable;
 use Illuminate\Contracts\Queue\ShouldQueue;
 use Illuminate\Foundation\Bus\Dispatchable;
 use Illuminate\Queue\InteractsWithQueue;
 use Illuminate\Queue\SerializesModels;
 
-class TestGenericSendEmail implements CustomActionInterface, CallableFromEventInterface, HasBindingsInterface
+class TestGenericSendEmail implements CustomActionInterface, CallableFromEventInterface, HasContextInterface
 {
     use Dispatchable,
         Queueable,
         InteractsWithQueue,
         SerializesModels,
-        InteractWithBindingsTrait,
+        InteractWithContextTrait,
         InteractWithSettingsTrait,
         CallableFromEventTrait;
 
@@ -180,7 +180,7 @@ class TestGenericSendEmail implements CustomActionInterface, CallableFromEventIn
         return [];
     }
 
-    public static function getBindingSchema(): array
+    public static function getContextSchema(): array
     {
         return [];
     }
@@ -212,10 +212,10 @@ declare(strict_types=1);
 namespace App\Actions\CustomActions;
 
 use Comhon\CustomAction\Actions\SendAutomaticEmail;
-use Comhon\CustomAction\Contracts\HasTranslatableBindingsInterface;
+use Comhon\CustomAction\Contracts\HasTranslatableContextInterface;
 use Illuminate\Contracts\Queue\ShouldQueue;
 
-class TestGenericSendEmail extends SendAutomaticEmail implements HasTranslatableBindingsInterface
+class TestGenericSendEmail extends SendAutomaticEmail implements HasTranslatableContextInterface
 {
     public static function getSettingsSchema(?string \$eventClassContext = null): array
     {
@@ -227,9 +227,9 @@ class TestGenericSendEmail extends SendAutomaticEmail implements HasTranslatable
         return parent::getLocalizedSettingsSchema(\$eventClassContext);
     }
 
-    public static function getBindingSchema(): array
+    public static function getContextSchema(): array
     {
-        return parent::getBindingSchema();
+        return parent::getContextSchema();
     }
 
     public function getContext(): array
@@ -237,7 +237,7 @@ class TestGenericSendEmail extends SendAutomaticEmail implements HasTranslatable
         return parent::getContext();
     }
 
-    public static function getTranslatableBindings(): array
+    public static function getTranslatableContext(): array
     {
         return [];
     }
@@ -260,7 +260,7 @@ namespace App\Actions\CustomActions;
 
 use App\Actions\BadAction;
 use Comhon\CustomAction\Actions\CallableManually;
-use Comhon\CustomAction\Actions\InteractWithBindingsTrait;
+use Comhon\CustomAction\Actions\InteractWithContextTrait;
 use Comhon\CustomAction\Actions\InteractWithSettingsTrait;
 use Comhon\CustomAction\Contracts\CustomActionInterface;
 use Illuminate\Bus\Queueable;
@@ -275,7 +275,7 @@ class TestGenericSendEmail extends BadAction implements CustomActionInterface
         Queueable,
         InteractsWithQueue,
         SerializesModels,
-        InteractWithBindingsTrait,
+        InteractWithContextTrait,
         InteractWithSettingsTrait,
         CallableManually;
 

@@ -48,10 +48,10 @@ class ManualActionFactory extends Factory
         });
     }
 
-    public function withBindingsTranslations(): Factory
+    public function withContextTranslations(): Factory
     {
         return $this->afterMaking(function (ManualAction $manualAction) {
-            $manualAction->type = 'send-manual-company-email-with-bindings-translations';
+            $manualAction->type = 'send-manual-company-email-with-context-translations';
         });
     }
 }

@@ -3,7 +3,7 @@
 namespace Tests\Unit;
 
 use App\Events\CompanyRegistered;
-use App\Events\MyEventWithoutBindings;
+use App\Events\MyEventWithoutContext;
 use App\Models\Company;
 use App\Models\User;
 use Comhon\CustomAction\Events\EventActionError;
@@ -100,7 +100,7 @@ class EventActionDispatcherTest extends TestCase
     {
         Queue::fake();
 
-        MyEventWithoutBindings::dispatch();
+        MyEventWithoutContext::dispatch();
 
         Queue::assertNothingPushed();
     }
@@ -112,7 +112,7 @@ class EventActionDispatcherTest extends TestCase
 
         Queue::fake();
 
-        MyEventWithoutBindings::dispatch();
+        MyEventWithoutContext::dispatch();
 
         Queue::assertPushed(CallQueuedListener::class, 1);
         Queue::assertPushed(function (CallQueuedListener $dispatcher) {

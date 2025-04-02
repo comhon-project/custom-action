@@ -2,13 +2,13 @@
 
 namespace Comhon\CustomAction;
 
-use Comhon\CustomAction\Bindings\BindingsFinder;
-use Comhon\CustomAction\Bindings\BindingsScoper;
-use Comhon\CustomAction\Bindings\BindingsValidator;
 use Comhon\CustomAction\Commands\GenerateActionCommand;
-use Comhon\CustomAction\Contracts\BindingsFinderInterface;
-use Comhon\CustomAction\Contracts\BindingsScoperInterface;
-use Comhon\CustomAction\Contracts\BindingsValidatorInterface;
+use Comhon\CustomAction\Context\ContextFinder;
+use Comhon\CustomAction\Context\ContextScoper;
+use Comhon\CustomAction\Context\ContextValidator;
+use Comhon\CustomAction\Contracts\ContextFinderInterface;
+use Comhon\CustomAction\Contracts\ContextScoperInterface;
+use Comhon\CustomAction\Contracts\ContextValidatorInterface;
 use Comhon\CustomAction\Contracts\CustomActionInterface;
 use Comhon\CustomAction\Contracts\CustomEventInterface;
 use Comhon\CustomAction\Contracts\MailableEntityInterface;
@@ -58,9 +58,9 @@ class CustomActionServiceProvider extends PackageServiceProvider
     {
         $this->app->singleton(CustomActionModelResolver::class);
         $this->app->singletonIf(ModelResolverInterface::class, ModelResolver::class);
-        $this->app->singletonIf(BindingsFinderInterface::class, BindingsFinder::class);
-        $this->app->singletonIf(BindingsValidatorInterface::class, BindingsValidator::class);
-        $this->app->singletonIf(BindingsScoperInterface::class, BindingsScoper::class);
+        $this->app->singletonIf(ContextFinderInterface::class, ContextFinder::class);
+        $this->app->singletonIf(ContextValidatorInterface::class, ContextValidator::class);
+        $this->app->singletonIf(ContextScoperInterface::class, ContextScoper::class);
     }
 
     public function packageBooted()
