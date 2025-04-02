@@ -185,7 +185,7 @@ class TestGenericSendEmail implements CustomActionInterface, CallableFromEventIn
         return [];
     }
 
-    public function getBindingValues(): array
+    public function getContext(): array
     {
         return [];
     }
@@ -232,9 +232,9 @@ class TestGenericSendEmail extends SendAutomaticEmail implements HasTranslatable
         return parent::getBindingSchema();
     }
 
-    public function getBindingValues(): array
+    public function getContext(): array
     {
-        return parent::getBindingValues();
+        return parent::getContext();
     }
 
     public static function getTranslatableBindings(): array

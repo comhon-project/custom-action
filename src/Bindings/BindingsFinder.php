@@ -8,18 +8,18 @@ use Comhon\CustomAction\Rules\RuleHelper;
 
 class BindingsFinder implements BindingsFinderInterface
 {
-    public function find(string $bindingType, array $bindingSchema): array
+    public function find(string $type, array $contextSchema): array
     {
         $founds = [];
-        $bindingClass = CustomActionModelResolver::getClass($bindingType);
+        $class = CustomActionModelResolver::getClass($type);
 
-        foreach ($bindingSchema as $key => $value) {
-            if (is_string($value)) {
-                $value = explode('|', $value);
+        foreach ($contextSchema as $key => $rules) {
+            if (is_string($rules)) {
+                $rules = explode('|', $rules);
             }
-            if (is_array($value)) {
-                foreach ($value as $rule) {
-                    if (is_string($rule) && ($rule == $bindingType || $this->isA($rule, $bindingClass))) {
+            if (is_array($rules)) {
+                foreach ($rules as $rule) {
+                    if (is_string($rule) && ($rule == $type || $this->isA($rule, $class))) {
                         $founds[] = $key;
                     }
                 }
@@ -29,19 +29,19 @@ class BindingsFinder implements BindingsFinderInterface
         return $founds;
     }
 
-    private function isA(string $rule, ?string $bindingClass): bool
+    private function isA(string $rule, ?string $class): bool
     {
-        if (! $bindingClass) {
+        if (! $class) {
             return false;
         }
         $ruleIsPrefix = RuleHelper::getRuleName('is').':';
         if (strpos($rule, $ruleIsPrefix) !== 0) {
             return false;
         }
-        $class = CustomActionModelResolver::getClass(
+        $ruleClass = CustomActionModelResolver::getClass(
             explode(',', substr($rule, strlen($ruleIsPrefix)))[0]
         );
 
-        return is_a($class, $bindingClass, true);
+        return is_a($ruleClass, $class, true);
     }
 }

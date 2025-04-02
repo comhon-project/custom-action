@@ -34,7 +34,7 @@ class BadEvent implements CustomEventInterface, HasBindingsInterface
     }
 
     /**
-     * Get event binding schema
+     * Get event context schema
      */
     public static function getBindingSchema(): array
     {
@@ -44,9 +44,9 @@ class BadEvent implements CustomEventInterface, HasBindingsInterface
     }
 
     /**
-     * Get event binding values
+     * Get event context values
      */
-    public function getBindingValues(): array
+    public function getContext(): array
     {
         return [
             'company' => 'bad',

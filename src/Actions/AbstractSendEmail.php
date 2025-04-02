@@ -72,7 +72,7 @@ abstract class AbstractSendEmail implements CustomActionInterface, HasBindingsIn
     abstract protected function getAttachments(array $bindings, LocalizedSetting $localizedSetting): ?iterable;
 
     /**
-     * Get action binding schema.
+     * Get action context schema.
      *
      * Common bindings + recipient specific bindings
      */
@@ -87,7 +87,7 @@ abstract class AbstractSendEmail implements CustomActionInterface, HasBindingsIn
     }
 
     /**
-     * Get action common binding schema.
+     * Get action common context schema.
      *
      * Common bindings are bindings that are the same for all recipients
      */
@@ -96,7 +96,7 @@ abstract class AbstractSendEmail implements CustomActionInterface, HasBindingsIn
         return [];
     }
 
-    public function getBindingValues(): array
+    public function getContext(): array
     {
         return [];
     }

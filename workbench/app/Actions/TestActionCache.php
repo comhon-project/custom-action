@@ -51,7 +51,7 @@ class TestActionCache implements CustomActionInterface, HasBindingsInterface
     }
 
     /**
-     * Get action binding schema.
+     * Get action context schema.
      *
      * Common bindings + recipient specific bindings
      */
@@ -62,7 +62,7 @@ class TestActionCache implements CustomActionInterface, HasBindingsInterface
         ];
     }
 
-    public function getBindingValues(): array
+    public function getContext(): array
     {
         return [
             'index' => ++$this->index,

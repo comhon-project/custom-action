@@ -26,7 +26,7 @@ class EventActionDispatcher
             ->where('event', $eventUniqueName)->whereHas('eventActions');
 
         $listeners = $event instanceof HasBindingsInterface
-            ? BindingsScoper::getEventListeners($query, $event->getBindingValues())
+            ? BindingsScoper::getEventListeners($query, $event->getContext())
             : $query->lazy();
 
         foreach ($listeners as $listener) {

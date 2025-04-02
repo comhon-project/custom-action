@@ -11,43 +11,43 @@ class BindingsHelper
     /**
      * get all bindings keys from given event that have given types.
      */
-    public static function getEventBindingRules(string $eventClass, array $types): array
+    public static function getEventContextRules(string $eventClass, array $types): array
     {
         if (! is_subclass_of($eventClass, HasBindingsInterface::class)) {
             throw new \InvalidArgumentException('first argument must be a subclass of HasBindingsInterface');
         }
-        $bindingRules = [];
-        $bindingSchema = $eventClass::getBindingSchema();
+        $contextRules = [];
+        $contextSchema = $eventClass::getBindingSchema();
         foreach ($types as $key => $type) {
             $asArray = false;
             if (strpos($type, 'array:') === 0) {
                 $type = substr($type, 6);
                 $asArray = true;
             }
-            $enum = BindingsFinder::find($type, $bindingSchema);
+            $enum = BindingsFinder::find($type, $contextSchema);
             if (! empty($enum)) {
                 if ($asArray) {
-                    $bindingRules[$key] = 'array';
+                    $contextRules[$key] = 'array';
                     $key .= '.*';
                 }
-                $bindingRules[$key] = 'string|in:'.implode(',', $enum);
+                $contextRules[$key] = 'string|in:'.implode(',', $enum);
             }
         }
 
-        return $bindingRules;
+        return $contextRules;
     }
 
     /**
      * get all bindings values from given key
      */
-    public static function getBindingValues(array $bindings, string $key): array
+    public static function getValues(array $bindings, string $key): array
     {
         if (strpos($key, '*') === false) {
             return [Arr::get($bindings, $key)];
         }
         $values = [];
 
-        $retrieveBindingRecursive = function (&$values, $bindings, $path, $level) use (&$retrieveBindingRecursive) {
+        $retrieveValuesRecursive = function (&$values, $bindings, $path, $level) use (&$retrieveValuesRecursive) {
             $currentKey = $path[$level] ?? null;
             if (! isset($currentKey)) {
                 $values[] = $bindings;
@@ -59,14 +59,14 @@ class BindingsHelper
             }
             if ($currentKey == '*') {
                 foreach ($bindings as $subValue) {
-                    $retrieveBindingRecursive($values, $subValue, $path, $level + 1);
+                    $retrieveValuesRecursive($values, $subValue, $path, $level + 1);
                 }
             } elseif (Arr::exists($bindings, $currentKey)) {
-                $retrieveBindingRecursive($values, $bindings[$currentKey], $path, $level + 1);
+                $retrieveValuesRecursive($values, $bindings[$currentKey], $path, $level + 1);
             }
         };
 
-        $retrieveBindingRecursive($values, $bindings, explode('.', $key), 0);
+        $retrieveValuesRecursive($values, $bindings, explode('.', $key), 0);
 
         return $values;
     }

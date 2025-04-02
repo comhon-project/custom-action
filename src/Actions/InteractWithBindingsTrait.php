@@ -37,10 +37,10 @@ trait InteractWithBindingsTrait
         foreach ($hasBindingsObjects as $hasBindings) {
             $currentBindings = $validated
                 ? BindingsValidator::getValidatedBindings(
-                    $hasBindings->getBindingValues(),
+                    $hasBindings->getContext(),
                     $hasBindings->getBindingSchema($this)
                 )
-                : $hasBindings->getBindingValues();
+                : $hasBindings->getContext();
 
             if ($withTranslations && $hasBindings instanceof HasTranslatableBindingsInterface) {
                 $this->setTranslationValues($currentBindings, $hasBindings->getTranslatableBindings($this));
@@ -66,27 +66,27 @@ trait InteractWithBindingsTrait
         return $this->getAllBindings($withTranslations, true, $useCache);
     }
 
-    public static function setTranslationValues(array &$bindings, array $translations)
+    public static function setTranslationValues(array &$values, array $translations)
     {
-        $retrieveBindingRecursive = function (&$bindings, $path, $level, $translator) use (&$retrieveBindingRecursive) {
+        $accessValueRecursive = function (&$values, $path, $level, $translator) use (&$accessValueRecursive) {
             $currentKey = $path[$level] ?? null;
             if (! isset($currentKey)) {
-                $bindings = new Translatable($bindings, $translator);
+                $values = new Translatable($values, $translator);
             }
-            if (! Arr::accessible($bindings)) {
+            if (! Arr::accessible($values)) {
                 return;
             }
             if ($currentKey == '*') {
-                foreach ($bindings as &$subValue) {
-                    $retrieveBindingRecursive($subValue, $path, $level + 1, $translator);
+                foreach ($values as &$subValue) {
+                    $accessValueRecursive($subValue, $path, $level + 1, $translator);
                 }
-            } elseif (Arr::exists($bindings, $currentKey)) {
-                $retrieveBindingRecursive($bindings[$currentKey], $path, $level + 1, $translator);
+            } elseif (Arr::exists($values, $currentKey)) {
+                $accessValueRecursive($values[$currentKey], $path, $level + 1, $translator);
             }
         };
 
-        foreach ($translations as $bindingKey => $translator) {
-            $retrieveBindingRecursive($bindings, explode('.', $bindingKey), 0, $translator);
+        foreach ($translations as $key => $translator) {
+            $accessValueRecursive($values, explode('.', $key), 0, $translator);
         }
     }
 }

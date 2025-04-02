@@ -29,16 +29,16 @@ class SendAutomaticEmail extends AbstractSendEmail implements CallableFromEventI
             $schema["recipients.{$recipientType}.static.emails.*"] = 'email';
         }
         if ($eventClassContext && is_subclass_of($eventClassContext, HasBindingsInterface::class)) {
-            $bindingTypes = [
+            $contextTypes = [
                 'attachments' => 'array:stored-file',
                 'from.bindings.mailable' => 'mailable-entity',
                 'from.bindings.email' => 'email',
             ];
             foreach (static::RECIPIENT_TYPES as $recipientType) {
-                $bindingTypes["recipients.{$recipientType}.bindings.mailables"] = 'array:mailable-entity';
-                $bindingTypes["recipients.{$recipientType}.bindings.emails"] = 'array:email';
+                $contextTypes["recipients.{$recipientType}.bindings.mailables"] = 'array:mailable-entity';
+                $contextTypes["recipients.{$recipientType}.bindings.emails"] = 'array:email';
             }
-            $rules = BindingsHelper::getEventBindingRules($eventClassContext, $bindingTypes);
+            $rules = BindingsHelper::getEventContextRules($eventClassContext, $contextTypes);
             $schema = array_merge($schema, $rules);
         }
 
@@ -72,9 +72,9 @@ class SendAutomaticEmail extends AbstractSendEmail implements CallableFromEventI
         foreach (['mailable', 'email'] as $key) {
             $bindingsKey = $settingsFrom['bindings'][$key] ?? null;
             if ($bindingsKey) {
-                foreach (BindingsHelper::getBindingValues($bindings, $bindingsKey) as $binding) {
-                    if ($binding) {
-                        $froms[] = $binding;
+                foreach (BindingsHelper::getValues($bindings, $bindingsKey) as $value) {
+                    if ($value) {
+                        $froms[] = $value;
                     }
                 }
             }
@@ -116,7 +116,7 @@ class SendAutomaticEmail extends AbstractSendEmail implements CallableFromEventI
                 $bindingsKeys = $settingsRecipients[$recipientType]['bindings'][$key] ?? null;
                 if ($bindingsKeys) {
                     foreach ($bindingsKeys as $bindingsKey) {
-                        foreach (BindingsHelper::getBindingValues($bindings, $bindingsKey) as $recipient) {
+                        foreach (BindingsHelper::getValues($bindings, $bindingsKey) as $recipient) {
                             if ($recipient) {
                                 $recipients[$recipientType] ??= [];
                                 $recipients[$recipientType][] = is_string($recipient)

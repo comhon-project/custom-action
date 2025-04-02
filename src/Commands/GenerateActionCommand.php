@@ -202,7 +202,7 @@ class GenerateActionCommand extends Command
                     'static' => true,
                     'return' => 'array',
                 ],
-                'getBindingValues' => [
+                'getContext' => [
                     'return' => 'array',
                 ],
             ];

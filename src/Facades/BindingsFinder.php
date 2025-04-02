@@ -5,7 +5,7 @@ namespace Comhon\CustomAction\Facades;
 use Illuminate\Support\Facades\Facade;
 
 /**
- * @method static array find(string $bindingType, array $bindingSchema)
+ * @method static array find(string $type, array $contextSchema)
  *
  * @see \Comhon\CustomAction\Bindings\BindingsFinder
  */

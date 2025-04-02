@@ -10,7 +10,7 @@ class BindingsHelperTest extends TestCase
 {
     public function test_get_bindings_string()
     {
-        $rules = BindingsHelper::getEventBindingRules(CompanyRegistered::class, ['my.key' => 'string']);
+        $rules = BindingsHelper::getEventContextRules(CompanyRegistered::class, ['my.key' => 'string']);
 
         $this->assertEquals([
             'my.key' => 'string|in:company.name,company.status,company.languages.*.locale,user.name,localized',
@@ -19,7 +19,7 @@ class BindingsHelperTest extends TestCase
 
     public function test_get_bindings_email_receiver()
     {
-        $rules = BindingsHelper::getEventBindingRules(CompanyRegistered::class, ['receivers' => 'mailable-entity']);
+        $rules = BindingsHelper::getEventContextRules(CompanyRegistered::class, ['receivers' => 'mailable-entity']);
 
         $this->assertEquals([
             'receivers' => 'string|in:user',
@@ -28,7 +28,7 @@ class BindingsHelperTest extends TestCase
 
     public function test_get_bindings_array()
     {
-        $rules = BindingsHelper::getEventBindingRules(CompanyRegistered::class, ['my.key' => 'array:string']);
+        $rules = BindingsHelper::getEventContextRules(CompanyRegistered::class, ['my.key' => 'array:string']);
 
         $this->assertEquals([
             'my.key' => 'array',
@@ -38,7 +38,7 @@ class BindingsHelperTest extends TestCase
 
     public function test_get_bindings_several_types()
     {
-        $rules = BindingsHelper::getEventBindingRules(CompanyRegistered::class, [
+        $rules = BindingsHelper::getEventContextRules(CompanyRegistered::class, [
             'receivers' => 'mailable-entity',
             'my.key' => 'string',
         ]);
@@ -52,7 +52,7 @@ class BindingsHelperTest extends TestCase
     public function test_get_bindings_invalid_event_class()
     {
         $this->expectExceptionMessage('first argument must be a subclass of HasBindingsInterface');
-        BindingsHelper::getEventBindingRules('foo', ['my.key' => 'string']);
+        BindingsHelper::getEventContextRules('foo', ['my.key' => 'string']);
 
     }
 
@@ -67,7 +67,7 @@ class BindingsHelperTest extends TestCase
         ];
         $this->assertEquals(
             [12],
-            BindingsHelper::getBindingValues($bindings, 'my.sub.value')
+            BindingsHelper::getValues($bindings, 'my.sub.value')
         );
     }
 
@@ -78,7 +78,7 @@ class BindingsHelperTest extends TestCase
         ];
         $this->assertEquals(
             [null],
-            BindingsHelper::getBindingValues($bindings, 'my.sub.value')
+            BindingsHelper::getValues($bindings, 'my.sub.value')
         );
     }
 
@@ -89,7 +89,7 @@ class BindingsHelperTest extends TestCase
         ];
         $this->assertEquals(
             [],
-            BindingsHelper::getBindingValues($bindings, 'my.*.value')
+            BindingsHelper::getValues($bindings, 'my.*.value')
         );
     }
 
@@ -100,7 +100,7 @@ class BindingsHelperTest extends TestCase
         ];
         $this->assertEquals(
             [12, 13],
-            BindingsHelper::getBindingValues($bindings, '*')
+            BindingsHelper::getValues($bindings, '*')
         );
     }
 
@@ -123,7 +123,7 @@ class BindingsHelperTest extends TestCase
         ];
         $this->assertEquals(
             [14, 15, 16],
-            BindingsHelper::getBindingValues($bindings, 'my.*.subs.*.value')
+            BindingsHelper::getValues($bindings, 'my.*.subs.*.value')
         );
     }
 
@@ -141,7 +141,7 @@ class BindingsHelperTest extends TestCase
         ];
         $this->assertEquals(
             [20, 21, 22],
-            BindingsHelper::getBindingValues($bindings, 'my.*.values.*')
+            BindingsHelper::getValues($bindings, 'my.*.values.*')
         );
     }
 }
