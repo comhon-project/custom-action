@@ -6,8 +6,8 @@ use Comhon\CustomAction\Context\Translatable;
 use Comhon\CustomAction\Contracts\CallableFromEventInterface;
 use Comhon\CustomAction\Contracts\HasContextInterface;
 use Comhon\CustomAction\Contracts\HasTranslatableContextInterface;
-use Comhon\CustomAction\Facades\ContextValidator;
 use Illuminate\Support\Arr;
+use Illuminate\Support\Facades\Validator;
 
 trait InteractWithContextTrait
 {
@@ -36,7 +36,7 @@ trait InteractWithContextTrait
         $context = [];
         foreach ($hasContextObjects as $hasContext) {
             $currentContext = $validated
-                ? ContextValidator::getValidatedContext(
+                ? Validator::validate(
                     $hasContext->getContext(),
                     $hasContext->getContextSchema($this)
                 )

@@ -69,6 +69,9 @@ class ActionDefinitionTest extends TestCase
                     'subject' => 'required|'.RuleHelper::getRuleName('text_template'),
                     'body' => 'required|'.RuleHelper::getRuleName('html_template'),
                 ],
+                'context_keys_ignored_for_scoped_setting' => [
+                    'to', 'default_timezone', 'preferred_timezone',
+                ],
             ],
         ]);
 
@@ -97,6 +100,9 @@ class ActionDefinitionTest extends TestCase
                     'subject' => 'required|'.RuleHelper::getRuleName('text_template'),
                     'body' => 'required|'.RuleHelper::getRuleName('html_template'),
                     'test_localized' => 'string',
+                ],
+                'context_keys_ignored_for_scoped_setting' => [
+                    'to', 'default_timezone', 'preferred_timezone',
                 ],
             ],
         ]);
@@ -154,6 +160,9 @@ class ActionDefinitionTest extends TestCase
                         'subject' => 'required|'.RuleHelper::getRuleName('text_template'),
                         'body' => 'required|'.RuleHelper::getRuleName('html_template'),
                     ],
+                    'context_keys_ignored_for_scoped_setting' => [
+                        'to', 'default_timezone', 'preferred_timezone',
+                    ],
                 ],
             ]);
     }
@@ -171,6 +180,7 @@ class ActionDefinitionTest extends TestCase
                     'translatable_context' => [],
                     'settings_schema' => [],
                     'localized_settings_schema' => [],
+                    'context_keys_ignored_for_scoped_setting' => [],
                 ],
             ]);
     }

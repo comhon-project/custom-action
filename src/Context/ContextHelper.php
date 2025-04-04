@@ -3,71 +3,81 @@
 namespace Comhon\CustomAction\Context;
 
 use Comhon\CustomAction\Contracts\HasContextInterface;
-use Comhon\CustomAction\Facades\ContextFinder;
-use Illuminate\Support\Arr;
+use Comhon\CustomAction\Facades\CustomActionModelResolver;
+use Comhon\CustomAction\Rules\RuleHelper;
 
 class ContextHelper
 {
     /**
-     * get all context keys from given event that have given types.
+     * Extract context schemas from given classes and merge them.
+     *
+     * @param  array  $classes  for each element extract context schema if element is a class that
+     *                          implements HasContextInterface otherwise element is ignored
      */
-    public static function getEventContextRules(string $eventClass, array $types): array
+    public static function mergeContextSchemas(array $classes): array
     {
-        if (! is_subclass_of($eventClass, HasContextInterface::class)) {
-            throw new \InvalidArgumentException('first argument must be a subclass of HasContextInterface');
-        }
+        $contexts = array_map(
+            fn ($class) => ($class && is_subclass_of($class, HasContextInterface::class)) ? $class::getContextSchema() : [],
+            $classes,
+        );
+
+        return array_merge(...$contexts);
+    }
+
+    /**
+     * For each type, return the list of context keys that have the same type.
+     */
+    public static function getContextKeyEnumRuleAccordingType(array $types, array $contextSchema, bool $addArrayRule = false): array
+    {
         $contextRules = [];
-        $contextSchema = $eventClass::getContextSchema();
+        $enums = [];
         foreach ($types as $key => $type) {
-            $asArray = false;
-            if (strpos($type, 'array:') === 0) {
-                $type = substr($type, 6);
-                $asArray = true;
-            }
-            $enum = ContextFinder::find($type, $contextSchema);
-            if (! empty($enum)) {
-                if ($asArray) {
-                    $contextRules[$key] = 'array';
-                    $key .= '.*';
+            $enums[$type] ??= self::find($type, $contextSchema);
+            if (! empty($enums[$type])) {
+                if ($addArrayRule && substr($key, -2) == '.*') {
+                    $contextRules[substr($key, 0, -2)] = 'array';
                 }
-                $contextRules[$key] = 'string|in:'.implode(',', $enum);
+                $contextRules[$key] = 'string|in:'.implode(',', $enums[$type]);
             }
         }
 
         return $contextRules;
     }
 
-    /**
-     * get all values values from given key
-     */
-    public static function getValues(array $data, string $key): array
+    public static function find(string $type, array $contextSchema): array
     {
-        if (strpos($key, '*') === false) {
-            return [Arr::get($data, $key)];
-        }
-        $values = [];
+        $founds = [];
+        $class = CustomActionModelResolver::getClass($type);
 
-        $retrieveValuesRecursive = function (&$values, $data, $path, $level) use (&$retrieveValuesRecursive) {
-            $currentKey = $path[$level] ?? null;
-            if (! isset($currentKey)) {
-                $values[] = $data;
-
-                return;
+        foreach ($contextSchema as $key => $rules) {
+            if (is_string($rules)) {
+                $rules = explode('|', $rules);
             }
-            if (! Arr::accessible($data)) {
-                return;
-            }
-            if ($currentKey == '*') {
-                foreach ($data as $subValue) {
-                    $retrieveValuesRecursive($values, $subValue, $path, $level + 1);
+            if (is_array($rules)) {
+                foreach ($rules as $rule) {
+                    if (is_string($rule) && ($rule == $type || static::isA($rule, $class))) {
+                        $founds[] = $key;
+                    }
                 }
-            } elseif (Arr::exists($data, $currentKey)) {
-                $retrieveValuesRecursive($values, $data[$currentKey], $path, $level + 1);
             }
-        };
+        }
 
-        $retrieveValuesRecursive($values, $data, explode('.', $key), 0);
+        return $founds;
+    }
 
-        return $values;
+    private static function isA(string $rule, ?string $class): bool
+    {
+        if (! $class) {
+            return false;
+        }
+        $ruleIsPrefix = RuleHelper::getRuleName('is').':';
+        if (strpos($rule, $ruleIsPrefix) !== 0) {
+            return false;
+        }
+        $ruleClass = CustomActionModelResolver::getClass(
+            explode(',', substr($rule, strlen($ruleIsPrefix)))[0]
+        );
+
+        return is_a($ruleClass, $class, true);
     }
 }

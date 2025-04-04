@@ -6,6 +6,7 @@ namespace Comhon\CustomAction\Actions;
 
 use Comhon\CustomAction\Contracts\CustomActionInterface;
 use Comhon\CustomAction\Contracts\HasContextInterface;
+use Comhon\CustomAction\Contracts\HasContextKeysIgnoredForScopedSettingInterface;
 use Comhon\CustomAction\Contracts\HasTimezonePreferenceInterface;
 use Comhon\CustomAction\Contracts\MailableEntityInterface;
 use Comhon\CustomAction\Exceptions\SendEmailActionException;
@@ -19,7 +20,7 @@ use Illuminate\Queue\InteractsWithQueue;
 use Illuminate\Queue\SerializesModels;
 use Illuminate\Support\Facades\Mail;
 
-abstract class AbstractSendEmail implements CustomActionInterface, HasContextInterface
+abstract class AbstractSendEmail implements CustomActionInterface, HasContextInterface, HasContextKeysIgnoredForScopedSettingInterface
 {
     use Dispatchable,
         InteractsWithQueue,
@@ -84,6 +85,11 @@ abstract class AbstractSendEmail implements CustomActionInterface, HasContextInt
             'default_timezone' => 'string',
             'preferred_timezone' => 'string',
         ];
+    }
+
+    public static function getContextKeysIgnoredForScopedSetting(): array
+    {
+        return ['to', 'default_timezone', 'preferred_timezone'];
     }
 
     /**

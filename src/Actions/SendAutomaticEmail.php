@@ -4,7 +4,6 @@ namespace Comhon\CustomAction\Actions;
 
 use Comhon\CustomAction\Context\ContextHelper;
 use Comhon\CustomAction\Contracts\CallableFromEventInterface;
-use Comhon\CustomAction\Contracts\HasContextInterface;
 use Comhon\CustomAction\Exceptions\SendEmailActionException;
 use Comhon\CustomAction\Facades\CustomActionModelResolver;
 use Comhon\CustomAction\Models\LocalizedSetting;
@@ -28,17 +27,23 @@ class SendAutomaticEmail extends AbstractSendEmail implements CallableFromEventI
             $schema["recipients.{$recipientType}.static.emails"] = 'array';
             $schema["recipients.{$recipientType}.static.emails.*"] = 'email';
         }
-        if ($eventClassContext && is_subclass_of($eventClassContext, HasContextInterface::class)) {
-            $contextTypes = [
-                'attachments' => 'array:stored-file',
+
+        $contextSchema = ContextHelper::mergeContextSchemas([$eventClassContext, static::class]);
+        foreach (static::getContextKeysIgnoredForScopedSetting() as $contextKey) {
+            unset($contextSchema[$contextKey]);
+        }
+
+        if (count($contextSchema)) {
+            $typeBySettingKey = [
+                'attachments.*' => 'stored-file',
                 'from.context.mailable' => 'mailable-entity',
                 'from.context.email' => 'email',
             ];
             foreach (static::RECIPIENT_TYPES as $recipientType) {
-                $contextTypes["recipients.{$recipientType}.context.mailables"] = 'array:mailable-entity';
-                $contextTypes["recipients.{$recipientType}.context.emails"] = 'array:email';
+                $typeBySettingKey["recipients.{$recipientType}.context.mailables.*"] = 'mailable-entity';
+                $typeBySettingKey["recipients.{$recipientType}.context.emails.*"] = 'email';
             }
-            $rules = ContextHelper::getEventContextRules($eventClassContext, $contextTypes);
+            $rules = ContextHelper::getContextKeyEnumRuleAccordingType($typeBySettingKey, $contextSchema, true);
             $schema = array_merge($schema, $rules);
         }
 
@@ -72,7 +77,9 @@ class SendAutomaticEmail extends AbstractSendEmail implements CallableFromEventI
         foreach (['mailable', 'email'] as $key) {
             $contextKey = $settingsFrom['context'][$key] ?? null;
             if ($contextKey) {
-                foreach (ContextHelper::getValues($context, $contextKey) as $value) {
+                $contextFroms = data_get($context, $contextKey);
+                $contextFroms = str_contains($contextKey, '*') ? $contextFroms : [$contextFroms];
+                foreach ($contextFroms as $value) {
                     if ($value) {
                         $froms[] = $value;
                     }
@@ -116,7 +123,9 @@ class SendAutomaticEmail extends AbstractSendEmail implements CallableFromEventI
                 $contextKeys = $settingsRecipients[$recipientType]['context'][$key] ?? null;
                 if ($contextKeys) {
                     foreach ($contextKeys as $contextKey) {
-                        foreach (ContextHelper::getValues($context, $contextKey) as $recipient) {
+                        $contextRecipents = data_get($context, $contextKey);
+                        $contextRecipents = str_contains($contextKey, '*') ? $contextRecipents : [$contextRecipents];
+                        foreach ($contextRecipents as $recipient) {
                             if ($recipient) {
                                 $recipients[$recipientType] ??= [];
                                 $recipients[$recipientType][] = is_string($recipient)
