@@ -2,6 +2,7 @@
 
 namespace Tests\Feature;
 
+use App\Actions\SendManualCompanyRegistrationGroupedMail;
 use App\Actions\SendManualCompanyRegistrationMail;
 use App\Actions\SendManualCompanyRegistrationMailWithContextTranslations;
 use App\Models\Company;
@@ -212,5 +213,42 @@ class ManualActionHandleTest extends TestCase
 
         $mails[2]->assertHasTo($otherUserEn->email);
         $mails[2]->assertHasSubject('draft Draft! French!');
+    }
+
+    public function test_handle_manual_action_with_grouped_recipients_success()
+    {
+        Lang::addLines(['status.draft' => 'Draft!'], 'en');
+        Lang::addLines(['status.draft' => 'Brouillon!'], 'fr');
+        Lang::addLines(['languages.fr' => 'French!'], 'en');
+        Lang::addLines(['languages.fr' => 'Francais!'], 'fr');
+
+        $targetUser = User::factory(['preferred_locale' => 'en'])->create();
+        $otherUser1 = User::factory(['preferred_locale' => 'fr'])->create();
+        $otherUser2 = User::factory(['preferred_locale' => 'en'])->create();
+
+        $company = Company::factory()->create();
+        ManualAction::factory()->sendMailRegistrationCompany([$otherUser1->id, $otherUser2->id])
+            ->withGroupedRecipients()
+            ->create();
+
+        Mail::fake();
+
+        SendManualCompanyRegistrationGroupedMail::dispatch(
+            $company,
+            new SystemFile($this->getAssetPath()),
+            $targetUser,
+        );
+
+        $mails = [];
+        Mail::assertSent(Custom::class, 1);
+        Mail::assertSent(Custom::class, function (Custom $mail) use (&$mails) {
+            $mails[] = $mail;
+
+            return true;
+        });
+
+        $mails[0]->assertHasTo($targetUser->email);
+        $mails[0]->assertHasTo($otherUser1->email);
+        $mails[0]->assertHasTo($otherUser2->email);
     }
 }

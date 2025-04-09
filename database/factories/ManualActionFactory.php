@@ -54,4 +54,11 @@ class ManualActionFactory extends Factory
             $manualAction->type = 'send-manual-company-email-with-context-translations';
         });
     }
+
+    public function withGroupedRecipients(): Factory
+    {
+        return $this->afterMaking(function (ManualAction $manualAction) {
+            $manualAction->type = 'send-manual-company-grouped-email';
+        });
+    }
 }

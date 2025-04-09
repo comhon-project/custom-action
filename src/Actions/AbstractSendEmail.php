@@ -18,6 +18,7 @@ use Illuminate\Foundation\Bus\Dispatchable;
 use Illuminate\Mail\Mailables\Address;
 use Illuminate\Queue\InteractsWithQueue;
 use Illuminate\Queue\SerializesModels;
+use Illuminate\Support\Facades\App;
 use Illuminate\Support\Facades\Mail;
 
 abstract class AbstractSendEmail implements CustomActionInterface, ExposeContextInterface, HasContextKeysIgnoredForScopedSettingInterface
@@ -102,6 +103,31 @@ abstract class AbstractSendEmail implements CustomActionInterface, ExposeContext
         return [];
     }
 
+    /**
+     * Determine whether an email should be sent to each recipient
+     * individually or as a single email to all recipients.
+     */
+    protected function shouldGroupRecipients(): bool
+    {
+        return false;
+    }
+
+    /**
+     * Determine which locale should be used when sending grouped emails.
+     */
+    protected function getGroupedLocale(): string
+    {
+        return App::getLocale();
+    }
+
+    /**
+     * Determine which timezone should be used when sending grouped emails.
+     */
+    protected function getGroupedTimezone(): string
+    {
+        return config('app.timezone');
+    }
+
     final public function handle()
     {
         $localizedMailInfos = [];
@@ -114,21 +140,33 @@ abstract class AbstractSendEmail implements CustomActionInterface, ExposeContext
             throw new SendEmailActionException($this->getSetting(), 'there is no mail recipients defined');
         }
 
+        $groupRecipients = $this->shouldGroupRecipients() && count($tos) > 1;
+        if ($groupRecipients) {
+            $tos = [$tos];
+        }
+
         foreach ($tos as $to) {
-            $localizedSetting = $this->getLocalizedSettingOrFail(is_string($to) ? null : $to);
+            if ($groupRecipients) {
+                $localizedSetting = $this->getLocalizedSettingOrFail($this->getGroupedLocale());
+                $preferredTimezone = $this->getGroupedTimezone();
+                $to = $this->normalizeAddresses($to);
+            } else {
+                $localizedSetting = $this->getLocalizedSettingOrFail(is_string($to) ? null : $to);
+
+                // we expose 'to' value in email body or subject only if recipient is a MailableEntityInterface
+                $context['to'] = $to instanceof MailableEntityInterface
+                    ? $to->getExposableValues()
+                    : null;
+
+                $preferredTimezone = $to instanceof HasTimezonePreferenceInterface
+                    ? $to->preferredTimezone()
+                    : null;
+
+                $to = $this->normalizeAddress($to);
+            }
+
             $locale = $localizedSetting->locale;
             $localizedMailInfos[$locale] ??= $this->getLocalizedMailInfos($localizedSetting, $from);
-
-            // we expose 'to' value in email body or subject, only if recipient is a MailableEntityInterface
-            $context['to'] = $to instanceof MailableEntityInterface
-                ? $to->getExposableValues()
-                : null;
-
-            $preferredTimezone = $to instanceof HasTimezonePreferenceInterface
-                ? $to->preferredTimezone()
-                : null;
-
-            $to = $this->normalizeAddress($to);
 
             $pendingMail = Mail::to($to);
 
