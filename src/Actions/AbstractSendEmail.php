@@ -5,7 +5,7 @@ declare(strict_types=1);
 namespace Comhon\CustomAction\Actions;
 
 use Comhon\CustomAction\Contracts\CustomActionInterface;
-use Comhon\CustomAction\Contracts\HasContextInterface;
+use Comhon\CustomAction\Contracts\ExposeContextInterface;
 use Comhon\CustomAction\Contracts\HasContextKeysIgnoredForScopedSettingInterface;
 use Comhon\CustomAction\Contracts\HasTimezonePreferenceInterface;
 use Comhon\CustomAction\Contracts\MailableEntityInterface;
@@ -20,7 +20,7 @@ use Illuminate\Queue\InteractsWithQueue;
 use Illuminate\Queue\SerializesModels;
 use Illuminate\Support\Facades\Mail;
 
-abstract class AbstractSendEmail implements CustomActionInterface, HasContextInterface, HasContextKeysIgnoredForScopedSettingInterface
+abstract class AbstractSendEmail implements CustomActionInterface, ExposeContextInterface, HasContextKeysIgnoredForScopedSettingInterface
 {
     use Dispatchable,
         InteractsWithQueue,
@@ -44,33 +44,33 @@ abstract class AbstractSendEmail implements CustomActionInterface, HasContextInt
      * should return an address only if you want another sender
      * than the the default one defined on the application config
      */
-    abstract protected function getFrom(array $context): ?Address;
+    abstract protected function getFrom(): ?Address;
 
     /**
      * Get email recipents
      *
      * @return array{to: array, cc: array, bcc: array}
      */
-    abstract protected function getRecipients(array $context, ?array $recipientTypes = null): array;
+    abstract protected function getRecipients(?array $recipientTypes = null): array;
 
     /**
      * Get email subject.
      *
      * returned subject can be a text template that will be processed to do some replacements
      */
-    abstract protected function getSubject(array $context, LocalizedSetting $localizedSetting): string;
+    abstract protected function getSubject(LocalizedSetting $localizedSetting): string;
 
     /**
      * Get email body
      *
      * returned body can be a html template that will be processed to do some replacements
      */
-    abstract protected function getBody(array $context, LocalizedSetting $localizedSetting): string;
+    abstract protected function getBody(LocalizedSetting $localizedSetting): string;
 
     /**
      * Get email attachements
      */
-    abstract protected function getAttachments(array $context, LocalizedSetting $localizedSetting): ?iterable;
+    abstract protected function getAttachments(LocalizedSetting $localizedSetting): ?iterable;
 
     /**
      * Get action context schema.
@@ -81,7 +81,7 @@ abstract class AbstractSendEmail implements CustomActionInterface, HasContextInt
     {
         return [
             ...static::getCommonContextSchema() ?? [],
-            'to' => RuleHelper::getRuleName('is').':mailable-entity',
+            'to' => ['nullable', RuleHelper::getRuleName('is').':mailable-entity'],
             'default_timezone' => 'string',
             'preferred_timezone' => 'string',
         ];
@@ -102,39 +102,28 @@ abstract class AbstractSendEmail implements CustomActionInterface, HasContextInt
         return [];
     }
 
-    public function getContext(): array
-    {
-        return [];
-    }
-
     final public function handle()
     {
         $localizedMailInfos = [];
-        $validatedContext = $this->getAllValidatedContext(true);
-        $validatedReceivers = $this->getRecipients($validatedContext, ['to']);
-
-        // we use not validated and not localized context to find recipients.
-        // by using not validating context, we keep original object instances.
-        // (usefull for models that implement MailableEntityInterface)
-        $context = $this->getAllContext();
-
-        $from = $this->getFrom($context);
-        $recipients = $this->getRecipients($context);
+        $context = $this->getExposedValidatedContext(true);
+        $from = $this->getFrom();
+        $recipients = $this->getRecipients();
         $tos = $recipients['to'] ?? null;
 
         if (empty($tos)) {
             throw new SendEmailActionException($this->getSetting(), 'there is no mail recipients defined');
         }
 
-        foreach ($tos as $index => $to) {
-            $localizedSetting = $this->getLocalizedSettingOrFail($to);
+        foreach ($tos as $to) {
+            $localizedSetting = $this->getLocalizedSettingOrFail(is_string($to) ? null : $to);
             $locale = $localizedSetting->locale;
-            $localizedMailInfos[$locale] ??= $this->getLocalizedMailInfos($localizedSetting, $validatedContext, $from);
-            $mailInfos = &$localizedMailInfos[$locale];
+            $localizedMailInfos[$locale] ??= $this->getLocalizedMailInfos($localizedSetting, $from);
 
-            $mailInfos['context']['to'] = $to instanceof MailableEntityInterface
+            // we expose 'to' value in email body or subject, only if recipient is a MailableEntityInterface
+            $context['to'] = $to instanceof MailableEntityInterface
                 ? $to->getExposableValues()
-                : $validatedReceivers['to'][$index];
+                : null;
+
             $preferredTimezone = $to instanceof HasTimezonePreferenceInterface
                 ? $to->preferredTimezone()
                 : null;
@@ -152,21 +141,18 @@ abstract class AbstractSendEmail implements CustomActionInterface, HasContextInt
 
             $sendMethod = $this->sendAsynchronously ? 'queue' : 'send';
             $pendingMail->$sendMethod(
-                new Custom($mailInfos['mail'], $mailInfos['context'], $locale, null, $preferredTimezone)
+                new Custom($localizedMailInfos[$locale], $context, $locale, null, $preferredTimezone)
             );
         }
     }
 
-    protected function getLocalizedMailInfos(LocalizedSetting $localizedSetting, array $context, ?Address $from)
+    protected function getLocalizedMailInfos(LocalizedSetting $localizedSetting, ?Address $from)
     {
         return [
-            'context' => $context,
-            'mail' => [
-                'from' => $from,
-                'subject' => $this->getSubject($context, $localizedSetting),
-                'body' => $this->getBody($context, $localizedSetting),
-                'attachments' => $this->getAttachments($context, $localizedSetting),
-            ],
+            'from' => $from,
+            'subject' => $this->getSubject($localizedSetting),
+            'body' => $this->getBody($localizedSetting),
+            'attachments' => $this->getAttachments($localizedSetting),
         ];
     }
 

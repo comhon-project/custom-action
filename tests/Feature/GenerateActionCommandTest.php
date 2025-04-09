@@ -62,12 +62,14 @@ class GenerateActionCommandTest extends TestCase
                 [
                     '--extends' => $extends,
                     '--callable' => $callable,
-                    '--has-context' => $hasContext,
+                    '--expose-context' => $hasContext,
+                    '--format-context' => $hasContext,
                     '--has-translatable-context' => $hasTranslatableContext,
                 ]
                 : [
                     '--callable' => $callable,
-                    '--has-context' => $hasContext,
+                    '--expose-context' => $hasContext,
+                    '--format-context' => $hasContext,
                     '--has-translatable-context' => $hasTranslatableContext,
                 ]),
         ]);
@@ -153,14 +155,15 @@ use Comhon\CustomAction\Actions\InteractWithContextTrait;
 use Comhon\CustomAction\Actions\InteractWithSettingsTrait;
 use Comhon\CustomAction\Contracts\CallableFromEventInterface;
 use Comhon\CustomAction\Contracts\CustomActionInterface;
-use Comhon\CustomAction\Contracts\HasContextInterface;
+use Comhon\CustomAction\Contracts\ExposeContextInterface;
+use Comhon\CustomAction\Contracts\FormatContextInterface;
 use Illuminate\Bus\Queueable;
 use Illuminate\Contracts\Queue\ShouldQueue;
 use Illuminate\Foundation\Bus\Dispatchable;
 use Illuminate\Queue\InteractsWithQueue;
 use Illuminate\Queue\SerializesModels;
 
-class TestGenericSendEmail implements CustomActionInterface, CallableFromEventInterface, HasContextInterface
+class TestGenericSendEmail implements CustomActionInterface, CallableFromEventInterface, ExposeContextInterface, FormatContextInterface
 {
     use Dispatchable,
         Queueable,
@@ -185,7 +188,7 @@ class TestGenericSendEmail implements CustomActionInterface, CallableFromEventIn
         return [];
     }
 
-    public function getContext(): array
+    public function formatContext(): array
     {
         return [];
     }
@@ -225,16 +228,6 @@ class TestGenericSendEmail extends SendAutomaticEmail implements HasTranslatable
     public static function getLocalizedSettingsSchema(?string \$eventClassContext = null): array
     {
         return parent::getLocalizedSettingsSchema(\$eventClassContext);
-    }
-
-    public static function getContextSchema(): array
-    {
-        return parent::getContextSchema();
-    }
-
-    public function getContext(): array
-    {
-        return parent::getContext();
     }
 
     public static function getTranslatableContext(): array

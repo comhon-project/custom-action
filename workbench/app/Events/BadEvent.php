@@ -4,7 +4,8 @@ namespace App\Events;
 
 use App\Actions\BadAction;
 use Comhon\CustomAction\Contracts\CustomEventInterface;
-use Comhon\CustomAction\Contracts\HasContextInterface;
+use Comhon\CustomAction\Contracts\ExposeContextInterface;
+use Comhon\CustomAction\Contracts\FormatContextInterface;
 use Illuminate\Broadcasting\InteractsWithSockets;
 use Illuminate\Foundation\Events\Dispatchable;
 use Illuminate\Queue\SerializesModels;
@@ -12,20 +13,12 @@ use Illuminate\Queue\SerializesModels;
 /**
  * event that has an action that doesn't implement CustomAction interface
  */
-class BadEvent implements CustomEventInterface, HasContextInterface
+class BadEvent implements CustomEventInterface, ExposeContextInterface, FormatContextInterface
 {
     use Dispatchable, InteractsWithSockets, SerializesModels;
 
-    /**
-     * Create a new event instance.
-     *
-     * @return void
-     */
     public function __construct() {}
 
-    /**
-     * Get actions that might be attached to event
-     */
     public static function getAllowedActions(): array
     {
         return [
@@ -33,9 +26,6 @@ class BadEvent implements CustomEventInterface, HasContextInterface
         ];
     }
 
-    /**
-     * Get event context schema
-     */
     public static function getContextSchema(): array
     {
         return [
@@ -43,10 +33,7 @@ class BadEvent implements CustomEventInterface, HasContextInterface
         ];
     }
 
-    /**
-     * Get event context values
-     */
-    public function getContext(): array
+    public function formatContext(): array
     {
         return [
             'company' => 'bad',

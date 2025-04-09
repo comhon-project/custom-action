@@ -44,7 +44,7 @@ class ActionDefinitionTest extends TestCase
         $response->assertJson([
             'data' => [
                 'context_schema' => [
-                    'to' => 'is:mailable-entity',
+                    'to' => ['nullable', 'is:mailable-entity'],
                     'default_timezone' => 'string',
                     'preferred_timezone' => 'string',
                 ],
@@ -79,7 +79,7 @@ class ActionDefinitionTest extends TestCase
         $response->assertJson([
             'data' => [
                 'context_schema' => [
-                    'to' => 'is:mailable-entity',
+                    'to' => ['nullable', 'is:mailable-entity'],
                     'default_timezone' => 'string',
                     'preferred_timezone' => 'string',
                     'company.name' => 'string',
@@ -119,7 +119,7 @@ class ActionDefinitionTest extends TestCase
             ->assertJson([
                 'data' => [
                     'context_schema' => [
-                        'to' => 'is:mailable-entity',
+                        'to' => ['nullable', 'is:mailable-entity'],
                         'default_timezone' => 'string',
                         'preferred_timezone' => 'string',
                     ],

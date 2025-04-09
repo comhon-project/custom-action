@@ -7,7 +7,8 @@ use App\Models\Company;
 use App\Models\User;
 use Comhon\CustomAction\Actions\SendAutomaticEmail;
 use Comhon\CustomAction\Contracts\CustomEventInterface;
-use Comhon\CustomAction\Contracts\HasContextInterface;
+use Comhon\CustomAction\Contracts\ExposeContextInterface;
+use Comhon\CustomAction\Contracts\FormatContextInterface;
 use Comhon\CustomAction\Files\SystemFile;
 use Comhon\CustomAction\Rules\RuleHelper;
 use Illuminate\Broadcasting\InteractsWithSockets;
@@ -15,20 +16,12 @@ use Illuminate\Foundation\Events\Dispatchable;
 use Illuminate\Queue\SerializesModels;
 use Tests\Support\Utils;
 
-class CompanyRegistered implements CustomEventInterface, HasContextInterface
+class CompanyRegistered implements CustomEventInterface, ExposeContextInterface, FormatContextInterface
 {
     use Dispatchable, InteractsWithSockets, SerializesModels;
 
-    /**
-     * Create a new event instance.
-     *
-     * @return void
-     */
     public function __construct(public Company $company, public User $user) {}
 
-    /**
-     * Get actions that might be attached to event
-     */
     public static function getAllowedActions(): array
     {
         return [
@@ -37,9 +30,6 @@ class CompanyRegistered implements CustomEventInterface, HasContextInterface
         ];
     }
 
-    /**
-     * Get event context schema
-     */
     public static function getContextSchema(): array
     {
         return [
@@ -57,10 +47,7 @@ class CompanyRegistered implements CustomEventInterface, HasContextInterface
         ];
     }
 
-    /**
-     * Get event context values
-     */
-    public function getContext(): array
+    public function formatContext(): array
     {
         return [
             'company' => $this->company,

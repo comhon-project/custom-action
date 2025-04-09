@@ -4,7 +4,7 @@ namespace Comhon\CustomAction\Http\Controllers;
 
 use Comhon\CustomAction\Catalogs\EventCatalog;
 use Comhon\CustomAction\Contracts\CustomEventInterface;
-use Comhon\CustomAction\Contracts\HasContextInterface;
+use Comhon\CustomAction\Contracts\ExposeContextInterface;
 use Comhon\CustomAction\Contracts\HasTranslatableContextInterface;
 use Comhon\CustomAction\Facades\CustomActionModelResolver;
 use Comhon\CustomAction\Models\EventListener;
@@ -37,7 +37,7 @@ class EventController extends Controller
 
         $eventClass = CustomActionModelResolver::getClass($eventUniqueName);
         $schema = [
-            'context_schema' => is_subclass_of($eventClass, HasContextInterface::class)
+            'context_schema' => is_subclass_of($eventClass, ExposeContextInterface::class)
                 ? $eventClass::getContextSchema()
                 : [],
             'translatable_context' => is_subclass_of($eventClass, HasTranslatableContextInterface::class)

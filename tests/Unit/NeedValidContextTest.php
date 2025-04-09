@@ -15,10 +15,10 @@ class NeedValidContextTest extends TestCase
     {
         ManualAction::factory()->create();
         $action = new TestActionCache;
-        $res = $action->getAllValidatedContext('en', false);
+        $res = $action->getExposedValidatedContext(false, false);
         $this->assertEquals(1, $res['index']);
 
-        $res = $action->getAllValidatedContext('en', false);
+        $res = $action->getExposedValidatedContext(false, false);
         $this->assertEquals(2, $res['index']);
     }
 
@@ -26,10 +26,10 @@ class NeedValidContextTest extends TestCase
     {
         ManualAction::factory()->create();
         $action = new TestActionCache;
-        $res = $action->getAllValidatedContext('en', true);
+        $res = $action->getExposedValidatedContext(false, true);
         $this->assertEquals(1, $res['index']);
 
-        $res = $action->getAllValidatedContext('en', true);
+        $res = $action->getExposedValidatedContext(false, true);
         $this->assertEquals(1, $res['index']);
     }
 }

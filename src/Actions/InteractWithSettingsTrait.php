@@ -23,7 +23,7 @@ trait InteractWithSettingsTrait
     {
         if (! isset($this->setting)) {
             $action = $this->getActionModel();
-            $context = $this->getAllContext();
+            $context = $this->getExposedContext();
             if (empty($context)) {
                 $this->setting = $action->defaultSetting ?? throw new MissingSettingException($action, true);
             } else {

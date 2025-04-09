@@ -2,9 +2,10 @@
 
 namespace Comhon\CustomAction\Actions;
 
+use Comhon\CustomAction\Context\ContextHelper;
 use Comhon\CustomAction\Context\Translatable;
 use Comhon\CustomAction\Contracts\CallableFromEventInterface;
-use Comhon\CustomAction\Contracts\HasContextInterface;
+use Comhon\CustomAction\Contracts\ExposeContextInterface;
 use Comhon\CustomAction\Contracts\HasTranslatableContextInterface;
 use Illuminate\Support\Arr;
 use Illuminate\Support\Facades\Validator;
@@ -19,32 +20,30 @@ trait InteractWithContextTrait
      * @param  bool  $useCache  if true, cache context for the action instance,
      *                          and get value from it if exists.
      */
-    public function getAllContext(bool $withTranslations = false, bool $validated = false, bool $useCache = true): array
+    public function getExposedContext(bool $withTranslations = false, bool $validated = false, bool $useCache = true): array
     {
         if ($useCache && isset($this->contextCache[$withTranslations][$validated])) {
             return $this->contextCache[$withTranslations][$validated];
         }
 
-        $hasContextObjects = [];
-        if ($this instanceof CallableFromEventInterface && $this->getEvent() instanceof HasContextInterface) {
-            $hasContextObjects[] = $this->getEvent();
+        $contextObjects = [];
+        if ($this instanceof CallableFromEventInterface && $this->getEvent() instanceof ExposeContextInterface) {
+            $contextObjects[] = $this->getEvent();
         }
-        if ($this instanceof HasContextInterface) {
-            $hasContextObjects[] = $this;
+        if ($this instanceof ExposeContextInterface) {
+            $contextObjects[] = $this;
         }
 
         $context = [];
-        foreach ($hasContextObjects as $hasContext) {
-            $currentContext = $validated
-                ? Validator::validate(
-                    $hasContext->getContext(),
-                    $hasContext->getContextSchema($this)
-                )
-                : $hasContext->getContext();
-
-            if ($withTranslations && $hasContext instanceof HasTranslatableContextInterface) {
-                $this->setTranslationValues($currentContext, $hasContext->getTranslatableContext($this));
+        foreach ($contextObjects as $contextObject) {
+            $currentContext = ContextHelper::extractContext($contextObject);
+            if ($validated) {
+                $currentContext = Validator::validate($currentContext, $contextObject->getContextSchema($this));
             }
+            if ($withTranslations && $contextObject instanceof HasTranslatableContextInterface) {
+                $this->setTranslationValues($currentContext, $contextObject->getTranslatableContext($this));
+            }
+            // for the merge, action context takes priority over event context.
             $context = empty($context) ? $currentContext : array_merge($context, $currentContext);
         }
 
@@ -61,9 +60,9 @@ trait InteractWithContextTrait
      * @param  bool  $useCache  if true, cache context for the action instance,
      *                          and get value from it if exists.
      */
-    public function getAllValidatedContext(bool $withTranslations = false, bool $useCache = true): array
+    public function getExposedValidatedContext(bool $withTranslations = false, bool $useCache = true): array
     {
-        return $this->getAllContext($withTranslations, true, $useCache);
+        return $this->getExposedContext($withTranslations, true, $useCache);
     }
 
     public static function setTranslationValues(array &$values, array $translations)

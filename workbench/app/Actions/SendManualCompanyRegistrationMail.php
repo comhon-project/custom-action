@@ -19,9 +19,9 @@ class SendManualCompanyRegistrationMail extends AbstractSendEmail
     use CallableManually;
 
     public function __construct(
-        private Company $company,
-        private SystemFile $logo,
-        private User|UserWithoutPreference|null $to,
+        public Company $company,
+        public SystemFile $logo,
+        public User|UserWithoutPreference|null $to,
     ) {}
 
     public static function getSettingsSchema(?string $eventClassContext = null): array
@@ -52,38 +52,30 @@ class SendManualCompanyRegistrationMail extends AbstractSendEmail
         ];
     }
 
-    public function getContext(): array
+    protected function getFrom(): ?Address
     {
-        return [
-            'company' => $this->company,
-            'logo' => $this->logo,
-        ];
-    }
-
-    protected function getFrom(array $context): ?Address
-    {
-        $from = $context['from']
+        $from = $this->getExposedContext()['from']
             ?? $this->setting->settings['from']
             ?? null;
 
         return $from ? $this->normalizeAddress($from) : null;
     }
 
-    protected function getSubject(array $context, LocalizedSetting $localizedSetting): string
+    protected function getSubject(LocalizedSetting $localizedSetting): string
     {
-        return $context['subject']
+        return $this->getExposedContext()['subject']
             ?? $localizedSetting->settings['subject']
             ?? throw new SendEmailActionException($this->setting, 'localized settings subject is not defined');
     }
 
-    protected function getBody(array $context, LocalizedSetting $localizedSetting): string
+    protected function getBody(LocalizedSetting $localizedSetting): string
     {
-        return $context['body']
+        return $this->getExposedContext()['body']
             ?? $localizedSetting->settings['body']
             ?? throw new SendEmailActionException($this->setting, 'localized settings body is not defined');
     }
 
-    protected function getRecipients(array $context, ?array $recipientTypes = null): array
+    protected function getRecipients(?array $recipientTypes = null): array
     {
         if (! $this->to) {
             return [];
@@ -100,7 +92,7 @@ class SendManualCompanyRegistrationMail extends AbstractSendEmail
         return ['to' => $tos];
     }
 
-    protected function getAttachments(array $context, LocalizedSetting $localizedSetting): ?iterable
+    protected function getAttachments(LocalizedSetting $localizedSetting): ?iterable
     {
         return [$this->logo];
     }

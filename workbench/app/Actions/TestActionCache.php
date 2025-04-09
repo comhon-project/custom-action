@@ -7,7 +7,8 @@ namespace App\Actions;
 use Comhon\CustomAction\Actions\InteractWithContextTrait;
 use Comhon\CustomAction\Actions\InteractWithSettingsTrait;
 use Comhon\CustomAction\Contracts\CustomActionInterface;
-use Comhon\CustomAction\Contracts\HasContextInterface;
+use Comhon\CustomAction\Contracts\ExposeContextInterface;
+use Comhon\CustomAction\Contracts\FormatContextInterface;
 use Comhon\CustomAction\Models\Action;
 use Comhon\CustomAction\Models\ManualAction;
 use Illuminate\Bus\Queueable;
@@ -15,7 +16,7 @@ use Illuminate\Foundation\Bus\Dispatchable;
 use Illuminate\Queue\InteractsWithQueue;
 use Illuminate\Queue\SerializesModels;
 
-class TestActionCache implements CustomActionInterface, HasContextInterface
+class TestActionCache implements CustomActionInterface, ExposeContextInterface, FormatContextInterface
 {
     use Dispatchable,
         InteractsWithQueue,
@@ -62,7 +63,7 @@ class TestActionCache implements CustomActionInterface, HasContextInterface
         ];
     }
 
-    public function getContext(): array
+    public function formatContext(): array
     {
         return [
             'index' => ++$this->index,

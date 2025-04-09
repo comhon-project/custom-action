@@ -2,22 +2,33 @@
 
 namespace Comhon\CustomAction\Context;
 
-use Comhon\CustomAction\Contracts\HasContextInterface;
+use Comhon\CustomAction\Contracts\ExposeContextInterface;
+use Comhon\CustomAction\Contracts\FormatContextInterface;
 use Comhon\CustomAction\Facades\CustomActionModelResolver;
 use Comhon\CustomAction\Rules\RuleHelper;
 
 class ContextHelper
 {
     /**
+     * Extract context from given object instance.
+     */
+    public static function extractContext(object $object): array
+    {
+        return $object instanceof FormatContextInterface
+            ? $object->formatContext()
+            : get_object_vars($object);
+    }
+
+    /**
      * Extract context schemas from given classes and merge them.
      *
      * @param  array  $classes  for each element extract context schema if element is a class that
-     *                          implements HasContextInterface otherwise element is ignored
+     *                          implements ExposeContextInterface otherwise element is ignored
      */
     public static function mergeContextSchemas(array $classes): array
     {
         $contexts = array_map(
-            fn ($class) => ($class && is_subclass_of($class, HasContextInterface::class)) ? $class::getContextSchema() : [],
+            fn ($class) => ($class && is_subclass_of($class, ExposeContextInterface::class)) ? $class::getContextSchema() : [],
             $classes,
         );
 

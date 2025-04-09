@@ -8,7 +8,8 @@ use Comhon\CustomAction\Actions\InteractWithContextTrait;
 use Comhon\CustomAction\Actions\InteractWithSettingsTrait;
 use Comhon\CustomAction\Contracts\CallableFromEventInterface;
 use Comhon\CustomAction\Contracts\CustomActionInterface;
-use Comhon\CustomAction\Contracts\HasContextInterface;
+use Comhon\CustomAction\Contracts\ExposeContextInterface;
+use Comhon\CustomAction\Contracts\FormatContextInterface;
 use Comhon\CustomAction\Contracts\HasTranslatableContextInterface;
 use Comhon\CustomAction\Facades\CustomActionModelResolver;
 use Illuminate\Bus\Queueable;
@@ -29,7 +30,8 @@ class GenerateActionCommand extends Command
         {name : The class name of your action}
         {--callable= : How your action will be called (manually, from-event)}
         {--extends= : The action (class name or unique name) that must be extended}
-        {--has-context : Whether the action has context}
+        {--expose-context : Whether the action expose context}
+        {--format-context : Whether the context should be formatted before usage}
         {--has-translatable-context : Whether the action has translatable context}';
 
     public $description = 'generate a custom action class';
@@ -68,11 +70,14 @@ class GenerateActionCommand extends Command
             $interfaces[] = CallableFromEventInterface::class;
             $traits[] = CallableFromEventTrait::class;
         }
+        if ($this->option('expose-context')) {
+            $interfaces[] = ExposeContextInterface::class;
+        }
+        if ($this->option('format-context')) {
+            $interfaces[] = FormatContextInterface::class;
+        }
         if ($this->option('has-translatable-context')) {
-            $interfaces[] = HasContextInterface::class;
             $interfaces[] = HasTranslatableContextInterface::class;
-        } elseif ($this->option('has-context')) {
-            $interfaces[] = HasContextInterface::class;
         }
 
         $extendsClass = $this->getExtendsClassFromOption();
@@ -195,14 +200,19 @@ class GenerateActionCommand extends Command
                 'return' => 'array',
             ],
         ];
-        if (in_array(HasContextInterface::class, $interfaces)) {
+        if (in_array(ExposeContextInterface::class, $interfaces)) {
             $functions = [
                 ...$functions,
                 'getContextSchema' => [
                     'static' => true,
                     'return' => 'array',
                 ],
-                'getContext' => [
+            ];
+        }
+        if (in_array(FormatContextInterface::class, $interfaces)) {
+            $functions = [
+                ...$functions,
+                'formatContext' => [
                     'return' => 'array',
                 ],
             ];

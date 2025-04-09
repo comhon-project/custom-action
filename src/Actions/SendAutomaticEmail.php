@@ -58,7 +58,7 @@ class SendAutomaticEmail extends AbstractSendEmail implements CallableFromEventI
         ];
     }
 
-    protected function getFrom(array $context): ?Address
+    protected function getFrom(): ?Address
     {
         $froms = [];
         $settingsFrom = $this->getSetting()->settings['from'] ?? null;
@@ -77,7 +77,7 @@ class SendAutomaticEmail extends AbstractSendEmail implements CallableFromEventI
         foreach (['mailable', 'email'] as $key) {
             $contextKey = $settingsFrom['context'][$key] ?? null;
             if ($contextKey) {
-                $contextFroms = data_get($context, $contextKey);
+                $contextFroms = data_get($this->getExposedContext(), $contextKey);
                 $contextFroms = str_contains($contextKey, '*') ? $contextFroms : [$contextFroms];
                 foreach ($contextFroms as $value) {
                     if ($value) {
@@ -93,7 +93,7 @@ class SendAutomaticEmail extends AbstractSendEmail implements CallableFromEventI
         return count($froms) ? $this->normalizeAddress($froms[0]) : null;
     }
 
-    protected function getRecipients(array $context, ?array $recipientTypes = null): array
+    protected function getRecipients(?array $recipientTypes = null): array
     {
         $recipients = [];
         $settingsRecipients = $this->getSetting()->settings['recipients'] ?? null;
@@ -123,7 +123,7 @@ class SendAutomaticEmail extends AbstractSendEmail implements CallableFromEventI
                 $contextKeys = $settingsRecipients[$recipientType]['context'][$key] ?? null;
                 if ($contextKeys) {
                     foreach ($contextKeys as $contextKey) {
-                        $contextRecipents = data_get($context, $contextKey);
+                        $contextRecipents = data_get($this->getExposedContext(), $contextKey);
                         $contextRecipents = str_contains($contextKey, '*') ? $contextRecipents : [$contextRecipents];
                         foreach ($contextRecipents as $recipient) {
                             if ($recipient) {
@@ -146,26 +146,26 @@ class SendAutomaticEmail extends AbstractSendEmail implements CallableFromEventI
         return $recipients;
     }
 
-    protected function getSubject(array $context, LocalizedSetting $localizedSetting): string
+    protected function getSubject(LocalizedSetting $localizedSetting): string
     {
         return $localizedSetting->settings['subject']
             ?? throw new SendEmailActionException($this->getSetting(), 'localized settings subject is not defined');
     }
 
-    protected function getBody(array $context, LocalizedSetting $localizedSetting): string
+    protected function getBody(LocalizedSetting $localizedSetting): string
     {
         return $localizedSetting->settings['body']
             ?? throw new SendEmailActionException($this->getSetting(), 'localized settings body is not defined');
     }
 
-    protected function getAttachments($context, LocalizedSetting $localizedSetting): ?iterable
+    protected function getAttachments(LocalizedSetting $localizedSetting): ?iterable
     {
         if (! isset($this->getSetting()->settings['attachments'])) {
             return [];
         }
 
         return collect($this->getSetting()->settings['attachments'])
-            ->map(fn ($property) => Arr::get($context, $property))
+            ->map(fn ($property) => Arr::get($this->getExposedContext(), $property))
             ->filter(fn ($path) => $path != null);
     }
 

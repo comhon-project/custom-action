@@ -2,12 +2,13 @@
 
 namespace App\Models;
 
+use Comhon\CustomAction\Contracts\MailableEntityInterface;
 use Illuminate\Contracts\Translation\HasLocalePreference;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Foundation\Auth\User as Authenticatable;
 use Illuminate\Notifications\Notifiable;
 
-class UserWithoutPreference extends Authenticatable implements HasLocalePreference
+class UserWithoutPreference extends Authenticatable implements HasLocalePreference, MailableEntityInterface
 {
     use HasFactory, Notifiable;
 
@@ -52,5 +53,20 @@ class UserWithoutPreference extends Authenticatable implements HasLocalePreferen
     public function preferredLocale()
     {
         return $this->preferred_locale;
+    }
+
+    public function getEmail(): string
+    {
+        return $this->email;
+    }
+
+    public function getEmailName(): ?string
+    {
+        return $this->name;
+    }
+
+    public function getExposableValues(): array
+    {
+        return $this->getAttributes();
     }
 }
