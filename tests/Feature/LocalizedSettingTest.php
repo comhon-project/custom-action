@@ -78,7 +78,7 @@ class LocalizedSettingTest extends TestCase
                 ['id' => $localizedSettingEn->id, 'locale' => 'en'],
                 ['id' => $localizedSettingFr->id, 'locale' => 'fr'],
             ],
-        ]);
+        ])->assertJsonMissingPath('data.0.settings');
 
         // get en
         $response = $this->actingAs($user)->getJson("custom/localized-settings/{$localizedSettingEn->id}");

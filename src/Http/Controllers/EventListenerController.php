@@ -65,7 +65,7 @@ class EventListenerController extends Controller
     {
         $this->authorize('view', $eventListener);
 
-        $query = $eventListener->eventActions()->with('defaultSetting');
+        $query = $eventListener->eventActions();
 
         $name = $request->input('name');
         if ($name !== null) {

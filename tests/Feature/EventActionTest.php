@@ -34,19 +34,15 @@ class EventActionTest extends TestCase
                 [
                     'id' => $actions[0]->id,
                     'type' => 'send-automatic-email',
-                    'default_setting' => [
-                        'id' => $actions[0]->defaultSetting->id,
-                    ],
+                    'name' => 'My Custom Event Action',
                 ],
                 [
                     'id' => $actions[1]->id,
                     'type' => 'send-automatic-email',
-                    'default_setting' => [
-                        'id' => $actions[1]->defaultSetting->id,
-                    ],
+                    'name' => 'My Custom Event Action',
                 ],
             ],
-        ]);
+        ])->assertJsonMissingPath('data.0.default_setting');
     }
 
     public function test_list_event_listener_actions_with_filter()

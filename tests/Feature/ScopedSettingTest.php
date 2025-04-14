@@ -95,7 +95,7 @@ class ScopedSettingTest extends TestCase
                     'name' => 'Scoped Settings 2',
                 ],
             ],
-        ]);
+        ])->assertJsonMissingPath('data.0.settings');
 
         // get scope 1
         $response = $this->actingAs($user)->getJson("custom/scoped-settings/{$scopedSettings1->id}");
@@ -134,7 +134,7 @@ class ScopedSettingTest extends TestCase
                         'name' => 'my one',
                     ],
                 ],
-            ]);
+            ])->assertJsonMissingPath('data.0.default_setting');
     }
 
     public function test_store_action_scoped_with_event_context_settings()
