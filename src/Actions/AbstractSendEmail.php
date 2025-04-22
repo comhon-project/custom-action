@@ -128,7 +128,7 @@ abstract class AbstractSendEmail implements CustomActionInterface, ExposeContext
         return config('app.timezone');
     }
 
-    final public function handle()
+    public function handle()
     {
         $localizedMailInfos = [];
         $context = $this->getExposedValidatedContext(true);
