@@ -124,7 +124,6 @@ class CustomActionServiceProvider extends PackageServiceProvider
     {
         FacadesCustomActionModelResolver::bind('stored-file', StoredFileInterface::class);
         FacadesCustomActionModelResolver::bind('mailable-entity', MailableEntityInterface::class);
-        FacadesCustomActionModelResolver::bind('custom-event', CustomEventInterface::class);
     }
 
     public function publishFiles()

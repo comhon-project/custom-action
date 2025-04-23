@@ -195,7 +195,7 @@ class ActionDefinitionTest extends TestCase
         $this->actingAs($user)->getJson("custom/actions/send-automatic-email/schema?$params")
             ->assertUnprocessable()
             ->assertJson([
-                'message' => 'The event context is not subclass of custom-event.',
+                'message' => 'The event_context is not subclass of custom-event.',
             ]);
     }
 

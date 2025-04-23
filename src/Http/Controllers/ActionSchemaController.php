@@ -3,11 +3,11 @@
 namespace Comhon\CustomAction\Http\Controllers;
 
 use Comhon\CustomAction\Contracts\CustomActionInterface;
+use Comhon\CustomAction\Contracts\CustomEventInterface;
 use Comhon\CustomAction\Contracts\ExposeContextInterface;
 use Comhon\CustomAction\Contracts\HasContextKeysIgnoredForScopedSettingInterface;
 use Comhon\CustomAction\Contracts\HasTranslatableContextInterface;
 use Comhon\CustomAction\Facades\CustomActionModelResolver;
-use Comhon\CustomAction\Rules\RuleHelper;
 use Illuminate\Http\Request;
 use Illuminate\Http\Resources\Json\JsonResource;
 use Symfony\Component\HttpKernel\Exception\NotFoundHttpException;
@@ -29,7 +29,12 @@ class ActionSchemaController extends Controller
             'event_context' => [
                 'nullable',
                 'string',
-                RuleHelper::getRuleName('is').':custom-event,false,true',
+                function (string $attribute, mixed $value, \Closure $fail) {
+                    $class = CustomActionModelResolver::getClass($value);
+                    if (! $class || ! is_subclass_of($class, CustomEventInterface::class)) {
+                        $fail("The {$attribute} is not subclass of custom-event.");
+                    }
+                },
             ],
         ]);
 
