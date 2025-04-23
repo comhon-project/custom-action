@@ -1,9 +1,8 @@
 <?php
 
-namespace Comhon\CustomAction\Actions;
+namespace Comhon\CustomAction\Actions\Email;
 
 use Comhon\CustomAction\Context\ContextHelper;
-use Comhon\CustomAction\Contracts\CallableFromEventInterface;
 use Comhon\CustomAction\Exceptions\SendEmailActionException;
 use Comhon\CustomAction\Facades\CustomActionModelResolver;
 use Comhon\CustomAction\Models\LocalizedSetting;
@@ -11,10 +10,8 @@ use Comhon\CustomAction\Rules\RuleHelper;
 use Illuminate\Mail\Mailables\Address;
 use Illuminate\Support\Arr;
 
-class SendAutomaticEmail extends AbstractSendEmail implements CallableFromEventInterface
+abstract class AbstractSendGenericEmail extends AbstractSendEmail
 {
-    use CallableFromEventTrait;
-
     public static function getSettingsSchema(?string $eventClassContext = null): array
     {
         $schema = [
@@ -93,15 +90,13 @@ class SendAutomaticEmail extends AbstractSendEmail implements CallableFromEventI
         return count($froms) ? $this->normalizeAddress($froms[0]) : null;
     }
 
-    protected function getRecipients(?array $recipientTypes = null): array
+    protected function getRecipients(): array
     {
         $recipients = [];
         $settingsRecipients = $this->getSetting()->settings['recipients'] ?? null;
         $mailableEntities = $this->loadStaticMailableEntities();
 
-        $recipientTypes ??= static::RECIPIENT_TYPES;
-
-        foreach ($recipientTypes as $recipientType) {
+        foreach (static::RECIPIENT_TYPES as $recipientType) {
             $mailables = $settingsRecipients[$recipientType]['static']['mailables'] ?? null;
             if ($mailables) {
                 foreach ($mailables as $mailable) {

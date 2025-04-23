@@ -2,7 +2,7 @@
 
 namespace App\Actions;
 
-use Comhon\CustomAction\Actions\CallableManually;
+use Comhon\CustomAction\Actions\CallableManuallyTrait;
 use Comhon\CustomAction\Actions\InteractWithContextTrait;
 use Comhon\CustomAction\Actions\InteractWithSettingsTrait;
 use Comhon\CustomAction\Contracts\CustomActionInterface;
@@ -13,7 +13,7 @@ use Illuminate\Queue\SerializesModels;
 
 class MyManualActionWithoutContext implements CustomActionInterface
 {
-    use CallableManually,
+    use CallableManuallyTrait,
         Dispatchable,
         InteractsWithQueue,
         InteractWithContextTrait,

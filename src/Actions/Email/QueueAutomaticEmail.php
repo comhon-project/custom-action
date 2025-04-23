@@ -1,6 +1,6 @@
 <?php
 
-namespace Comhon\CustomAction\Actions;
+namespace Comhon\CustomAction\Actions\Email;
 
 use Illuminate\Contracts\Queue\ShouldQueue;
 

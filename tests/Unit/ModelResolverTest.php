@@ -6,7 +6,7 @@ use App\Actions\SendAutomaticCompanyRegistrationMail;
 use App\Events\CompanyRegistered;
 use App\Models\Company;
 use App\Models\User;
-use Comhon\CustomAction\Actions\SendAutomaticEmail;
+use Comhon\CustomAction\Actions\Email\SendAutomaticEmail;
 use Comhon\CustomAction\Resolver\CustomActionModelResolver;
 use Comhon\ModelResolverContract\ModelResolverInterface;
 use Tests\TestCase;

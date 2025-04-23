@@ -5,8 +5,8 @@ namespace App\Actions;
 use App\Models\Company;
 use App\Models\User;
 use App\Models\UserWithoutPreference;
-use Comhon\CustomAction\Actions\AbstractSendEmail;
-use Comhon\CustomAction\Actions\CallableManually;
+use Comhon\CustomAction\Actions\CallableManuallyTrait;
+use Comhon\CustomAction\Actions\Email\AbstractSendEmail;
 use Comhon\CustomAction\Exceptions\SendEmailActionException;
 use Comhon\CustomAction\Facades\CustomActionModelResolver;
 use Comhon\CustomAction\Files\SystemFile;
@@ -16,7 +16,7 @@ use Illuminate\Mail\Mailables\Address;
 
 class SendManualCompanyRegistrationMail extends AbstractSendEmail
 {
-    use CallableManually;
+    use CallableManuallyTrait;
 
     public function __construct(
         public Company $company,
@@ -75,7 +75,7 @@ class SendManualCompanyRegistrationMail extends AbstractSendEmail
             ?? throw new SendEmailActionException($this->setting, 'localized settings body is not defined');
     }
 
-    protected function getRecipients(?array $recipientTypes = null): array
+    protected function getRecipients(): array
     {
         if (! $this->to) {
             return [];

@@ -2,7 +2,7 @@
 
 namespace App\Actions;
 
-use Comhon\CustomAction\Actions\SendAutomaticEmail;
+use Comhon\CustomAction\Actions\Email\SendAutomaticEmail;
 
 class SendAutomaticCompanyRegistrationMail extends SendAutomaticEmail
 {

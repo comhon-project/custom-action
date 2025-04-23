@@ -6,7 +6,7 @@ use App\Events\CompanyRegistered;
 use App\Events\CompanyRegisteredWithContextTranslations;
 use App\Models\Company;
 use App\Models\User;
-use Comhon\CustomAction\Actions\QueueAutomaticEmail;
+use Comhon\CustomAction\Actions\Email\QueueAutomaticEmail;
 use Comhon\CustomAction\Events\EventActionError;
 use Comhon\CustomAction\Mail\Custom;
 use Comhon\CustomAction\Models\DefaultSetting;

@@ -2,8 +2,10 @@
 
 declare(strict_types=1);
 
-namespace Comhon\CustomAction\Actions;
+namespace Comhon\CustomAction\Actions\Email;
 
+use Comhon\CustomAction\Actions\InteractWithContextTrait;
+use Comhon\CustomAction\Actions\InteractWithSettingsTrait;
 use Comhon\CustomAction\Contracts\CustomActionInterface;
 use Comhon\CustomAction\Contracts\ExposeContextInterface;
 use Comhon\CustomAction\Contracts\HasContextKeysIgnoredForScopedSettingInterface;
@@ -52,7 +54,7 @@ abstract class AbstractSendEmail implements CustomActionInterface, ExposeContext
      *
      * @return array{to: array, cc: array, bcc: array}
      */
-    abstract protected function getRecipients(?array $recipientTypes = null): array;
+    abstract protected function getRecipients(): array;
 
     /**
      * Get email subject.

@@ -99,7 +99,7 @@ declare(strict_types=1);
 
 namespace App\Actions\CustomActions;
 
-use Comhon\CustomAction\Actions\CallableManually;
+use Comhon\CustomAction\Actions\CallableManuallyTrait;
 use Comhon\CustomAction\Actions\InteractWithContextTrait;
 use Comhon\CustomAction\Actions\InteractWithSettingsTrait;
 use Comhon\CustomAction\Contracts\CustomActionInterface;
@@ -117,7 +117,7 @@ class TestGenericSendEmail implements CustomActionInterface
         SerializesModels,
         InteractWithContextTrait,
         InteractWithSettingsTrait,
-        CallableManually;
+        CallableManuallyTrait;
 
     public static function getSettingsSchema(?string \$eventClassContext = null): array
     {
@@ -214,7 +214,7 @@ declare(strict_types=1);
 
 namespace App\Actions\CustomActions;
 
-use Comhon\CustomAction\Actions\SendAutomaticEmail;
+use Comhon\CustomAction\Actions\Email\SendAutomaticEmail;
 use Comhon\CustomAction\Contracts\HasTranslatableContextInterface;
 use Illuminate\Contracts\Queue\ShouldQueue;
 
@@ -252,7 +252,7 @@ declare(strict_types=1);
 namespace App\Actions\CustomActions;
 
 use App\Actions\BadAction;
-use Comhon\CustomAction\Actions\CallableManually;
+use Comhon\CustomAction\Actions\CallableManuallyTrait;
 use Comhon\CustomAction\Actions\InteractWithContextTrait;
 use Comhon\CustomAction\Actions\InteractWithSettingsTrait;
 use Comhon\CustomAction\Contracts\CustomActionInterface;
@@ -270,7 +270,7 @@ class TestGenericSendEmail extends BadAction implements CustomActionInterface
         SerializesModels,
         InteractWithContextTrait,
         InteractWithSettingsTrait,
-        CallableManually;
+        CallableManuallyTrait;
 
     public static function getSettingsSchema(?string \$eventClassContext = null): array
     {

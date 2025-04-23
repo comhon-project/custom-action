@@ -6,7 +6,7 @@ use Comhon\CustomAction\Facades\CustomActionModelResolver;
 use Comhon\CustomAction\Models\Action;
 use Comhon\CustomAction\Models\ManualAction;
 
-trait CallableManually
+trait CallableManuallyTrait
 {
     public function getActionModel(): Action
     {

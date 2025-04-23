@@ -5,7 +5,7 @@ namespace App\Events;
 use App\Actions\SendAutomaticCompanyRegistrationMail;
 use App\Models\Company;
 use App\Models\User;
-use Comhon\CustomAction\Actions\SendAutomaticEmail;
+use Comhon\CustomAction\Actions\Email\SendAutomaticEmail;
 use Comhon\CustomAction\Contracts\CustomEventInterface;
 use Comhon\CustomAction\Contracts\ExposeContextInterface;
 use Comhon\CustomAction\Contracts\FormatContextInterface;

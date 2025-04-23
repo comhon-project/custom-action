@@ -2,8 +2,8 @@
 
 namespace Comhon\CustomAction\Resolver;
 
-use Comhon\CustomAction\Actions\QueueAutomaticEmail;
-use Comhon\CustomAction\Actions\SendAutomaticEmail;
+use Comhon\CustomAction\Actions\Email\QueueAutomaticEmail;
+use Comhon\CustomAction\Actions\Email\SendAutomaticEmail;
 use Comhon\ModelResolverContract\ModelResolverInterface;
 
 /**

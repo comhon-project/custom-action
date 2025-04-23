@@ -3,7 +3,7 @@
 namespace Comhon\CustomAction\Commands;
 
 use Comhon\CustomAction\Actions\CallableFromEventTrait;
-use Comhon\CustomAction\Actions\CallableManually;
+use Comhon\CustomAction\Actions\CallableManuallyTrait;
 use Comhon\CustomAction\Actions\InteractWithContextTrait;
 use Comhon\CustomAction\Actions\InteractWithSettingsTrait;
 use Comhon\CustomAction\Contracts\CallableFromEventInterface;
@@ -18,6 +18,7 @@ use Illuminate\Contracts\Queue\ShouldQueue;
 use Illuminate\Foundation\Bus\Dispatchable;
 use Illuminate\Queue\InteractsWithQueue;
 use Illuminate\Queue\SerializesModels;
+use Illuminate\Support\Facades\File;
 
 class GenerateActionCommand extends Command
 {
@@ -65,7 +66,7 @@ class GenerateActionCommand extends Command
         $callableManually = $callable == 'manually';
 
         if ($callableManually) {
-            $traits[] = CallableManually::class;
+            $traits[] = CallableManuallyTrait::class;
         } else {
             $interfaces[] = CallableFromEventInterface::class;
             $traits[] = CallableFromEventTrait::class;
@@ -161,9 +162,12 @@ class GenerateActionCommand extends Command
         $nameSpaces = [
             'App\Actions\CustomActions',
             'App\Actions',
-            'Comhon\CustomAction\Actions',
             '',
         ];
+        $actionsPath = __DIR__.DIRECTORY_SEPARATOR.'..'.DIRECTORY_SEPARATOR.'Actions';
+        foreach (array_map('basename', File::directories($actionsPath)) as $directory) {
+            $nameSpaces[] = 'Comhon\CustomAction\Actions\\'.$directory;
+        }
         foreach ($nameSpaces as $nameSpace) {
             $class = $nameSpace.'\\'.$extends;
             if (class_exists($class)) {

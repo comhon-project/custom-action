@@ -9,14 +9,15 @@ use App\Actions\SendAutomaticCompanyRegistrationMail;
 use App\Actions\SendManualCompanyRegistrationGroupedMail;
 use App\Actions\SendManualCompanyRegistrationMail;
 use App\Actions\SendManualCompanyRegistrationMailWithContextTranslations;
+use App\Actions\SendManualUserRegisteredEmail;
 use App\Events\BadEvent;
 use App\Events\CompanyRegistered;
 use App\Events\CompanyRegisteredWithContextTranslations;
 use App\Events\MyEventWithoutContext;
 use App\Models\Company;
 use App\Models\User;
-use Comhon\CustomAction\Actions\QueueAutomaticEmail;
-use Comhon\CustomAction\Actions\SendAutomaticEmail;
+use Comhon\CustomAction\Actions\Email\QueueAutomaticEmail;
+use Comhon\CustomAction\Actions\Email\SendAutomaticEmail;
 use Comhon\CustomAction\Facades\CustomActionModelResolver;
 
 trait SetUpWithModelRegistrationTrait
@@ -37,6 +38,7 @@ trait SetUpWithModelRegistrationTrait
             'send-manual-company-email' => SendManualCompanyRegistrationMail::class,
             'send-manual-company-email-with-context-translations' => SendManualCompanyRegistrationMailWithContextTranslations::class,
             'send-manual-company-grouped-email' => SendManualCompanyRegistrationGroupedMail::class,
+            'send-manual-user-registered-email' => SendManualUserRegisteredEmail::class,
 
             'my-event-without-context' => MyEventWithoutContext::class,
             'my-action-without-context' => MyActionWithoutContext::class,
