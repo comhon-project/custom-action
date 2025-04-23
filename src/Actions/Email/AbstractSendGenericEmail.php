@@ -12,13 +12,18 @@ use Illuminate\Support\Arr;
 
 abstract class AbstractSendGenericEmail extends AbstractSendEmail
 {
+    public static function getCustomizableRecipientTypes(): array
+    {
+        return static::RECIPIENT_TYPES;
+    }
+
     public static function getSettingsSchema(?string $eventClassContext = null): array
     {
         $schema = [
             'from.static.mailable' => RuleHelper::getRuleName('model_reference').':mailable-entity,from',
             'from.static.email' => 'email',
         ];
-        foreach (static::RECIPIENT_TYPES as $recipientType) {
+        foreach (static::getCustomizableRecipientTypes() as $recipientType) {
             $schema["recipients.{$recipientType}.static.mailables"] = 'array';
             $schema["recipients.{$recipientType}.static.mailables.*"] = RuleHelper::getRuleName('model_reference').':mailable-entity,recipient';
             $schema["recipients.{$recipientType}.static.emails"] = 'array';
@@ -36,7 +41,7 @@ abstract class AbstractSendGenericEmail extends AbstractSendEmail
                 'from.context.mailable' => 'mailable-entity',
                 'from.context.email' => 'email',
             ];
-            foreach (static::RECIPIENT_TYPES as $recipientType) {
+            foreach (static::getCustomizableRecipientTypes() as $recipientType) {
                 $typeBySettingKey["recipients.{$recipientType}.context.mailables.*"] = 'mailable-entity';
                 $typeBySettingKey["recipients.{$recipientType}.context.emails.*"] = 'email';
             }
@@ -96,7 +101,7 @@ abstract class AbstractSendGenericEmail extends AbstractSendEmail
         $settingsRecipients = $this->getSetting()->settings['recipients'] ?? null;
         $mailableEntities = $this->loadStaticMailableEntities();
 
-        foreach (static::RECIPIENT_TYPES as $recipientType) {
+        foreach (static::getCustomizableRecipientTypes() as $recipientType) {
             $mailables = $settingsRecipients[$recipientType]['static']['mailables'] ?? null;
             if ($mailables) {
                 foreach ($mailables as $mailable) {
@@ -132,7 +137,7 @@ abstract class AbstractSendGenericEmail extends AbstractSendEmail
                 }
             }
         }
-        foreach (array_diff(static::RECIPIENT_TYPES, ['to']) as $recipientType) {
+        foreach (array_diff(static::getCustomizableRecipientTypes(), ['to']) as $recipientType) {
             if ($recipients[$recipientType] ?? null) {
                 $recipients[$recipientType] = $this->normalizeAddresses($recipients[$recipientType]);
             }
@@ -171,7 +176,7 @@ abstract class AbstractSendGenericEmail extends AbstractSendEmail
         $mailableIds = [];
 
         if ($recipients) {
-            foreach (static::RECIPIENT_TYPES as $recipientType) {
+            foreach (static::getCustomizableRecipientTypes() as $recipientType) {
                 $mailables = $recipients[$recipientType]['static']['mailables'] ?? null;
                 if ($mailables) {
                     foreach ($mailables as $mailable) {
