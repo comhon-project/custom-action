@@ -35,7 +35,7 @@ class EventActionController extends Controller
         if ($request->filled('settings')) {
             $validated = $request->validate($actionService->getSettingsRules($eventAction, false));
             $defaultSetting = new DefaultSetting;
-            $defaultSetting->settings = $validated['settings'];
+            $defaultSetting->settings = $validated['settings'] ?? [];
         }
 
         DB::transaction(function () use ($eventAction, $defaultSetting) {

@@ -210,6 +210,33 @@ class DefaultSettingTest extends TestCase
             ]);
     }
 
+    public function test_store_action_settings_empty()
+    {
+        $prefixAction = 'event-actions';
+        $actionClass = EventAction::class;
+        $uniqueProperty = 'id';
+
+        /** @var Action $action */
+        $action = $actionClass::factory()->create();
+        $input = [];
+        /** @var User $user */
+        $user = User::factory()->hasConsumerAbility()->create();
+
+        $response = $this->actingAs($user)->postJson("custom/$prefixAction/{$action->$uniqueProperty}/default-settings", [
+            'settings' => $input,
+        ]);
+        $response->assertCreated();
+        $this->assertEquals(1, $action->defaultSetting()->count());
+        $defaultSetting = $action->defaultSetting()->first();
+        $response->assertJson([
+            'data' => [
+                'id' => $defaultSetting->id,
+                'settings' => $input,
+            ],
+        ]);
+        $this->assertEquals($input, $defaultSetting->settings);
+    }
+
     public function test_store_action_scoped_settings_forbidden()
     {
         $action = ManualAction::factory()->create();

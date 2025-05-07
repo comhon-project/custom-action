@@ -29,6 +29,7 @@ class ScopedSettingController extends Controller
         $this->authorize('update', $scopedSetting);
 
         $validated = $request->validate($actionService->getSettingsRules($scopedSetting->action, true));
+        $validated['settings'] ??= [];
         $scopedSetting->fill($validated);
         $scopedSetting->save();
 

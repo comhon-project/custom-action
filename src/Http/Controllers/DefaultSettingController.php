@@ -28,7 +28,7 @@ class DefaultSettingController extends Controller
         $this->authorize('update', $defaultSetting);
 
         $validated = $request->validate($actionService->getSettingsRules($defaultSetting->action, false));
-        $defaultSetting->settings = $validated['settings'];
+        $defaultSetting->settings = $validated['settings'] ?? [];
         $defaultSetting->save();
 
         return new JsonResource($defaultSetting->unsetRelations());

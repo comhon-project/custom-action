@@ -20,6 +20,7 @@ class ActionService
             throw new AccessDeniedHttpException('default settings already exist');
         }
         $validated = Validator::validate($input, $this->getSettingsRules($action, false));
+        $validated['settings'] ??= [];
         $defaultSetting = new DefaultSetting($validated);
         $defaultSetting->action()->associate($action);
         $defaultSetting->save();
@@ -31,6 +32,7 @@ class ActionService
     public function storeScopedSetting(Action $action, array $input): ScopedSetting
     {
         $validated = Validator::validate($input, $this->getSettingsRules($action, true));
+        $validated['settings'] ??= [];
         $scopedSettings = new ScopedSetting($validated);
         $scopedSettings->action()->associate($action);
         $scopedSettings->save();
