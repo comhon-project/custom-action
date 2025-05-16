@@ -270,4 +270,70 @@ class EventActionTest extends TestCase
 
         $this->assertEquals(1, $eventListener->eventActions()->count());
     }
+
+    public function test_simulate_event_action_success()
+    {
+        // create event listener for CompanyRegistered event
+        $eventListener = EventListener::factory()->genericRegistrationCompany()->create();
+        $eventListener->event = 'company-registered-with-context-translations';
+        $eventListener->save();
+        $action = $eventListener->eventActions[0];
+
+        /** @var User $user */
+        $user = User::factory()->hasConsumerAbility()->create();
+
+        $inputs = [
+            'settings' => [],
+            'localized_settings' => [
+                'subject' => 'subject company {{ company.status }}',
+                'body' => 'body company {{ company.status }}',
+            ],
+        ];
+
+        $this->actingAs($user)->postJson("custom/event-actions/$action->id/simulate", $inputs)
+            ->assertOk()
+            ->assertJson([
+                'data' => [
+                    'subject' => 'subject company draft',
+                    'body' => 'body company draft',
+                ],
+            ]);
+    }
+
+    public function test_simulate_event_action_not_simulatable()
+    {
+        // create event listener for CompanyRegistered event
+        $eventListener = EventListener::factory()->genericRegistrationCompany()->create();
+        $action = $eventListener->eventActions[0];
+
+        /** @var User $user */
+        $user = User::factory()->hasConsumerAbility()->create();
+
+        $inputs = [
+            'localized_settings' => [
+                'subject' => 'subject company {{ company.status }}',
+                'body' => 'body company {{ company.status }}',
+            ],
+        ];
+
+        $this->actingAs($user)->postJson("custom/event-actions/$action->id/simulate", $inputs)
+            ->assertUnprocessable()
+            ->assertJson([
+                'message' => 'cannot simulate action, event company-registered is not fakable',
+            ]);
+    }
+
+    public function test_simulate_event_action_forbidden()
+    {
+        // create event listener for CompanyRegistered event
+        $eventListener = EventListener::factory()->genericRegistrationCompany()->create();
+        $eventListener->event = 'company-registered-with-context-translations';
+        $eventListener->save();
+        $action = $eventListener->eventActions[0];
+
+        /** @var User $user */
+        $user = User::factory()->create();
+        $this->actingAs($user)->postJson("custom/event-actions/$action->id/simulate")
+            ->assertForbidden();
+    }
 }

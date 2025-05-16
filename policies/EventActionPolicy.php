@@ -39,4 +39,12 @@ class EventActionPolicy
     {
         // TODO put your authorization logic here
     }
+
+    /**
+     * Determine whether the user can simulate action.
+     */
+    public function simulate(User $user, EventAction $model)
+    {
+        // TODO put your authorization logic here
+    }
 }

@@ -5,6 +5,7 @@ namespace Comhon\CustomAction\Http\Controllers;
 use Comhon\CustomAction\Catalogs\EventCatalog;
 use Comhon\CustomAction\Contracts\CustomEventInterface;
 use Comhon\CustomAction\Contracts\ExposeContextInterface;
+use Comhon\CustomAction\Contracts\FakableInterface;
 use Comhon\CustomAction\Contracts\HasTranslatableContextInterface;
 use Comhon\CustomAction\Facades\CustomActionModelResolver;
 use Comhon\CustomAction\Models\EventListener;
@@ -46,6 +47,7 @@ class EventController extends Controller
             'allowed_actions' => collect($eventClass::getAllowedActions())->map(function ($class) {
                 return CustomActionModelResolver::getUniqueName($class);
             })->values(),
+            'fakable' => is_subclass_of($eventClass, FakableInterface::class),
         ];
 
         return new JsonResource($schema);

@@ -90,7 +90,6 @@ class SendManualEmailTest extends TestCase
     #[DataProvider('providerBoolean')]
     public function test_preview_manual_email_success($grouped)
     {
-        $renderTemplate = $grouped;
         $user = User::factory()->create();
 
         ManualAction::factory(['type' => 'send-manual-user-registered-email'])
@@ -115,13 +114,18 @@ class SendManualEmailTest extends TestCase
         Mail::fake();
 
         $users = $grouped ? [$user, User::factory()->create()] : [$user];
-        $preview = (new SendManualUserRegisteredEmail($users, $grouped))->preview($renderTemplate);
+        $preview = (new SendManualUserRegisteredEmail($users, $grouped))->simulate();
 
         Mail::assertSent(Custom::class, 0);
-        $expected = $renderTemplate
-            ? "Dear {$user->first_name}, you have been registered !"
-            : 'Dear {{ users.0.first_name }}, you have been registered !';
-        $this->assertEquals($expected, $preview);
+
+        $this->assertArrayHasKey('subject', $preview);
+        $this->assertArrayHasKey('body', $preview);
+
+        $expected = "Dear {$user->first_name}";
+        $this->assertEquals($expected, $preview['subject']);
+
+        $expected = "Dear {$user->first_name}, you have been registered !";
+        $this->assertEquals($expected, $preview['body']);
     }
 
     public function test_preview_manual_email_failure()
@@ -150,6 +154,6 @@ class SendManualEmailTest extends TestCase
         $users = [User::factory()->create(), User::factory()->create()];
 
         $this->expectExceptionMessage('must have one and only one email to send to generate preview');
-        (new SendManualUserRegisteredEmail($users))->preview();
+        (new SendManualUserRegisteredEmail($users))->simulate();
     }
 }

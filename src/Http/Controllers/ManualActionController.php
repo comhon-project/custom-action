@@ -64,6 +64,14 @@ class ManualActionController extends Controller
         return new JsonResource($scopedSetting);
     }
 
+    public function simulate(Request $request, ActionService $actionService, string $type)
+    {
+        $manualAction = $this->getOrCreateManualAction($type);
+        $this->authorize('simulate', $manualAction);
+
+        return new JsonResource($actionService->simulate($manualAction, $request->input()));
+    }
+
     private function getOrCreateManualAction(string $type): ManualAction
     {
         if (! CustomActionModelResolver::isAllowedAction($type)) {

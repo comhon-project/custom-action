@@ -5,8 +5,10 @@ namespace Comhon\CustomAction\Http\Controllers;
 use Comhon\CustomAction\Contracts\CustomActionInterface;
 use Comhon\CustomAction\Contracts\CustomEventInterface;
 use Comhon\CustomAction\Contracts\ExposeContextInterface;
+use Comhon\CustomAction\Contracts\FakableInterface;
 use Comhon\CustomAction\Contracts\HasContextKeysIgnoredForScopedSettingInterface;
 use Comhon\CustomAction\Contracts\HasTranslatableContextInterface;
+use Comhon\CustomAction\Contracts\SimulatableInterface;
 use Comhon\CustomAction\Facades\CustomActionModelResolver;
 use Illuminate\Http\Request;
 use Illuminate\Http\Resources\Json\JsonResource;
@@ -43,6 +45,9 @@ class ActionSchemaController extends Controller
             ? CustomActionModelResolver::getClass($validated['event_context'])
             : null;
 
+        $isFakable = ($eventClassContext !== null && is_subclass_of($eventClassContext, FakableInterface::class))
+            || ($eventClassContext === null && is_subclass_of($actionClass, FakableInterface::class));
+
         $actionSchema = [
             'settings_schema' => $actionClass::getSettingsSchema($eventClassContext),
             'localized_settings_schema' => $actionClass::getLocalizedSettingsSchema($eventClassContext),
@@ -55,6 +60,7 @@ class ActionSchemaController extends Controller
             'context_keys_ignored_for_scoped_setting' => is_subclass_of($actionClass, HasContextKeysIgnoredForScopedSettingInterface::class)
                 ? $actionClass::getContextKeysIgnoredForScopedSetting()
                 : [],
+            'simulatable' => $isFakable && is_subclass_of($actionClass, SimulatableInterface::class),
         ];
 
         return new JsonResource($actionSchema);

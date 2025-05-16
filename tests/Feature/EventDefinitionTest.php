@@ -58,6 +58,7 @@ class EventDefinitionTest extends TestCase
                         'send-automatic-email',
                         'send-automatic-company-email',
                     ],
+                    'fakable' => true,
                 ],
             ]);
     }
@@ -75,6 +76,7 @@ class EventDefinitionTest extends TestCase
                     'allowed_actions' => [
                         'my-action-without-context',
                     ],
+                    'fakable' => false,
                 ],
             ]);
     }

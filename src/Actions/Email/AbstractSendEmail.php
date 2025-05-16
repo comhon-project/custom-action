@@ -11,10 +11,12 @@ use Comhon\CustomAction\Contracts\ExposeContextInterface;
 use Comhon\CustomAction\Contracts\HasContextKeysIgnoredForScopedSettingInterface;
 use Comhon\CustomAction\Contracts\HasTimezonePreferenceInterface;
 use Comhon\CustomAction\Contracts\MailableEntityInterface;
+use Comhon\CustomAction\Contracts\SimulatableInterface;
 use Comhon\CustomAction\Exceptions\SendEmailActionException;
 use Comhon\CustomAction\Mail\Custom;
 use Comhon\CustomAction\Models\LocalizedSetting;
 use Comhon\CustomAction\Rules\RuleHelper;
+use Comhon\TemplateRenderer\Facades\Template;
 use Illuminate\Bus\Queueable;
 use Illuminate\Foundation\Bus\Dispatchable;
 use Illuminate\Mail\Mailables\Address;
@@ -23,7 +25,7 @@ use Illuminate\Queue\SerializesModels;
 use Illuminate\Support\Facades\App;
 use Illuminate\Support\Facades\Mail;
 
-abstract class AbstractSendEmail implements CustomActionInterface, ExposeContextInterface, HasContextKeysIgnoredForScopedSettingInterface
+abstract class AbstractSendEmail implements CustomActionInterface, ExposeContextInterface, HasContextKeysIgnoredForScopedSettingInterface, SimulatableInterface
 {
     use Dispatchable,
         InteractsWithQueue,
@@ -214,5 +216,48 @@ abstract class AbstractSendEmail implements CustomActionInterface, ExposeContext
             $value instanceof MailableEntityInterface => new Address($value->getEmail(), $value->getEmailName()),
             is_object($value) => new Address($value->email, $value->name ?? null),
         };
+    }
+
+    public function simulate()
+    {
+        $context = $this->getExposedValidatedContext(true);
+        $recipients = $this->getRecipients();
+        $tos = $recipients['to'] ?? null;
+
+        $groupRecipients = $this->shouldGroupRecipients() && $tos && count($tos) > 1;
+        if ($groupRecipients) {
+            $tos = [$tos];
+        }
+        if ($tos && count($tos) > 1) {
+            throw new SendEmailActionException($this->getSetting(), 'must have one and only one email to send to generate preview');
+        }
+
+        if ($groupRecipients) {
+            $localizedSetting = $this->getLocalizedSettingOrFail($this->getGroupedLocale());
+            $preferredTimezone = $this->getGroupedTimezone();
+        } else {
+            $to = collect($tos)->pop();
+            $localizedSetting = $this->getLocalizedSettingOrFail(is_string($to) ? null : $to);
+
+            // we expose 'to' value in email body or subject only if recipient is a MailableEntityInterface
+            $context['to'] = $to instanceof MailableEntityInterface ? $to->getExposableValues() : null;
+
+            $preferredTimezone = $to instanceof HasTimezonePreferenceInterface ? $to->preferredTimezone() : null;
+        }
+
+        $subject = $this->getSubject($localizedSetting);
+        $body = $this->getBody($localizedSetting);
+
+        $args = [
+            $context,
+            $localizedSetting->locale,
+            null,
+            $preferredTimezone,
+        ];
+
+        return [
+            'subject' => Template::render($subject, ...$args),
+            'body' => Template::render($body, ...$args),
+        ];
     }
 }

@@ -17,10 +17,18 @@ trait InteractWithSettingsTrait
 {
     protected Setting $setting;
 
+    protected ?Setting $fakedSetting = null;
+
+    protected ?LocalizedSetting $fakedLocalizedSetting = null;
+
     private array $localizedSettingCache = [];
 
     public function getSetting(): Setting
     {
+        if (isset($this->fakedSetting)) {
+            return $this->fakedSetting;
+        }
+
         if (! isset($this->setting)) {
             $action = $this->getActionModel();
             $context = $this->getExposedContext();
@@ -68,6 +76,10 @@ trait InteractWithSettingsTrait
         HasLocalePreference|array|string|null $fallbackLocale = null,
         bool $useCache = true
     ): ?LocalizedSetting {
+        if (isset($this->fakedLocalizedSetting)) {
+            return $this->fakedLocalizedSetting;
+        }
+
         $locale = $this->getLocaleString($locale);
         $fallbackLocale = $this->getLocaleString($fallbackLocale);
         $locales = $fallbackLocale ? [$locale, $fallbackLocale] : [$locale];

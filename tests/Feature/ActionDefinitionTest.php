@@ -72,6 +72,7 @@ class ActionDefinitionTest extends TestCase
                 'context_keys_ignored_for_scoped_setting' => [
                     'to', 'default_timezone', 'preferred_timezone',
                 ],
+                'simulatable' => false,
             ],
         ]);
 
@@ -104,6 +105,7 @@ class ActionDefinitionTest extends TestCase
                 'context_keys_ignored_for_scoped_setting' => [
                     'to', 'default_timezone', 'preferred_timezone',
                 ],
+                'simulatable' => true,
             ],
         ]);
     }

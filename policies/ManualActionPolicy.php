@@ -22,4 +22,12 @@ class ManualActionPolicy
     {
         // TODO put your authorization logic here
     }
+
+    /**
+     * Determine whether the user can simulate action.
+     */
+    public function simulate(User $user, ManualAction $model)
+    {
+        // TODO put your authorization logic here
+    }
 }

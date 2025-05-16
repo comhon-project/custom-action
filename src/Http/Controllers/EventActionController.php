@@ -116,6 +116,13 @@ class EventActionController extends Controller
         return new JsonResource($scopedSetting);
     }
 
+    public function simulate(Request $request, ActionService $actionService, EventAction $eventAction)
+    {
+        $this->authorize('simulate', $eventAction);
+
+        return new JsonResource($actionService->simulate($eventAction, $request->input()));
+    }
+
     private function validateStoreRequest(Request $request, EventListener $eventListener)
     {
         $eventClass = $eventListener->getEventClass();

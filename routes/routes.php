@@ -24,6 +24,7 @@ Route::group($attributes, function () {
         Route::get('scoped-settings', [ManualActionController::class, 'listScopedSettings']);
         Route::post('default-settings', [ManualActionController::class, 'storeDefaultSetting']);
         Route::post('scoped-settings', [ManualActionController::class, 'storeScopedSetting']);
+        Route::post('simulate', [ManualActionController::class, 'simulate']);
     });
 
     Route::apiResource('default-settings', DefaultSettingController::class)->only(['show', 'update']);
@@ -60,5 +61,6 @@ Route::group($attributes, function () {
         Route::get('scoped-settings', [EventActionController::class, 'listScopedSettings']);
         Route::post('default-settings', [EventActionController::class, 'storeDefaultSetting']);
         Route::post('scoped-settings', [EventActionController::class, 'storeScopedSetting']);
+        Route::post('simulate', [EventActionController::class, 'simulate']);
     });
 });

@@ -9,13 +9,13 @@ class RuleHelper
         return config('custom-action.rule_prefix').$ruleName;
     }
 
-    public static function getSettingsRules(array $schema): array
+    public static function getSettingsRules(array $schema, $prefix = 'settings'): array
     {
         $rules = [
-            'settings' => 'present|array',
+            $prefix => 'present|array',
         ];
         foreach ($schema as $key => $rule) {
-            $rules["settings.$key"] = $rule;
+            $rules["$prefix.$key"] = $rule;
         }
 
         return $rules;
