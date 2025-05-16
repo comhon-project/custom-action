@@ -13,6 +13,7 @@ use Comhon\CustomAction\Models\ScopedSetting;
 use Comhon\CustomAction\Models\Setting;
 use Comhon\CustomAction\Rules\RuleHelper;
 use Illuminate\Support\Facades\App;
+use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Validator;
 use Symfony\Component\HttpKernel\Exception\AccessDeniedHttpException;
 
@@ -116,13 +117,26 @@ class ActionService
             ])
             : null;
 
-        $customActionClass = CustomActionModelResolver::getClass($action->type);
-        $customAction = $customActionClass::buildFakeInstance($action, $setting, $localizedSetting);
+        // Wrap fake instantiation and action simulation in a non-committed database transaction
+        // to prevent any changes from being applied to the database.
+        try {
+            DB::beginTransaction();
 
-        if (! $customAction instanceof SimulatableInterface) {
-            throw new SimulateActionException("cannot simulate action {$action->type}");
+            $customActionClass = CustomActionModelResolver::getClass($action->type);
+            $customAction = $customActionClass::buildFakeInstance($action, $setting, $localizedSetting);
+
+            if (! $customAction instanceof SimulatableInterface) {
+                throw new SimulateActionException("cannot simulate action {$action->type}");
+            }
+            if (! method_exists($customAction, 'simulate')) {
+                throw new \Exception("simulate method doesn't exist on class ".get_class($customAction));
+            }
+
+            $result = app()->call([$customAction, 'simulate']);
+        } finally {
+            DB::rollBack();
         }
 
-        return $customAction->simulate();
+        return $result;
     }
 }

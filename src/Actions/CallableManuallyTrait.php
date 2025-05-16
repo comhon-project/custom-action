@@ -23,6 +23,10 @@ trait CallableManuallyTrait
         return $action;
     }
 
+    /**
+     * Ensure the faked class does not modify the database.
+     * Otherwise, wrap this call in a non-committed database transaction.
+     */
     public static function buildFakeInstance(ManualAction $manualAction, ?DefaultSetting $setting = null, ?LocalizedSetting $localizedSetting = null)
     {
         if (! is_subclass_of(static::class, FakableInterface::class)) {

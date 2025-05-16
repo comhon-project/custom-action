@@ -27,6 +27,10 @@ trait CallableFromEventTrait
         return $this->event;
     }
 
+    /**
+     * Ensure the faked class does not modify the database.
+     * Otherwise, wrap this call in a non-committed database transaction.
+     */
     public static function buildFakeInstance(EventAction $eventAction, ?DefaultSetting $setting = null, ?LocalizedSetting $localizedSetting = null)
     {
         $eventClass = $eventAction->eventListener->getEventClass();

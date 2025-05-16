@@ -2,6 +2,7 @@
 
 namespace Tests\Feature;
 
+use App\Models\Company;
 use App\Models\User;
 use Comhon\CustomAction\Models\DefaultSetting;
 use Comhon\CustomAction\Models\EventAction;
@@ -290,6 +291,8 @@ class EventActionTest extends TestCase
             ],
         ];
 
+        $this->assertEquals(0, Company::count());
+
         $this->actingAs($user)->postJson("custom/event-actions/$action->id/simulate", $inputs)
             ->assertOk()
             ->assertJson([
@@ -298,6 +301,8 @@ class EventActionTest extends TestCase
                     'body' => 'body company draft',
                 ],
             ]);
+
+        $this->assertEquals(0, Company::count());
     }
 
     public function test_simulate_event_action_not_simulatable()
