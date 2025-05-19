@@ -4,6 +4,7 @@ namespace Tests\Unit;
 
 use App\Models\User;
 use Comhon\CustomAction\Mail\Custom;
+use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Mail\Mailables\Attachment;
 use PHPUnit\Framework\Attributes\DataProvider;
 use Tests\Support\Utils;
@@ -11,6 +12,8 @@ use Tests\TestCase;
 
 class CustomMailTest extends TestCase
 {
+    use RefreshDatabase;
+
     private function getAssetPath(): string
     {
         return Utils::joinPaths(Utils::getTestPath('Data'), 'jc.jpeg');

@@ -5,11 +5,14 @@ namespace Tests\Unit;
 use App\Models\Company;
 use App\Models\User;
 use Comhon\CustomAction\Facades\CustomActionModelResolver;
+use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Support\Facades\Validator;
 use Tests\TestCase;
 
 class RuleModelReferenceTest extends TestCase
 {
+    use RefreshDatabase;
+
     public function test_valid_simple()
     {
         CustomActionModelResolver::register([
