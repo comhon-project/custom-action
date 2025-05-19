@@ -8,17 +8,20 @@ use Comhon\CustomAction\Mail\Custom;
 use Comhon\CustomAction\Models\DefaultSetting;
 use Comhon\CustomAction\Models\LocalizedSetting;
 use Comhon\CustomAction\Models\ManualAction;
+use Comhon\CustomAction\Services\ActionService;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Support\Facades\Mail;
+use PHPUnit\Framework\Attributes\DataProvider;
 use Tests\SetUpWithModelRegistrationTrait;
 use Tests\TestCase;
 
-class SendManualEmailTest extends TestCase
+class SimulatationTest extends TestCase
 {
     use RefreshDatabase;
     use SetUpWithModelRegistrationTrait;
 
-    public function test_send_manual_email_success()
+    #[DataProvider('providerBoolean')]
+    public function test_simulate_manual_email_success($grouped)
     {
         $user = User::factory()->create();
 
@@ -43,18 +46,23 @@ class SendManualEmailTest extends TestCase
 
         Mail::fake();
 
-        SendManualUserRegisteredEmail::dispatch([$user]);
+        $users = $grouped ? [$user, User::factory()->create()] : [$user];
+        $preview = (new SendManualUserRegisteredEmail($users, $grouped))->simulate();
 
-        Mail::assertSent(Custom::class, 1);
-        Mail::assertSent(Custom::class, function (Custom $mail) use ($user) {
-            return $mail->hasTo($user->email) && $mail->hasSubject("Dear {$user->first_name}");
-        });
+        Mail::assertSent(Custom::class, 0);
+
+        $this->assertArrayHasKey('subject', $preview);
+        $this->assertArrayHasKey('body', $preview);
+
+        $expected = "Dear {$user->first_name}";
+        $this->assertEquals($expected, $preview['subject']);
+
+        $expected = "Dear {$user->first_name}, you have been registered !";
+        $this->assertEquals($expected, $preview['body']);
     }
 
-    public function test_send_manual_email_overridden_success()
+    public function test_simulate_manual_email_failure()
     {
-        $user = User::factory()->create();
-
         ManualAction::factory(['type' => 'send-manual-user-registered-email'])
             ->has(
                 DefaultSetting::factory([
@@ -76,13 +84,17 @@ class SendManualEmailTest extends TestCase
 
         Mail::fake();
 
-        SendManualUserRegisteredEmail::dispatch([$user], false, 'foo@bar.com', 'Overridden {{ users.0.first_name }}', 'body');
+        $users = [User::factory()->create(), User::factory()->create()];
 
-        Mail::assertSent(Custom::class, 1);
-        Mail::assertSent(Custom::class, function (Custom $mail) use ($user) {
-            return $mail->hasTo($user->email)
-                && $mail->hasSubject("Overridden {$user->first_name}")
-                && $mail->hasFrom('foo@bar.com');
-        });
+        $this->expectExceptionMessage('must have one and only one email to send to generate preview');
+        (new SendManualUserRegisteredEmail($users))->simulate();
+    }
+
+    public function test_simulate_function_doesnt_exists()
+    {
+        $action = ManualAction::factory(['type' => 'bad-action'])->create();
+
+        $this->expectExceptionMessage("simulate method doesn't exist on class App\Actions\BadAction");
+        app(ActionService::class)->simulate($action, []);
     }
 }
