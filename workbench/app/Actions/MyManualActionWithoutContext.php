@@ -22,7 +22,7 @@ class MyManualActionWithoutContext implements CustomActionInterface, FakableInte
         Queueable,
         SerializesModels;
 
-    public static function fake(): static
+    public static function fake(?array $state = null): static
     {
         return new static;
     }

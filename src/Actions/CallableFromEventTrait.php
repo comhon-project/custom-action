@@ -31,14 +31,18 @@ trait CallableFromEventTrait
      * Ensure the faked class does not modify the database.
      * Otherwise, wrap this call in a non-committed database transaction.
      */
-    public static function buildFakeInstance(EventAction $eventAction, ?DefaultSetting $setting = null, ?LocalizedSetting $localizedSetting = null)
-    {
+    public static function buildFakeInstance(
+        EventAction $eventAction,
+        ?DefaultSetting $setting = null,
+        ?LocalizedSetting $localizedSetting = null,
+        ?array $state = null,
+    ) {
         $eventClass = $eventAction->eventListener->getEventClass();
         if (! is_subclass_of($eventClass, FakableInterface::class)) {
             throw new SimulateActionException("cannot simulate action, event {$eventAction->eventListener->event} is not fakable");
         }
 
-        $event = $eventClass::fake();
+        $event = $eventClass::fake($state);
         $customAction = new static($eventAction, $event);
 
         $customAction->fakedSetting = $setting;

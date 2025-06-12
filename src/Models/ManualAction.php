@@ -16,4 +16,9 @@ class ManualAction extends Action
      * @var string
      */
     protected $table = 'custom_manual_actions';
+
+    public function getContextClass(): string
+    {
+        return $this->getActionClass();
+    }
 }

@@ -18,6 +18,11 @@ class EventAction extends Action
      */
     protected $table = 'custom_event_actions';
 
+    public function getContextClass(): string
+    {
+        return $this->eventListener->getEventClass();
+    }
+
     public function eventListener(): BelongsTo
     {
         return $this->belongsTo(EventListener::class);

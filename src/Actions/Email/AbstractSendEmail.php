@@ -16,6 +16,7 @@ use Comhon\CustomAction\Exceptions\SendEmailActionException;
 use Comhon\CustomAction\Mail\Custom;
 use Comhon\CustomAction\Models\LocalizedSetting;
 use Comhon\CustomAction\Rules\RuleHelper;
+use Comhon\CustomAction\Support\AddressNormalizer;
 use Comhon\TemplateRenderer\Facades\Template;
 use Illuminate\Bus\Queueable;
 use Illuminate\Foundation\Bus\Dispatchable;
@@ -210,12 +211,7 @@ abstract class AbstractSendEmail implements CustomActionInterface, ExposeContext
 
     protected function normalizeAddress($value): Address
     {
-        return match (true) {
-            is_string($value) => new Address($value),
-            is_array($value) => new Address($value['email'], $value['name'] ?? null),
-            $value instanceof MailableEntityInterface => new Address($value->getEmail(), $value->getEmailName()),
-            is_object($value) => new Address($value->email, $value->name ?? null),
-        };
+        return AddressNormalizer::normalize($value);
     }
 
     public function simulate()

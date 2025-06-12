@@ -12,6 +12,7 @@ use Comhon\CustomAction\Services\ActionService;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Support\Facades\Mail;
 use PHPUnit\Framework\Attributes\DataProvider;
+use Symfony\Component\HttpKernel\Exception\UnprocessableEntityHttpException;
 use Tests\SetUpWithModelRegistrationTrait;
 use Tests\TestCase;
 
@@ -96,5 +97,14 @@ class SimulatationTest extends TestCase
 
         $this->expectExceptionMessage("simulate method doesn't exist on class App\Actions\BadAction");
         app(ActionService::class)->simulate($action, []);
+    }
+
+    public function test_doesnt_have_fake_state()
+    {
+        $action = ManualAction::factory(['type' => 'bad-action'])->create();
+
+        $this->expectException(UnprocessableEntityHttpException::class);
+        $this->expectExceptionMessage('bad-action has no state to simulate action');
+        app(ActionService::class)->simulate($action, ['states' => ['foo']]);
     }
 }

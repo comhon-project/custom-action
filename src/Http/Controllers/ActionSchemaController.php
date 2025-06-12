@@ -7,6 +7,7 @@ use Comhon\CustomAction\Contracts\CustomEventInterface;
 use Comhon\CustomAction\Contracts\ExposeContextInterface;
 use Comhon\CustomAction\Contracts\FakableInterface;
 use Comhon\CustomAction\Contracts\HasContextKeysIgnoredForScopedSettingInterface;
+use Comhon\CustomAction\Contracts\HasFakeStateInterface;
 use Comhon\CustomAction\Contracts\HasTranslatableContextInterface;
 use Comhon\CustomAction\Contracts\SimulatableInterface;
 use Comhon\CustomAction\Facades\CustomActionModelResolver;
@@ -45,8 +46,9 @@ class ActionSchemaController extends Controller
             ? CustomActionModelResolver::getClass($validated['event_context'])
             : null;
 
-        $isFakable = ($eventClassContext !== null && is_subclass_of($eventClassContext, FakableInterface::class))
-            || ($eventClassContext === null && is_subclass_of($actionClass, FakableInterface::class));
+        $contextClass = $eventClassContext ?? $actionClass;
+        $simulatable = is_subclass_of($contextClass, FakableInterface::class)
+            && is_subclass_of($actionClass, SimulatableInterface::class);
 
         $actionSchema = [
             'settings_schema' => $actionClass::getSettingsSchema($eventClassContext),
@@ -60,7 +62,10 @@ class ActionSchemaController extends Controller
             'context_keys_ignored_for_scoped_setting' => is_subclass_of($actionClass, HasContextKeysIgnoredForScopedSettingInterface::class)
                 ? $actionClass::getContextKeysIgnoredForScopedSetting()
                 : [],
-            'simulatable' => $isFakable && is_subclass_of($actionClass, SimulatableInterface::class),
+            'simulatable' => $simulatable,
+            'fake_state_values' => $simulatable && is_subclass_of($contextClass, HasFakeStateInterface::class)
+                ? $contextClass::getFakeStateSchema()
+                : null,
         ];
 
         return new JsonResource($actionSchema);

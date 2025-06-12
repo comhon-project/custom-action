@@ -27,14 +27,18 @@ trait CallableManuallyTrait
      * Ensure the faked class does not modify the database.
      * Otherwise, wrap this call in a non-committed database transaction.
      */
-    public static function buildFakeInstance(ManualAction $manualAction, ?DefaultSetting $setting = null, ?LocalizedSetting $localizedSetting = null)
-    {
+    public static function buildFakeInstance(
+        ManualAction $manualAction,
+        ?DefaultSetting $setting = null,
+        ?LocalizedSetting $localizedSetting = null,
+        ?array $state = null,
+    ) {
         if (! is_subclass_of(static::class, FakableInterface::class)) {
             $actionUniqueName = CustomActionModelResolver::getUniqueName(static::class);
             throw new SimulateActionException("cannot simulate action, action $actionUniqueName is not fakable");
         }
 
-        $customAction = static::fake();
+        $customAction = static::fake($state);
         $customAction->fakedSetting = $setting;
         $customAction->fakedLocalizedSetting = $localizedSetting;
 

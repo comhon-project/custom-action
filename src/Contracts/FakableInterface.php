@@ -7,5 +7,5 @@ interface FakableInterface
     /**
      * instanciate class with faked data
      */
-    public static function fake(): static;
+    public static function fake(?array $state = null): static;
 }

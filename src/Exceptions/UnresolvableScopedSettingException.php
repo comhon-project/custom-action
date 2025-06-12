@@ -2,7 +2,7 @@
 
 namespace Comhon\CustomAction\Exceptions;
 
-class UnresolvableScopedSettingException extends \Exception
+class UnresolvableScopedSettingException extends RenderableException
 {
     public function __construct(public array $scopedSettings, public string $actionClass)
     {

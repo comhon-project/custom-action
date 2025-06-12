@@ -8,6 +8,7 @@ use Comhon\CustomAction\Models\DefaultSetting;
 use Comhon\CustomAction\Models\EventAction;
 use Comhon\CustomAction\Models\EventListener;
 use Illuminate\Foundation\Testing\RefreshDatabase;
+use PHPUnit\Framework\Attributes\DataProvider;
 use Tests\SetUpWithModelRegistrationTrait;
 use Tests\TestCase;
 
@@ -297,12 +298,122 @@ class EventActionTest extends TestCase
             ->assertOk()
             ->assertJson([
                 'data' => [
-                    'subject' => 'subject company draft',
-                    'body' => 'body company draft',
+                    'success' => true,
+                    'result' => [
+                        'subject' => 'subject company draft',
+                        'body' => 'body company draft',
+                    ],
                 ],
             ]);
 
         $this->assertEquals(0, Company::count());
+    }
+
+    public function test_simulate_event_action_with_state_success()
+    {
+        // create event listener for CompanyRegistered event
+        $eventListener = EventListener::factory()->genericRegistrationCompany()->create();
+        $eventListener->event = 'company-registered-with-context-translations';
+        $eventListener->save();
+        $action = $eventListener->eventActions[0];
+
+        /** @var User $user */
+        $user = User::factory()->hasConsumerAbility()->create();
+
+        $inputs = [
+            'settings' => [],
+            'localized_settings' => [
+                'subject' => 'subject company {{ company.status }}',
+                'body' => 'body company {{ company.status }}',
+            ],
+            'states' => [
+                'status_1',
+                ['status' => 10],
+                [
+                    'status_2',
+                    ['status' => 20],
+                    ['status_3', ['status' => 30]],
+                ],
+            ],
+        ];
+
+        $this->actingAs($user)->postJson("custom/event-actions/$action->id/simulate", $inputs)
+            ->assertOk()
+            ->assertJson([
+                'data' => [
+                    [
+                        'success' => true,
+                        'result' => [
+                            'subject' => 'subject company -status_1',
+                            'body' => 'body company -status_1',
+                        ],
+                    ],
+                    [
+                        'success' => true,
+                        'result' => [
+                            'subject' => 'subject company -status_10',
+                            'body' => 'body company -status_10',
+                        ],
+                    ],
+                    [
+                        'success' => true,
+                        'result' => [
+                            'subject' => 'subject company -status_2-status_20-status_3',
+                            'body' => 'body company -status_2-status_20-status_3',
+                        ],
+                    ],
+                    [
+                        'success' => true,
+                        'result' => [
+                            'subject' => 'subject company -status_2-status_20-status_30',
+                            'body' => 'body company -status_2-status_20-status_30',
+                        ],
+                    ],
+                ],
+            ]);
+    }
+
+    #[DataProvider('providerBoolean')]
+    public function test_simulate_event_action_with_state_error($debug)
+    {
+        config(['app.debug' => $debug]);
+        // create event listener for CompanyRegistered event
+        $eventListener = EventListener::factory()->genericRegistrationCompany()->create();
+        $eventListener->event = 'company-registered-with-context-translations';
+        $eventListener->save();
+        $action = $eventListener->eventActions[0];
+
+        /** @var User $user */
+        $user = User::factory()->hasConsumerAbility()->create();
+
+        $inputs = [
+            'settings' => [],
+            'localized_settings' => [
+                'subject' => 'subject company {{ company.status }}',
+                'body' => 'body company {{ company.status }}',
+            ],
+            'states' => [
+                ['status' => 1000],
+            ],
+        ];
+
+        $json = $this->actingAs($user)->postJson("custom/event-actions/$action->id/simulate", $inputs)
+            ->assertOk()
+            ->assertJson([
+                'data' => [
+                    [
+                        'success' => false,
+                        'message' => 'message',
+                    ],
+                ],
+            ])->json('data.0');
+
+        if ($debug) {
+            $this->assertArrayHasKey('trace', $json);
+            $this->assertIsArray($json['trace']);
+        } else {
+            $this->assertArrayNotHasKey('trace', $json);
+        }
     }
 
     public function test_simulate_event_action_not_simulatable()

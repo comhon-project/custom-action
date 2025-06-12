@@ -10,6 +10,8 @@ use Illuminate\Database\Eloquent\Relations\MorphOne;
 
 abstract class Action extends Model
 {
+    abstract public function getContextClass(): string;
+
     public function defaultSetting(): MorphOne
     {
         return $this->MorphOne(DefaultSetting::class, 'action');
