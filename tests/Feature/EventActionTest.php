@@ -304,7 +304,7 @@ class EventActionTest extends TestCase
                         'body' => 'body company draft',
                     ],
                 ],
-            ]);
+            ])->assertJsonMissingPath('data.state');
 
         $this->assertEquals(0, Company::count());
     }
@@ -347,6 +347,7 @@ class EventActionTest extends TestCase
                             'subject' => 'subject company -status_1',
                             'body' => 'body company -status_1',
                         ],
+                        'state' => ['status_1'],
                     ],
                     [
                         'success' => true,
@@ -354,6 +355,7 @@ class EventActionTest extends TestCase
                             'subject' => 'subject company -status_10',
                             'body' => 'body company -status_10',
                         ],
+                        'state' => [['status' => 10]],
                     ],
                     [
                         'success' => true,
@@ -361,6 +363,7 @@ class EventActionTest extends TestCase
                             'subject' => 'subject company -status_2-status_20-status_3',
                             'body' => 'body company -status_2-status_20-status_3',
                         ],
+                        'state' => ['status_2', ['status' => 20], 'status_3'],
                     ],
                     [
                         'success' => true,
@@ -368,6 +371,7 @@ class EventActionTest extends TestCase
                             'subject' => 'subject company -status_2-status_20-status_30',
                             'body' => 'body company -status_2-status_20-status_30',
                         ],
+                        'state' => ['status_2', ['status' => 20], ['status' => 30]],
                     ],
                 ],
             ]);
@@ -404,6 +408,7 @@ class EventActionTest extends TestCase
                     [
                         'success' => false,
                         'message' => 'message',
+                        'state' => [['status' => 1000]],
                     ],
                 ],
             ])->json('data.0');

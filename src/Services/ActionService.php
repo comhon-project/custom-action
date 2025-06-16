@@ -141,11 +141,12 @@ class ActionService
                 $results[] = [
                     'success' => true,
                     'result' => app()->call([$customAction, 'simulate']),
+                    ...($state !== null ? ['state' => $state] : []),
                 ];
             } catch (SimulateActionException|SimulateMethodDoestExistException $th) {
                 throw $th;
             } catch (\Throwable $th) {
-                $results[] = $this->reportError($th);
+                $results[] = $this->reportError($th, $state);
             } finally {
                 DB::rollBack();
             }
@@ -154,9 +155,12 @@ class ActionService
         return $hasMatrix ? $results : $results[0];
     }
 
-    private function reportError(\Throwable $th)
+    private function reportError(\Throwable $th, ?array $state)
     {
-        $result = ['success' => false];
+        $result = [
+            'success' => false,
+            ...($state !== null ? ['state' => $state] : []),
+        ];
         if (config('app.debug')) {
             $result['message'] = $th->getMessage();
             $result['trace'] = $th->getTrace();
