@@ -63,7 +63,7 @@ class ActionSchemaController extends Controller
                 ? $actionClass::getContextKeysIgnoredForScopedSetting()
                 : [],
             'simulatable' => $simulatable,
-            'fake_state_values' => $simulatable && is_subclass_of($contextClass, HasFakeStateInterface::class)
+            'fake_state_schema' => $simulatable && is_subclass_of($contextClass, HasFakeStateInterface::class)
                 ? $contextClass::getFakeStateSchema()
                 : null,
         ];

@@ -73,7 +73,7 @@ class ActionDefinitionTest extends TestCase
                     'to', 'default_timezone', 'preferred_timezone',
                 ],
                 'simulatable' => false,
-                'fake_state_values' => null,
+                'fake_state_schema' => null,
             ],
         ]);
 
@@ -107,7 +107,7 @@ class ActionDefinitionTest extends TestCase
                     'to', 'default_timezone', 'preferred_timezone',
                 ],
                 'simulatable' => true,
-                'fake_state_values' => [
+                'fake_state_schema' => [
                     'status_1',
                     'status_2',
                     'status_3',
