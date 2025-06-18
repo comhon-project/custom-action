@@ -12,6 +12,8 @@ use Comhon\CustomAction\Contracts\HasContextKeysIgnoredForScopedSettingInterface
 use Comhon\CustomAction\Contracts\HasTimezonePreferenceInterface;
 use Comhon\CustomAction\Contracts\MailableEntityInterface;
 use Comhon\CustomAction\Contracts\SimulatableInterface;
+use Comhon\CustomAction\DTOs\CustomMailable;
+use Comhon\CustomAction\DTOs\EmailData;
 use Comhon\CustomAction\Exceptions\SendEmailActionException;
 use Comhon\CustomAction\Mail\Custom;
 use Comhon\CustomAction\Models\LocalizedSetting;
@@ -19,10 +21,12 @@ use Comhon\CustomAction\Rules\RuleHelper;
 use Comhon\CustomAction\Support\AddressNormalizer;
 use Comhon\TemplateRenderer\Facades\Template;
 use Illuminate\Bus\Queueable;
+use Illuminate\Contracts\Translation\HasLocalePreference;
 use Illuminate\Foundation\Bus\Dispatchable;
 use Illuminate\Mail\Mailables\Address;
 use Illuminate\Queue\InteractsWithQueue;
 use Illuminate\Queue\SerializesModels;
+use Illuminate\Support\Collection;
 use Illuminate\Support\Facades\App;
 use Illuminate\Support\Facades\Mail;
 
@@ -126,20 +130,33 @@ abstract class AbstractSendEmail implements CustomActionInterface, ExposeContext
     }
 
     /**
-     * Determine which timezone should be used when sending grouped emails.
+     * Determine the preferred time zone to use during template rendering when sending grouped emails.
      */
     protected function getGroupedTimezone(): string
     {
         return config('app.timezone');
     }
 
-    public function handle()
+    /**
+     * Determine the default timezone to use during template rendering.
+     */
+    protected function getDefaultTimezone(?string $preferredTimezone): string
     {
-        $localizedMailInfos = [];
-        $context = $this->getExposedValidatedContext(true);
-        $from = $this->getFrom();
-        $recipients = $this->getRecipients();
-        $tos = $recipients['to'] ?? null;
+        return config('app.timezone');
+    }
+
+    private function buildEmailDataConainer(): EmailData
+    {
+        return new EmailData(
+            $this->getExposedValidatedContext(true),
+            $this->getRecipients(),
+            $this->getFrom(),
+        );
+    }
+
+    private function getTos(EmailData $emailData): array
+    {
+        $tos = $emailData->recipients['to'] ?? null;
 
         if (empty($tos)) {
             throw new SendEmailActionException($this->getSetting(), 'there is no mail recipients defined');
@@ -147,49 +164,69 @@ abstract class AbstractSendEmail implements CustomActionInterface, ExposeContext
 
         $groupRecipients = $this->shouldGroupRecipients() && count($tos) > 1;
         if ($groupRecipients) {
-            $tos = [$tos];
+            $tos = [collect($tos)];
         }
 
-        foreach ($tos as $to) {
-            if ($groupRecipients) {
-                $localizedSetting = $this->getLocalizedSettingOrFail($this->getGroupedLocale());
-                $preferredTimezone = $this->getGroupedTimezone();
-                $to = $this->normalizeAddresses($to);
-            } else {
-                $localizedSetting = $this->getLocalizedSettingOrFail(is_string($to) ? null : $to);
+        return $tos;
+    }
 
-                // we expose 'to' value in email body or subject only if recipient is a MailableEntityInterface
-                $context['to'] = $to instanceof MailableEntityInterface
-                    ? $to->getExposableValues()
-                    : null;
+    private function buildCustomMailable(EmailData $emailData, $to): CustomMailable
+    {
+        // if $to is a collection, that means there are several recipients for one mail.
+        if ($to instanceof Collection) {
+            $localizedSetting = $this->getLocalizedSettingOrFail($this->getGroupedLocale());
+            $normalizedTo = $this->normalizeAddresses($to);
+            $preferredTimezone = $this->getGroupedTimezone();
+        } else {
+            $localable = is_array($to) || $to instanceof HasLocalePreference;
+            $localizedSetting = $this->getLocalizedSettingOrFail($localable ? $to : null);
+            $normalizedTo = $this->normalizeAddress($to);
 
-                $preferredTimezone = $to instanceof HasTimezonePreferenceInterface
-                    ? $to->preferredTimezone()
-                    : null;
+            $emailData->context['to'] = $to instanceof MailableEntityInterface
+                ? $to->getExposableValues()
+                : ['email' => $normalizedTo->address, 'name' => $normalizedTo->name];
 
-                $to = $this->normalizeAddress($to);
-            }
+            $preferredTimezone = $to instanceof HasTimezonePreferenceInterface
+                ? $to->preferredTimezone()
+                : null;
+        }
 
-            $locale = $localizedSetting->locale;
-            $localizedMailInfos[$locale] ??= $this->getLocalizedMailInfos($localizedSetting, $from);
+        $locale = $localizedSetting->locale;
+        $emailData->localizedMailInfosCache[$locale] ??= $this->getLocalizedMailInfos(
+            $localizedSetting,
+            $emailData->from
+        );
 
-            $pendingMail = Mail::to($to);
+        return new CustomMailable(
+            new Custom(
+                $emailData->localizedMailInfosCache[$locale],
+                $emailData->context,
+                $locale,
+                $this->getDefaultTimezone($preferredTimezone),
+                $preferredTimezone,
+            ),
+            $normalizedTo,
+            $this->normalizeAddresses($emailData->recipients['cc'] ?? []),
+            $this->normalizeAddresses($emailData->recipients['bcc'] ?? []),
+        );
+    }
 
-            if ($recipients['cc'] ?? null) {
-                $pendingMail->cc($recipients['cc']);
-            }
-            if ($recipients['bcc'] ?? null) {
-                $pendingMail->bcc($recipients['bcc']);
-            }
+    public function handle()
+    {
+        $emailData = $this->buildEmailDataConainer();
 
+        foreach ($this->getTos($emailData) as $to) {
+            $customMailable = $this->buildCustomMailable($emailData, $to);
             $sendMethod = $this->sendAsynchronously ? 'queue' : 'send';
-            $pendingMail->$sendMethod(
-                new Custom($localizedMailInfos[$locale], $context, $locale, null, $preferredTimezone)
-            );
+
+            Mail::to($customMailable->to)
+                ->cc($customMailable->cc)
+                ->bcc($customMailable->bcc)
+                ->$sendMethod($customMailable->mailable);
         }
     }
 
-    protected function getLocalizedMailInfos(LocalizedSetting $localizedSetting, ?Address $from)
+    final protected function getLocalizedMailInfos(LocalizedSetting $localizedSetting, ?Address $from)
     {
         return [
             'from' => $from,
@@ -199,7 +236,7 @@ abstract class AbstractSendEmail implements CustomActionInterface, ExposeContext
         ];
     }
 
-    protected function normalizeAddresses($values)
+    final protected function normalizeAddresses($values)
     {
         $addresses = [];
         foreach ($values as $value) {
@@ -209,51 +246,28 @@ abstract class AbstractSendEmail implements CustomActionInterface, ExposeContext
         return $addresses;
     }
 
-    protected function normalizeAddress($value): Address
+    final protected function normalizeAddress($value): Address
     {
         return AddressNormalizer::normalize($value);
     }
 
     public function simulate()
     {
-        $context = $this->getExposedValidatedContext(true);
-        $recipients = $this->getRecipients();
-        $tos = $recipients['to'] ?? null;
+        $simulations = [];
+        $emailData = $this->buildEmailDataConainer();
 
-        $groupRecipients = $this->shouldGroupRecipients() && $tos && count($tos) > 1;
-        if ($groupRecipients) {
-            $tos = [$tos];
-        }
-        if ($tos && count($tos) > 1) {
-            throw new SendEmailActionException($this->getSetting(), 'must have one and only one email to send to generate preview');
-        }
+        foreach ($this->getTos($emailData) as $to) {
+            $customMailable = $this->buildCustomMailable($emailData, $to);
 
-        if ($groupRecipients) {
-            $localizedSetting = $this->getLocalizedSettingOrFail($this->getGroupedLocale());
-            $preferredTimezone = $this->getGroupedTimezone();
-        } else {
-            $to = collect($tos)->pop();
-            $localizedSetting = $this->getLocalizedSettingOrFail(is_string($to) ? null : $to);
-
-            // we expose 'to' value in email body or subject only if recipient is a MailableEntityInterface
-            $context['to'] = $to instanceof MailableEntityInterface ? $to->getExposableValues() : null;
-
-            $preferredTimezone = $to instanceof HasTimezonePreferenceInterface ? $to->preferredTimezone() : null;
+            $simulations[] = [
+                'to' => $customMailable->to,
+                'cc' => $customMailable->cc,
+                'bcc' => $customMailable->bcc,
+                'subject' => $customMailable->mailable->envelope()->subject,
+                'body' => $customMailable->mailable->content()->htmlString,
+            ];
         }
 
-        $subject = $this->getSubject($localizedSetting);
-        $body = $this->getBody($localizedSetting);
-
-        $args = [
-            $context,
-            $localizedSetting->locale,
-            null,
-            $preferredTimezone,
-        ];
-
-        return [
-            'subject' => Template::render($subject, ...$args),
-            'body' => Template::render($body, ...$args),
-        ];
+        return $simulations;
     }
 }

@@ -103,8 +103,13 @@ class ManualActionTest extends TestCase
                 'data' => [
                     'success' => true,
                     'result' => [
-                        'subject' => 'subject company draft',
-                        'body' => 'body company draft',
+                        [
+                            'to' => [],
+                            'cc' => [],
+                            'bcc' => [],
+                            'subject' => 'subject company draft',
+                            'body' => 'body company draft',
+                        ],
                     ],
                 ],
             ]);
@@ -133,8 +138,11 @@ class ManualActionTest extends TestCase
                     [
                         'success' => true,
                         'result' => [
-                            'subject' => 'subject company -status_1-status_2',
-                            'body' => 'body company -status_1-status_2',
+                            [
+                                'to' => [],
+                                'subject' => 'subject company -status_1-status_2',
+                                'body' => 'body company -status_1-status_2',
+                            ],
                         ],
                     ],
                 ],

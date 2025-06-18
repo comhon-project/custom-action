@@ -3,6 +3,7 @@
 namespace App\Actions;
 
 use App\Models\Company;
+use App\Models\User;
 use Comhon\CustomAction\Contracts\FakableInterface;
 use Comhon\CustomAction\Contracts\HasFakeStateInterface;
 use Comhon\CustomAction\Contracts\HasTranslatableContextInterface;
@@ -22,7 +23,11 @@ class SendManualCompanyRegistrationMailWithContextTranslations extends SendManua
             }
         }
 
-        return new static(Company::factory($companyState)->create(), new SystemFile('path'), null);
+        return new static(
+            Company::factory($companyState)->create(),
+            new SystemFile('path'),
+            User::factory()->create()
+        );
     }
 
     public static function getTranslatableContext(): array

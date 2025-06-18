@@ -285,7 +285,11 @@ class EventActionTest extends TestCase
         $user = User::factory()->hasConsumerAbility()->create();
 
         $inputs = [
-            'settings' => [],
+            'settings' => [
+                'recipients' => ['to' => [
+                    'static' => ['emails' => ['john.doe@gmail.com']],
+                ]],
+            ],
             'localized_settings' => [
                 'subject' => 'subject company {{ company.status }}',
                 'body' => 'body company {{ company.status }}',
@@ -300,8 +304,11 @@ class EventActionTest extends TestCase
                 'data' => [
                     'success' => true,
                     'result' => [
-                        'subject' => 'subject company draft',
-                        'body' => 'body company draft',
+                        [
+                            'to' => ['address' => 'john.doe@gmail.com'],
+                            'subject' => 'subject company draft',
+                            'body' => 'body company draft',
+                        ],
                     ],
                 ],
             ])->assertJsonMissingPath('data.state');
@@ -321,7 +328,11 @@ class EventActionTest extends TestCase
         $user = User::factory()->hasConsumerAbility()->create();
 
         $inputs = [
-            'settings' => [],
+            'settings' => [
+                'recipients' => ['to' => [
+                    'static' => ['emails' => ['john.doe@gmail.com']],
+                ]],
+            ],
             'localized_settings' => [
                 'subject' => 'subject company {{ company.status }}',
                 'body' => 'body company {{ company.status }}',
@@ -344,32 +355,44 @@ class EventActionTest extends TestCase
                     [
                         'success' => true,
                         'result' => [
-                            'subject' => 'subject company -status_1',
-                            'body' => 'body company -status_1',
+                            [
+                                'to' => ['address' => 'john.doe@gmail.com'],
+                                'subject' => 'subject company -status_1',
+                                'body' => 'body company -status_1',
+                            ],
                         ],
                         'state' => ['status_1'],
                     ],
                     [
                         'success' => true,
                         'result' => [
-                            'subject' => 'subject company -status_10',
-                            'body' => 'body company -status_10',
+                            [
+                                'to' => ['address' => 'john.doe@gmail.com'],
+                                'subject' => 'subject company -status_10',
+                                'body' => 'body company -status_10',
+                            ],
                         ],
                         'state' => [['status' => 10]],
                     ],
                     [
                         'success' => true,
                         'result' => [
-                            'subject' => 'subject company -status_2-status_20-status_3',
-                            'body' => 'body company -status_2-status_20-status_3',
+                            [
+                                'to' => ['address' => 'john.doe@gmail.com'],
+                                'subject' => 'subject company -status_2-status_20-status_3',
+                                'body' => 'body company -status_2-status_20-status_3',
+                            ],
                         ],
                         'state' => ['status_2', ['status' => 20], 'status_3'],
                     ],
                     [
                         'success' => true,
                         'result' => [
-                            'subject' => 'subject company -status_2-status_20-status_30',
-                            'body' => 'body company -status_2-status_20-status_30',
+                            [
+                                'to' => ['address' => 'john.doe@gmail.com'],
+                                'subject' => 'subject company -status_2-status_20-status_30',
+                                'body' => 'body company -status_2-status_20-status_30',
+                            ],
                         ],
                         'state' => ['status_2', ['status' => 20], ['status' => 30]],
                     ],

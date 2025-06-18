@@ -9,6 +9,7 @@ use Comhon\CustomAction\Models\DefaultSetting;
 use Comhon\CustomAction\Models\LocalizedSetting;
 use Comhon\CustomAction\Models\ManualAction;
 use Comhon\CustomAction\Services\ActionService;
+use Comhon\CustomAction\Support\AddressNormalizer;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Support\Facades\Mail;
 use PHPUnit\Framework\Attributes\DataProvider;
@@ -48,47 +49,32 @@ class SimulatationTest extends TestCase
         Mail::fake();
 
         $users = $grouped ? [$user, User::factory()->create()] : [$user];
-        $preview = (new SendManualUserRegisteredEmail($users, $grouped))->simulate();
+        $simulations = (new SendManualUserRegisteredEmail($users, $grouped))->simulate();
 
         Mail::assertSent(Custom::class, 0);
 
-        $this->assertArrayHasKey('subject', $preview);
-        $this->assertArrayHasKey('body', $preview);
+        $this->assertArrayHasKey(0, $simulations);
+        $this->assertCount(1, $simulations);
+        $simulation = $simulations[0];
+
+        $this->assertArrayHasKey('to', $simulation);
+        $this->assertArrayHasKey('subject', $simulation);
+        $this->assertArrayHasKey('body', $simulation);
+
+        $expected = json_decode(collect($users)->map(fn ($user) => AddressNormalizer::normalize($user))->toJson(), true);
+        if (! $grouped) {
+            $expected = $expected[0];
+        }
+        $this->assertEquals(
+            $expected,
+            json_decode(collect($simulation['to'])->toJson(), true)
+        );
 
         $expected = "Dear {$user->first_name}";
-        $this->assertEquals($expected, $preview['subject']);
+        $this->assertEquals($expected, $simulation['subject']);
 
         $expected = "Dear {$user->first_name}, you have been registered !";
-        $this->assertEquals($expected, $preview['body']);
-    }
-
-    public function test_simulate_manual_email_failure()
-    {
-        ManualAction::factory(['type' => 'send-manual-user-registered-email'])
-            ->has(
-                DefaultSetting::factory([
-                    'settings' => [
-                        'recipients' => ['to' => ['context' => ['mailables' => ['users.*']]]],
-                    ],
-                ])->has(
-                    LocalizedSetting::factory([
-                        'locale' => 'en',
-                        'settings' => [
-                            'subject' => 'Dear {{ users.0.first_name }}',
-                            'body' => 'Dear {{ users.0.first_name }}, you have been registered !',
-                        ],
-                    ]),
-                    'localizedSettings',
-                ),
-                'defaultSetting'
-            )->create();
-
-        Mail::fake();
-
-        $users = [User::factory()->create(), User::factory()->create()];
-
-        $this->expectExceptionMessage('must have one and only one email to send to generate preview');
-        (new SendManualUserRegisteredEmail($users))->simulate();
+        $this->assertEquals($expected, $simulation['body']);
     }
 
     public function test_simulate_function_doesnt_exists()
