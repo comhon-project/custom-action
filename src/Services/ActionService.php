@@ -282,6 +282,8 @@ class ActionService
         foreach ($collectionStates as $matrixStates) {
             if (is_string($matrixStates) || ! Arr::isList($matrixStates)) {
                 $flatenedStates[] = [$matrixStates];
+            } elseif (empty($matrixStates)) {
+                $flatenedStates[] = $matrixStates;
             } else {
                 $normalizedMatrix = [];
                 $indexes = [];

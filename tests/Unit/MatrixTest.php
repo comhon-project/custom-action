@@ -10,6 +10,7 @@ class MatrixTest extends TestCase
     public function test_get_flattened_states()
     {
         $actual = app(ActionService::class)->getFlattenedStates([
+            [],
             'a',
             ['b' => 1],
             [
@@ -27,6 +28,7 @@ class MatrixTest extends TestCase
             ],
         ]);
         $expected = [
+            [],
             ['a'],
             [['b' => 1]],
             ['a', 'b'],
