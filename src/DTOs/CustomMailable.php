@@ -9,7 +9,5 @@ class CustomMailable
     public function __construct(
         public Custom $mailable,
         public $to,
-        public ?array $cc = [],
-        public ?array $bcc = [],
     ) {}
 }

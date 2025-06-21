@@ -9,6 +9,7 @@ use App\Actions\SendAutomaticCompanyRegistrationMail;
 use App\Actions\SendManualCompanyRegistrationGroupedMail;
 use App\Actions\SendManualCompanyRegistrationMail;
 use App\Actions\SendManualCompanyRegistrationMailWithContextTranslations;
+use App\Actions\SendManualSimpleEmail;
 use App\Actions\SendManualUserRegisteredEmail;
 use App\Events\BadEvent;
 use App\Events\CompanyRegistered;
@@ -39,6 +40,7 @@ trait SetUpWithModelRegistrationTrait
             'send-manual-company-email-with-context-translations' => SendManualCompanyRegistrationMailWithContextTranslations::class,
             'send-manual-company-grouped-email' => SendManualCompanyRegistrationGroupedMail::class,
             'send-manual-user-registered-email' => SendManualUserRegisteredEmail::class,
+            'send-manual-simple-email' => SendManualSimpleEmail::class,
 
             'my-event-without-context' => MyEventWithoutContext::class,
             'my-action-without-context' => MyActionWithoutContext::class,

@@ -9,7 +9,7 @@ use Comhon\CustomAction\Models\DefaultSetting;
 use Comhon\CustomAction\Models\LocalizedSetting;
 use Comhon\CustomAction\Models\ManualAction;
 use Comhon\CustomAction\Services\ActionService;
-use Comhon\CustomAction\Support\AddressNormalizer;
+use Comhon\CustomAction\Support\EmailHelper;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Support\Facades\Mail;
 use PHPUnit\Framework\Attributes\DataProvider;
@@ -32,6 +32,7 @@ class SimulatationTest extends TestCase
                 DefaultSetting::factory([
                     'settings' => [
                         'recipients' => ['to' => ['context' => ['mailables' => ['users.*']]]],
+                        'from' => ['static' => ['email' => 'from@gmail.com']],
                     ],
                 ])->has(
                     LocalizedSetting::factory([
@@ -58,10 +59,13 @@ class SimulatationTest extends TestCase
         $simulation = $simulations[0];
 
         $this->assertArrayHasKey('to', $simulation);
+        $this->assertArrayHasKey('cc', $simulation);
+        $this->assertArrayHasKey('bcc', $simulation);
+        $this->assertArrayHasKey('from', $simulation);
         $this->assertArrayHasKey('subject', $simulation);
         $this->assertArrayHasKey('body', $simulation);
 
-        $expected = json_decode(collect($users)->map(fn ($user) => AddressNormalizer::normalize($user))->toJson(), true);
+        $expected = json_decode(collect($users)->map(fn ($user) => EmailHelper::normalizeAddress($user))->toJson(), true);
         if (! $grouped) {
             $expected = $expected[0];
         }
@@ -69,6 +73,8 @@ class SimulatationTest extends TestCase
             $expected,
             json_decode(collect($simulation['to'])->toJson(), true)
         );
+
+        $this->assertEquals('from@gmail.com', $simulation['from']?->address);
 
         $expected = "Dear {$user->first_name}";
         $this->assertEquals($expected, $simulation['subject']);

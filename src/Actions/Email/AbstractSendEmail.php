@@ -18,8 +18,7 @@ use Comhon\CustomAction\Exceptions\SendEmailActionException;
 use Comhon\CustomAction\Mail\Custom;
 use Comhon\CustomAction\Models\LocalizedSetting;
 use Comhon\CustomAction\Rules\RuleHelper;
-use Comhon\CustomAction\Support\AddressNormalizer;
-use Comhon\TemplateRenderer\Facades\Template;
+use Comhon\CustomAction\Support\EmailHelper;
 use Illuminate\Bus\Queueable;
 use Illuminate\Contracts\Translation\HasLocalePreference;
 use Illuminate\Foundation\Bus\Dispatchable;
@@ -59,7 +58,7 @@ abstract class AbstractSendEmail implements CustomActionInterface, ExposeContext
     /**
      * Get email recipents
      *
-     * @return array{to: array, cc: array, bcc: array}
+     * @return array{to: mixed, cc: mixed, bcc: mixed}
      */
     abstract protected function getRecipients(): array;
 
@@ -156,7 +155,7 @@ abstract class AbstractSendEmail implements CustomActionInterface, ExposeContext
 
     private function getTos(EmailData $emailData): array
     {
-        $tos = $emailData->recipients['to'] ?? null;
+        $tos = $emailData->to;
 
         if (empty($tos)) {
             throw new SendEmailActionException($this->getSetting(), 'there is no mail recipients defined');
@@ -206,22 +205,22 @@ abstract class AbstractSendEmail implements CustomActionInterface, ExposeContext
                 $preferredTimezone,
             ),
             $normalizedTo,
-            $this->normalizeAddresses($emailData->recipients['cc'] ?? []),
-            $this->normalizeAddresses($emailData->recipients['bcc'] ?? []),
         );
     }
 
     public function handle()
     {
         $emailData = $this->buildEmailDataConainer();
+        $cc = EmailHelper::normalizeAddresses($emailData->cc);
+        $bcc = EmailHelper::normalizeAddresses($emailData->bcc);
 
         foreach ($this->getTos($emailData) as $to) {
             $customMailable = $this->buildCustomMailable($emailData, $to);
             $sendMethod = $this->sendAsynchronously ? 'queue' : 'send';
 
             Mail::to($customMailable->to)
-                ->cc($customMailable->cc)
-                ->bcc($customMailable->bcc)
+                ->cc($cc)
+                ->bcc($bcc)
                 ->$sendMethod($customMailable->mailable);
         }
     }
@@ -236,33 +235,31 @@ abstract class AbstractSendEmail implements CustomActionInterface, ExposeContext
         ];
     }
 
-    final protected function normalizeAddresses($values)
+    final protected function normalizeAddresses(iterable $values): array
     {
-        $addresses = [];
-        foreach ($values as $value) {
-            $addresses[] = $this->normalizeAddress($value);
-        }
-
-        return $addresses;
+        return EmailHelper::normalizeAddresses($values);
     }
 
     final protected function normalizeAddress($value): Address
     {
-        return AddressNormalizer::normalize($value);
+        return EmailHelper::normalizeAddress($value);
     }
 
     public function simulate()
     {
         $simulations = [];
         $emailData = $this->buildEmailDataConainer();
+        $cc = EmailHelper::normalizeAddresses($emailData->cc);
+        $bcc = EmailHelper::normalizeAddresses($emailData->bcc);
 
         foreach ($this->getTos($emailData) as $to) {
             $customMailable = $this->buildCustomMailable($emailData, $to);
 
             $simulations[] = [
                 'to' => $customMailable->to,
-                'cc' => $customMailable->cc,
-                'bcc' => $customMailable->bcc,
+                'cc' => $cc,
+                'bcc' => $bcc,
+                'from' => $customMailable->mailable->envelope()->from,
                 'subject' => $customMailable->mailable->envelope()->subject,
                 'body' => $customMailable->mailable->content()->htmlString,
             ];

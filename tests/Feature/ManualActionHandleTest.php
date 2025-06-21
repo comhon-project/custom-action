@@ -5,11 +5,13 @@ namespace Tests\Feature;
 use App\Actions\SendManualCompanyRegistrationGroupedMail;
 use App\Actions\SendManualCompanyRegistrationMail;
 use App\Actions\SendManualCompanyRegistrationMailWithContextTranslations;
+use App\Actions\SendManualSimpleEmail;
 use App\Models\Company;
 use App\Models\User;
 use App\Models\UserWithoutPreference;
 use Comhon\CustomAction\Files\SystemFile;
 use Comhon\CustomAction\Mail\Custom;
+use Comhon\CustomAction\Models\DefaultSetting;
 use Comhon\CustomAction\Models\LocalizedSetting;
 use Comhon\CustomAction\Models\ManualAction;
 use Illuminate\Foundation\Testing\RefreshDatabase;
@@ -250,5 +252,63 @@ class ManualActionHandleTest extends TestCase
         $mails[0]->assertHasTo($targetUser->email);
         $mails[0]->assertHasTo($otherUser1->email);
         $mails[0]->assertHasTo($otherUser2->email);
+    }
+
+    #[DataProvider('providerBoolean')]
+    public function test_send_manual_email_inject_values_success($fromConstructor)
+    {
+        ManualAction::factory(['type' => 'send-manual-simple-email'])
+            ->has(
+                DefaultSetting::factory([
+                    'settings' => [],
+                ])->has(
+                    LocalizedSetting::factory([
+                        'locale' => 'en',
+                        'settings' => [],
+                    ]),
+                    'localizedSettings',
+                ),
+                'defaultSetting'
+            )->create();
+
+        Mail::fake();
+
+        if ($fromConstructor) {
+            SendManualSimpleEmail::dispatch(
+                'to@gmail.com',
+                'cc@gmail.com',
+                'bcc@gmail.com',
+                'from@gmail.com',
+                [new SystemFile($this->getAssetPath())],
+                'subject',
+                'body',
+            );
+        } else {
+            (new SendManualSimpleEmail)->to('to@gmail.com')
+                ->cc('cc@gmail.com')
+                ->bcc('bcc@gmail.com')
+                ->from('from@gmail.com')
+                ->attachments(new SystemFile($this->getAssetPath()))
+                ->attachments([new SystemFile($this->getAssetPath())])
+                ->subject('subject')
+                ->body('body')
+                ->handle();
+        }
+
+        /** @var Custom $mail */
+        $mail = null;
+        Mail::assertSent(Custom::class, 1);
+        Mail::assertSent(Custom::class, function (Custom $custom) use (&$mail) {
+            $mail = $custom;
+
+            return true;
+        });
+        $mail->assertHasTo('to@gmail.com');
+        $mail->assertHasCc('cc@gmail.com');
+        $mail->assertHasBcc('bcc@gmail.com');
+        $this->assertTrue($mail->hasFrom('from@gmail.com'));
+        $mail->assertHasSubject('subject');
+        $this->assertEquals('body', $mail->render());
+        $this->assertTrue($mail->hasAttachment(Attachment::fromPath($this->getAssetPath())));
     }
 }

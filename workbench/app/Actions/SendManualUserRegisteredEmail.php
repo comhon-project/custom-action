@@ -9,7 +9,7 @@ class SendManualUserRegisteredEmail extends AbstractSendManualEmail
     public function __construct(
         public array $users,
         private bool $shouldGroup = false,
-        protected ?string $from = null,
+        protected $from = null,
         protected ?string $subject = null,
         protected ?string $body = null,
     ) {}
