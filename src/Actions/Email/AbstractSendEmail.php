@@ -40,6 +40,10 @@ abstract class AbstractSendEmail implements CustomActionInterface, ExposeContext
 
     const RECIPIENT_TYPES = ['to', 'cc', 'bcc'];
 
+    private static string|\Closure|null $defaultTimeZone;
+
+    private static string|\Closure|null $groupedTimeZone;
+
     /**
      * Indicates if each mail should be sent asynchronously.
      *
@@ -80,6 +84,16 @@ abstract class AbstractSendEmail implements CustomActionInterface, ExposeContext
      * Get email attachements
      */
     abstract protected function getAttachments(LocalizedSetting $localizedSetting): ?iterable;
+
+    public static function registerDefaultTimeZone(string|\Closure|null $timeZone)
+    {
+        static::$defaultTimeZone = $timeZone;
+    }
+
+    public static function registerGroupedTimeZone(string|\Closure|null $timeZone)
+    {
+        static::$groupedTimeZone = $timeZone;
+    }
 
     /**
      * Get action context schema.
@@ -133,15 +147,27 @@ abstract class AbstractSendEmail implements CustomActionInterface, ExposeContext
      */
     protected function getGroupedTimezone(): string
     {
-        return config('app.timezone');
+        if (! isset(static::$groupedTimeZone)) {
+            return $this->getDefaultTimezone();
+        }
+
+        return static::$groupedTimeZone instanceof \Closure
+            ? (static::$groupedTimeZone)()
+            : static::$groupedTimeZone;
     }
 
     /**
      * Determine the default timezone to use during template rendering.
      */
-    protected function getDefaultTimezone(?string $preferredTimezone): string
+    protected function getDefaultTimezone(?string $preferredTimezone = null): string
     {
-        return config('app.timezone');
+        if (! isset(static::$defaultTimeZone)) {
+            return config('app.timezone');
+        }
+
+        return static::$defaultTimeZone instanceof \Closure
+            ? (static::$defaultTimeZone)($preferredTimezone)
+            : static::$defaultTimeZone;
     }
 
     private function buildEmailDataConainer(): EmailData

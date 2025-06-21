@@ -9,6 +9,7 @@ use App\Actions\SendManualSimpleEmail;
 use App\Models\Company;
 use App\Models\User;
 use App\Models\UserWithoutPreference;
+use Comhon\CustomAction\Actions\Email\AbstractSendManualEmail;
 use Comhon\CustomAction\Files\SystemFile;
 use Comhon\CustomAction\Mail\Custom;
 use Comhon\CustomAction\Models\DefaultSetting;
@@ -217,8 +218,11 @@ class ManualActionHandleTest extends TestCase
         $mails[2]->assertHasSubject('draft Draft! French!');
     }
 
-    public function test_handle_manual_action_with_grouped_recipients_success()
+    #[DataProvider('provider_handle_manual_action_with_grouped_recipients_success')]
+    public function test_handle_manual_action_with_grouped_recipients_success($groupedTimezone)
     {
+        AbstractSendManualEmail::registerGroupedTimeZone($groupedTimezone);
+
         Lang::addLines(['status.draft' => 'Draft!'], 'en');
         Lang::addLines(['status.draft' => 'Brouillon!'], 'fr');
         Lang::addLines(['languages.fr' => 'French!'], 'en');
@@ -252,11 +256,27 @@ class ManualActionHandleTest extends TestCase
         $mails[0]->assertHasTo($targetUser->email);
         $mails[0]->assertHasTo($otherUser1->email);
         $mails[0]->assertHasTo($otherUser2->email);
+
+        AbstractSendManualEmail::registerGroupedTimeZone(null);
+    }
+
+    public static function provider_handle_manual_action_with_grouped_recipients_success()
+    {
+        return [
+            [null],
+            ['UTC'],
+            [fn () => 'UTC'],
+        ];
     }
 
     #[DataProvider('providerBoolean')]
     public function test_send_manual_email_inject_values_success($fromConstructor)
     {
+        if ($fromConstructor) {
+            AbstractSendManualEmail::registerDefaultTimeZone(fn () => 'UTC');
+        } else {
+            AbstractSendManualEmail::registerDefaultTimeZone('UTC');
+        }
         ManualAction::factory(['type' => 'send-manual-simple-email'])
             ->has(
                 DefaultSetting::factory([
@@ -310,5 +330,7 @@ class ManualActionHandleTest extends TestCase
         $mail->assertHasSubject('subject');
         $this->assertEquals('body', $mail->render());
         $this->assertTrue($mail->hasAttachment(Attachment::fromPath($this->getAssetPath())));
+
+        AbstractSendManualEmail::registerDefaultTimeZone(null);
     }
 }
