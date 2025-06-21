@@ -18,6 +18,7 @@ return new class extends Migration
             $table->string('name', 255);
             $table->string('first_name', 255);
             $table->string('email', 255);
+            $table->string('status', 64);
             $table->boolean('has_consumer_ability')->default(false);
             $table->string('preferred_locale', 255)->nullable();
             $table->string('preferred_timezone', 255)->nullable();

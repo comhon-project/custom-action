@@ -2,8 +2,8 @@
 
 namespace Tests\Feature;
 
-use App\Actions\MyManualActionWithoutContext;
 use App\Actions\SendManualCompanyRegistrationMail;
+use App\Actions\SimpleManualAction;
 use App\Models\Company;
 use App\Models\User;
 use Comhon\CustomAction\Exceptions\LocalizedSettingNotFoundException;
@@ -104,22 +104,27 @@ class InteractWithSettingsTest extends TestCase
 
     public function test_get_setting_no_context()
     {
-        DefaultSetting::factory()
-            ->for(ManualAction::factory(['type' => 'my-manual-action-without-context']), 'action')
+        ManualAction::factory()
+            ->action(SimpleManualAction::class)
+            ->withSettings()
             ->create();
 
-        $action = new MyManualActionWithoutContext;
+        $action = new SimpleManualAction;
         $setting = $action->getSetting();
         $this->assertInstanceOf(DefaultSetting::class, $setting);
+
+        // same instance must be returned
         $this->assertSame($setting, $action->getSetting());
     }
 
     public function test_missing_settings()
     {
-        $action = ManualAction::factory(['type' => 'my-manual-action-without-context'])->create();
+        $actionModel = ManualAction::factory()
+            ->action(SimpleManualAction::class)
+            ->create();
 
-        $this->expectExceptionMessage("missing default setting on action Comhon\CustomAction\Models\ManualAction with id '{$action->id}'");
-        $action = new MyManualActionWithoutContext;
+        $this->expectExceptionMessage("missing default setting on action Comhon\CustomAction\Models\ManualAction with id '{$actionModel->id}'");
+        $action = new SimpleManualAction;
         $action->getSetting();
     }
 }

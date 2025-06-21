@@ -234,23 +234,6 @@ abstract class AbstractSendEmail implements CustomActionInterface, ExposeContext
         );
     }
 
-    public function handle()
-    {
-        $emailData = $this->buildEmailDataConainer();
-        $cc = EmailHelper::normalizeAddresses($emailData->cc);
-        $bcc = EmailHelper::normalizeAddresses($emailData->bcc);
-
-        foreach ($this->getTos($emailData) as $to) {
-            $customMailable = $this->buildCustomMailable($emailData, $to);
-            $sendMethod = $this->sendAsynchronously ? 'queue' : 'send';
-
-            Mail::to($customMailable->to)
-                ->cc($cc)
-                ->bcc($bcc)
-                ->$sendMethod($customMailable->mailable);
-        }
-    }
-
     final protected function getLocalizedMailInfos(LocalizedSetting $localizedSetting, ?Address $from)
     {
         return [
@@ -269,6 +252,23 @@ abstract class AbstractSendEmail implements CustomActionInterface, ExposeContext
     final protected function normalizeAddress($value): Address
     {
         return EmailHelper::normalizeAddress($value);
+    }
+
+    public function handle()
+    {
+        $emailData = $this->buildEmailDataConainer();
+        $cc = EmailHelper::normalizeAddresses($emailData->cc);
+        $bcc = EmailHelper::normalizeAddresses($emailData->bcc);
+
+        foreach ($this->getTos($emailData) as $to) {
+            $customMailable = $this->buildCustomMailable($emailData, $to);
+            $sendMethod = $this->sendAsynchronously ? 'queue' : 'send';
+
+            Mail::to($customMailable->to)
+                ->cc($cc)
+                ->bcc($bcc)
+                ->$sendMethod($customMailable->mailable);
+        }
     }
 
     public function simulate()

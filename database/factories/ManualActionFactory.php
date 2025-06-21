@@ -2,6 +2,7 @@
 
 namespace Database\Factories;
 
+use Comhon\CustomAction\Facades\CustomActionModelResolver;
 use Comhon\CustomAction\Models\DefaultSetting;
 use Comhon\CustomAction\Models\ManualAction;
 use Illuminate\Database\Eloquent\Factories\Factory;
@@ -59,6 +60,16 @@ class ManualActionFactory extends Factory
     {
         return $this->afterMaking(function (ManualAction $manualAction) {
             $manualAction->type = 'send-manual-company-grouped-email';
+        });
+    }
+
+    public function action(string $actionClass): Factory
+    {
+        return $this->state(function (array $attributes) use ($actionClass) {
+            return [
+                'type' => CustomActionModelResolver::getUniqueName($actionClass)
+                    ?? throw new \Exception("action $actionClass not registered"),
+            ];
         });
     }
 }

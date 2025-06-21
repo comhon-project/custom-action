@@ -20,7 +20,7 @@ class EventDefinitionTest extends TestCase
         $response = $this->actingAs($user)->getJson('custom/events');
         $response->assertJson([
             'data' => [
-                'company-registered',
+                'my-simple-event',
             ],
         ]);
     }
@@ -67,14 +67,14 @@ class EventDefinitionTest extends TestCase
     {
         /** @var User $user */
         $user = User::factory()->hasConsumerAbility()->create();
-        $this->actingAs($user)->getJson('custom/events/my-event-without-context/schema')
+        $this->actingAs($user)->getJson('custom/events/my-simple-event/schema')
             ->assertOk()
             ->assertJson([
                 'data' => [
                     'context_schema' => [],
                     'translatable_context' => [],
                     'allowed_actions' => [
-                        'my-action-without-context',
+                        'simple-event-action',
                     ],
                     'fakable' => false,
                 ],

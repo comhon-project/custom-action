@@ -2,6 +2,12 @@
 
 namespace Database\Factories;
 
+use App\Actions\ComplexEventAction;
+use App\Actions\QueuedEventAction;
+use App\Actions\SimpleEventAction;
+use App\Events\MyComplexEvent;
+use App\Events\MySimpleEvent;
+use Comhon\CustomAction\Facades\CustomActionModelResolver;
 use Comhon\CustomAction\Models\DefaultSetting;
 use Comhon\CustomAction\Models\EventAction;
 use Comhon\CustomAction\Models\EventListener;
@@ -50,6 +56,29 @@ class EventActionFactory extends Factory
             if ($withScopedSettings) {
                 $this->sendMailRegistrationCompanyScoped($eventAction, $toOtherUserIds);
             }
+        });
+    }
+
+    public function action(string $actionClass, ?string $eventClass = null): Factory
+    {
+        return $this->state(function (array $attributes) use ($actionClass, $eventClass) {
+            if (! $eventClass) {
+                $eventClass = match ($actionClass) {
+                    SimpleEventAction::class => MySimpleEvent::class,
+                    QueuedEventAction::class => MySimpleEvent::class,
+                    ComplexEventAction::class => MyComplexEvent::class,
+                    SimpleEventAction::class => MySimpleEvent::class,
+                };
+            }
+
+            return [
+                'type' => CustomActionModelResolver::getUniqueName($actionClass)
+                    ?? throw new \Exception("action $actionClass not registered"),
+                'event_listener_id' => EventListener::factory([
+                    'event' => CustomActionModelResolver::getUniqueName($eventClass)
+                        ?? throw new \Exception("event $eventClass not registered"),
+                ]),
+            ];
         });
     }
 }

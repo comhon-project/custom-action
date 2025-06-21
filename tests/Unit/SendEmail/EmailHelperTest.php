@@ -1,6 +1,6 @@
 <?php
 
-namespace Tests\Unit;
+namespace Tests\Unit\SendEmail;
 
 use App\Models\User;
 use Comhon\CustomAction\Support\EmailHelper;

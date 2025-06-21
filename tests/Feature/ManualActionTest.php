@@ -213,11 +213,20 @@ class ManualActionTest extends TestCase
         /** @var User $user */
         $user = User::factory()->hasConsumerAbility()->create();
 
-        $this->actingAs($user)->postJson('custom/manual-actions/my-manual-action-without-context/simulate')
+        $this->actingAs($user)->postJson('custom/manual-actions/fakable-not-simulatable-action/simulate')
             ->assertUnprocessable()
             ->assertJson([
-                'message' => 'cannot simulate action my-manual-action-without-context',
+                'message' => 'cannot simulate action fakable-not-simulatable-action',
             ]);
+    }
+
+    public function test_simulate_action_no_simulate_method()
+    {
+        /** @var User $user */
+        $user = User::factory()->hasConsumerAbility()->create();
+
+        $this->actingAs($user)->postJson('custom/manual-actions/simulatable-without-method-action/simulate')
+            ->assertInternalServerError();
     }
 
     public function test_simulate_action_not_fakable()
@@ -225,18 +234,10 @@ class ManualActionTest extends TestCase
         /** @var User $user */
         $user = User::factory()->hasConsumerAbility()->create();
 
-        $inputs = [
-            'settings' => ['test' => 'value'],
-            'localized_settings' => [
-                'subject' => 'subject company {{ company.status }}',
-                'body' => 'body company {{ company.status }}',
-            ],
-        ];
-
-        $this->actingAs($user)->postJson('custom/manual-actions/send-manual-company-email/simulate', $inputs)
+        $this->actingAs($user)->postJson('custom/manual-actions/simulatable-not-fakable-action/simulate')
             ->assertUnprocessable()
             ->assertJson([
-                'message' => 'cannot simulate action, action send-manual-company-email is not fakable',
+                'message' => 'cannot simulate action, action simulatable-not-fakable-action is not fakable',
             ]);
     }
 

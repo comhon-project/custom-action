@@ -2,14 +2,13 @@
 
 namespace Tests\Unit;
 
-use App\Events\CompanyRegistered;
-use App\Events\MyEventWithoutContext;
-use App\Models\Company;
+use App\Actions\SimpleEventAction;
+use App\Events\MySimpleEvent;
 use App\Models\User;
 use Comhon\CustomAction\Events\EventActionError;
 use Comhon\CustomAction\Listeners\EventActionDispatcher;
 use Comhon\CustomAction\Listeners\QueuedEventActionDispatcher;
-use Comhon\CustomAction\Models\EventListener;
+use Comhon\CustomAction\Models\EventAction;
 use Illuminate\Events\CallQueuedListener;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Support\Facades\Event;
@@ -64,12 +63,13 @@ class EventActionDispatcherTest extends TestCase
     #[DataProvider('providerBadActionTypes')]
     public function test_handle_event_with_not_existing_action($actionType)
     {
-        $listener = EventListener::factory()->genericRegistrationCompany()->create();
-        $event = new CompanyRegistered(Company::factory()->create(), User::factory()->create());
-        foreach ($listener->eventActions as $action) {
-            $action->type = $actionType;
-            $action->save();
-        }
+        $event = new MySimpleEvent(User::factory()->create());
+        $eventAction = EventAction::factory()
+            ->action(SimpleEventAction::class)
+            ->create();
+
+        $eventAction->type = $actionType;
+        $eventAction->save();
 
         Event::fake();
 
@@ -91,8 +91,8 @@ class EventActionDispatcherTest extends TestCase
     {
         return [
             ['foo'], // doesn't exists
-            ['company'], // doesn't implements of CustomActionInterface
-            ['send-manual-company-email'], // doesn't implements of CallableFromEventInterface
+            ['user'], // doesn't implements of CustomActionInterface
+            ['simple-manual-email'], // doesn't implements of CallableFromEventInterface
         ];
     }
 
@@ -100,7 +100,7 @@ class EventActionDispatcherTest extends TestCase
     {
         Queue::fake();
 
-        MyEventWithoutContext::dispatch();
+        MySimpleEvent::dispatch();
 
         Queue::assertNothingPushed();
     }
@@ -112,7 +112,7 @@ class EventActionDispatcherTest extends TestCase
 
         Queue::fake();
 
-        MyEventWithoutContext::dispatch();
+        MySimpleEvent::dispatch();
 
         Queue::assertPushed(CallQueuedListener::class, 1);
         Queue::assertPushed(function (CallQueuedListener $dispatcher) {

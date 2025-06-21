@@ -1,6 +1,6 @@
 <?php
 
-namespace Tests\Unit;
+namespace Tests\Unit\SendEmail;
 
 use App\Actions\SendManualCompanyRegistrationMail;
 use App\Models\Company;
