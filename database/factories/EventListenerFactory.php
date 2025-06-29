@@ -2,7 +2,8 @@
 
 namespace Database\Factories;
 
-use Comhon\CustomAction\Models\EventAction;
+use Comhon\CustomAction\Contracts\CustomEventInterface;
+use Comhon\CustomAction\Facades\CustomActionModelResolver;
 use Comhon\CustomAction\Models\EventListener;
 use Illuminate\Database\Eloquent\Factories\Factory;
 
@@ -26,43 +27,23 @@ class EventListenerFactory extends Factory
     public function definition()
     {
         return [
-            'event' => 'company-registered',
+            'event' => 'my-simple-event',
             'name' => 'My Custom Event Listener',
             'scope' => null,
         ];
     }
 
-    /**
-     * company registration listener.
-     */
-    public function genericRegistrationCompany(
-        $toOtherUserId = null,
-        $companyNameScope = null,
-        $shoudQueue = false,
-        $withAttachement = false
-    ): Factory {
-
-        return $this->state(function (array $attributes) use ($companyNameScope) {
-            return [
-                'scope' => $companyNameScope ? ['company.name' => $companyNameScope] : null,
-            ];
-        })->afterCreating(function (EventListener $listener) use ($toOtherUserId, $shoudQueue, $withAttachement) {
-            EventAction::factory()
-                ->sendMailRegistrationCompany(null, true, $shoudQueue, $withAttachement)
-                ->for($listener, 'eventListener')->create();
-
-            if ($toOtherUserId) {
-                EventAction::factory()
-                    ->sendMailRegistrationCompany($toOtherUserId, false, $shoudQueue)
-                    ->for($listener, 'eventListener')->create();
-            }
-        });
-    }
-
-    public function withContextTranslations(): Factory
+    public function event(string $eventClass): Factory
     {
-        return $this->afterMaking(function (EventListener $eventListener) {
-            $eventListener->event = 'company-registered-with-context-translations';
+        if (! is_subclass_of($eventClass, CustomEventInterface::class)) {
+            throw new \Exception('given event must be instance of CustomEventInterface');
+        }
+
+        return $this->state(function (array $attributes) use ($eventClass) {
+            return [
+                'event' => CustomActionModelResolver::getUniqueName($eventClass)
+                    ?? throw new \Exception("event $eventClass not registered"),
+            ];
         });
     }
 }

@@ -6,6 +6,7 @@ use Comhon\CustomAction\Contracts\ExposeContextInterface;
 use Comhon\CustomAction\Contracts\FormatContextInterface;
 use Comhon\CustomAction\Facades\CustomActionModelResolver;
 use Comhon\CustomAction\Rules\RuleHelper;
+use Illuminate\Support\Arr;
 
 class ContextHelper
 {
@@ -90,5 +91,29 @@ class ContextHelper
         );
 
         return is_a($ruleClass, $class, true);
+    }
+
+    public static function setTranslationValues(array &$values, array $translations)
+    {
+        $accessValueRecursive = function (&$values, $path, $level, $translator) use (&$accessValueRecursive) {
+            $currentKey = $path[$level] ?? null;
+            if (! isset($currentKey)) {
+                $values = new Translatable($values, $translator);
+            }
+            if (! Arr::accessible($values)) {
+                return;
+            }
+            if ($currentKey == '*') {
+                foreach ($values as &$subValue) {
+                    $accessValueRecursive($subValue, $path, $level + 1, $translator);
+                }
+            } elseif (Arr::exists($values, $currentKey)) {
+                $accessValueRecursive($values[$currentKey], $path, $level + 1, $translator);
+            }
+        };
+
+        foreach ($translations as $key => $translator) {
+            $accessValueRecursive($values, explode('.', $key), 0, $translator);
+        }
     }
 }

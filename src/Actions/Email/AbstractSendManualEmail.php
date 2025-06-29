@@ -25,6 +25,8 @@ class AbstractSendManualEmail extends AbstractSendGenericEmail
 
     protected ?string $body = null;
 
+    protected ?bool $grouped = null;
+
     public function __construct(
         $to = null,
         $cc = null,
@@ -33,6 +35,7 @@ class AbstractSendManualEmail extends AbstractSendGenericEmail
         ?iterable $attachments = null,
         ?string $subject = null,
         ?string $body = null,
+        ?bool $grouped = null,
     ) {
         $this->to = $to;
         $this->cc = $cc;
@@ -41,6 +44,7 @@ class AbstractSendManualEmail extends AbstractSendGenericEmail
         $this->attachments = $attachments;
         $this->subject = $subject;
         $this->body = $body;
+        $this->grouped = $grouped;
     }
 
     protected function getFrom(): ?Address
@@ -81,6 +85,11 @@ class AbstractSendManualEmail extends AbstractSendGenericEmail
     protected function getAttachments(LocalizedSetting $localizedSetting): ?iterable
     {
         return $this->attachments ?? parent::getAttachments($localizedSetting);
+    }
+
+    protected function shouldGroupRecipients(): bool
+    {
+        return $this->grouped ?? parent::shouldGroupRecipients();
     }
 
     public function from($from): static
@@ -133,6 +142,16 @@ class AbstractSendManualEmail extends AbstractSendGenericEmail
     public function body(string $body): static
     {
         $this->body = $body;
+
+        return $this;
+    }
+
+    /**
+     * Send only one email with all defined "to" at once
+     */
+    public function groupRecipients(bool $group): static
+    {
+        $this->grouped = $group;
 
         return $this;
     }

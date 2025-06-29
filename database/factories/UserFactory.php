@@ -29,6 +29,8 @@ class UserFactory extends Factory
             'name' => str_replace("'", '', fake()->lastName()),
             'first_name' => str_replace("'", '', fake()->firstName()),
             'email' => $this->faker->unique()->safeEmail,
+            'status' => 'foo',
+            'translation' => 'foo',
             'preferred_locale' => 'en',
             'preferred_timezone' => 'UTC',
             'last_login_at' => Carbon::parse('2022-12-12T00:00:00Z'),

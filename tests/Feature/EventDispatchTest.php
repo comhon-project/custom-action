@@ -2,25 +2,25 @@
 
 namespace Tests\Feature;
 
-use App\Events\CompanyRegistered;
-use App\Events\CompanyRegisteredWithContextTranslations;
-use App\Models\Company;
+use App\Actions\ComplexEventAction;
+use App\Actions\QueuedEventAction;
+use App\Actions\SimpleEventAction;
+use App\Events\MyComplexEvent;
+use App\Events\MySimpleEvent;
+use App\Models\Output;
 use App\Models\User;
-use Comhon\CustomAction\Actions\Email\QueueAutomaticEmail;
 use Comhon\CustomAction\Events\EventActionError;
-use Comhon\CustomAction\Mail\Custom;
+use Comhon\CustomAction\Listeners\EventActionDispatcher;
+use Comhon\CustomAction\Listeners\QueuedEventActionDispatcher;
 use Comhon\CustomAction\Models\DefaultSetting;
+use Comhon\CustomAction\Models\EventAction;
 use Comhon\CustomAction\Models\EventListener;
-use Comhon\CustomAction\Models\LocalizedSetting;
+use Illuminate\Events\CallQueuedListener;
 use Illuminate\Foundation\Testing\RefreshDatabase;
-use Illuminate\Mail\Mailables\Attachment;
 use Illuminate\Support\Facades\Event;
-use Illuminate\Support\Facades\Lang;
-use Illuminate\Support\Facades\Mail;
 use Illuminate\Support\Facades\Queue;
 use PHPUnit\Framework\Attributes\DataProvider;
 use Tests\SetUpWithModelRegistrationTrait;
-use Tests\Support\Utils;
 use Tests\TestCase;
 
 class EventDispatchTest extends TestCase
@@ -28,435 +28,198 @@ class EventDispatchTest extends TestCase
     use RefreshDatabase;
     use SetUpWithModelRegistrationTrait;
 
-    #[DataProvider('providerEventListener')]
-    public function test_event_listener_success($addCompanyScope)
+    private function dispatcher(): EventActionDispatcher
     {
-        $targetUser = User::factory()->create();
-        $otherUserFr = User::factory(['preferred_locale' => 'fr'])->create();
-        $otherUser = User::factory()->preferredTimezone('Europe/Paris')->create();
-        $companyName = 'my company';
-        $company = Company::factory(['name' => $companyName])->create();
-
-        // create event listener for CompanyRegistered event
-        EventListener::factory()->genericRegistrationCompany(
-            [$otherUserFr->id, $otherUser->id],
-            $addCompanyScope ? $companyName : null,
-            false,
-            true
-        )->create();
-
-        Queue::fake();
-        Mail::fake();
-
-        CompanyRegistered::dispatch($company, $targetUser);
-
-        Queue::assertNothingPushed();
-
-        $mails = [];
-        Mail::assertSent(Custom::class, 3);
-        Mail::assertSent(Custom::class, function (Custom $mail) use (&$mails) {
-            $mails[] = $mail;
-
-            return true;
-        });
-        $firstActionAttachementPath = Utils::joinPaths(Utils::getTestPath('Data'), 'jc.jpeg');
-
-        $mails[0]->assertHasTo($targetUser->email);
-        $mails[0]->assertHasSubject("Dear $targetUser->first_name, company $company->name (login: December 12, 2022 at 12:00 AM (UTC) December 12, 2022 at 12:00 AM (UTC))");
-        $this->assertTrue($mails[0]->hasAttachment(Attachment::fromPath($firstActionAttachementPath)));
-
-        $mails[1]->assertHasTo($otherUserFr->email);
-        $mails[1]->assertHasSubject("Cher·ère $otherUserFr->first_name, la société $company->name (login: 12 décembre 2022 à 00:00 (UTC) 12 décembre 2022 à 00:00 (UTC))");
-        $this->assertFalse($mails[1]->hasAttachment(Attachment::fromPath($firstActionAttachementPath)));
-
-        $mails[2]->assertHasTo($otherUser->email);
-        $mails[2]->assertHasSubject("Dear $otherUser->first_name, company $company->name (login: December 12, 2022 at 12:00 AM (UTC) December 12, 2022 at 1:00 AM (Europe/Paris))");
-        $this->assertFalse($mails[1]->hasAttachment(Attachment::fromPath($firstActionAttachementPath)));
+        return app(EventActionDispatcher::class);
     }
 
-    public static function providerEventListener()
+    private function queuedDispatcher(): QueuedEventActionDispatcher
     {
-        return [
-            [false],
-            [true],
-        ];
+        return app(QueuedEventActionDispatcher::class);
     }
 
-    public function test_event_listener_with_all_available_to_properties()
+    public function test_via_connection_with_default_queue_sync()
     {
-        /** @var User $user */
-        $user = User::factory()->create();
-        $companyName = 'my company';
-        $company = Company::factory(['name' => $companyName])->create();
-
-        $receiver = User::factory(['preferred_locale' => 'fr'])->create();
-        $defaultSetting = DefaultSetting::factory([
-            'settings' => [
-                'recipients' => ['to' => [
-                    'static' => [
-                        'mailables' => [
-                            ['recipient_type' => 'user', 'recipient_id' => $receiver->id],
-                        ],
-                        'emails' => ['john.doe@gmail.com'],
-                    ],
-                    'context' => [
-                        'mailables' => ['user'],
-                        'emails' => ['responsibles.*.email'],
-                    ],
-                ]],
-            ],
-        ])->withEventAction(null, 'company-registered')->create();
-
-        LocalizedSetting::factory()->for($defaultSetting, 'localizable')->emailSettings('en')->create();
-        LocalizedSetting::factory()->for($defaultSetting, 'localizable')->emailSettings('fr')->create();
-
-        Queue::fake();
-        Mail::fake();
-
-        CompanyRegistered::dispatch($company, $user);
-
-        Queue::assertNothingPushed();
-
-        $mails = [];
-        Mail::assertSent(Custom::class, 5);
-        Mail::assertSent(Custom::class, function (Custom $mail) use (&$mails) {
-            $mails[] = $mail;
-
-            return true;
-        });
-
-        $mails[0]->assertHasTo($receiver->email);
-        $mails[0]->assertHasSubject("Cher·ère $receiver->first_name, la société $company->name");
-
-        $mails[1]->assertHasTo('john.doe@gmail.com');
-        $mails[1]->assertHasSubject("Dear , company $company->name");
-
-        $mails[2]->assertHasTo($user->email);
-        $mails[2]->assertHasSubject("Dear $user->first_name, company $company->name");
-
-        $mails[3]->assertHasTo('responsible_one@gmail.com');
-        $mails[3]->assertHasSubject("Dear , company $company->name");
-
-        $mails[4]->assertHasTo('responsible_two@gmail.com');
-        $mails[4]->assertHasSubject("Dear , company $company->name");
+        $this->assertEquals('sync', $this->queuedDispatcher()->viaConnection());
     }
 
-    public function test_event_listener_scope_no_match()
+    public function test_via_connection_with_defined_config()
     {
-        $targetUser = User::factory()->create();
-        $otherUsers = User::factory()->count(2)->create();
-        $companyName = 'my company';
-        $scopeCompanyName = 'other company';
-        $company = Company::factory(['name' => $companyName])->create();
-
-        // create event listener for CompanyRegistered event
-        EventListener::factory()->genericRegistrationCompany(
-            $otherUsers->pluck('id')->all(),
-            $scopeCompanyName
-        )->create();
-
-        Mail::fake();
-        CompanyRegistered::dispatch($company, $targetUser);
-
-        // scope doesn't match so listener doesn't trigger actions.
-        Mail::assertNothingSent();
+        config(['custom-action.event_action_dispatcher.queue_connection' => 'foo']);
+        $this->assertEquals('foo', $this->queuedDispatcher()->viaConnection());
     }
 
-    #[DataProvider('providerEventListener')]
-    public function test_event_listener_with_action_scoped_settings($useFr)
+    public function test_via_queue_with_default_queue_sync()
     {
-        $state = $useFr ? ['preferred_locale' => 'fr'] : [];
-        $company = Company::factory(['name' => 'My VIP company'])->create();
-        $user = User::factory($state)->create();
+        $this->assertNull($this->queuedDispatcher()->viaQueue());
+    }
 
-        // create event listener for CompanyRegistered event
-        EventListener::factory()->genericRegistrationCompany()->create();
+    public function test_via_queue_with_default_queue_database()
+    {
+        config(['queue.default' => 'database']);
+        $this->assertEquals('default', $this->queuedDispatcher()->viaQueue());
+    }
 
-        Mail::fake();
-        CompanyRegistered::dispatch($company, $user);
+    public function test_via_queue_with_defined_config()
+    {
+        config(['custom-action.event_action_dispatcher.queue_name' => 'bar']);
+        $this->assertEquals('bar', $this->queuedDispatcher()->viaQueue());
+    }
 
-        /** @var \Illuminate\Mail\Mailable $mail */
-        $mail = null;
-        Mail::assertSent(Custom::class, 1);
-        Mail::assertSent(Custom::class, function (Custom $customMail) use (&$mail) {
-            $mail = $customMail;
+    #[DataProvider('providerBoolean')]
+    public function test_event_listener_success($addScope)
+    {
+        $user = User::factory('name')->create();
+        $scope = $addScope ? ['scope' => ['user.id' => $user->id]] : null;
 
-            return true;
-        });
+        $eventListener = EventListener::factory($scope)
+            ->event(MyComplexEvent::class)
+            ->create();
+        $eventAction = EventAction::factory()
+            ->action(ComplexEventAction::class, $eventListener)
+            ->withDefaultSettings()
+            ->create();
 
-        $mail->assertHasTo($user->email);
-
-        // there is a scoped settings according company name so mail subject must contain the scoped settings.
-        if ($useFr) {
-            $mail->assertHasSubject("Cher·ère $user->first_name, société VIP $company->name (vérifié à: 11 novembre 2022 (UTC))");
-        } else {
-            $mail->assertHasSubject("Dear $user->first_name, VIP company $company->name (verified at: November 11, 2022 (UTC))");
+        if ($addScope) {
+            // add event listener that have a scope that doesn't match
+            $eventListener = EventListener::factory(['scope' => ['user.id' => $user->id + 1]])
+                ->event(MyComplexEvent::class)
+                ->create();
+            EventAction::factory()
+                ->action(ComplexEventAction::class, $eventListener)
+                ->withDefaultSettings()
+                ->create();
         }
+
+        // other listener that listen for another event
+        // must never been taken in account
+        EventAction::factory()
+            ->action(SimpleEventAction::class)
+            ->withDefaultSettings()
+            ->create();
+
+        $this->assertEquals(0, Output::count());
+
+        Queue::fake();
+
+        MyComplexEvent::dispatch($user);
+
+        Queue::assertNothingPushed();
+
+        $this->assertEquals(1, Output::count());
+        $this->assertArraySubset(
+            [
+                'action' => 'complex-event-action',
+                'setting_id' => $eventAction->defaultSetting->id,
+                'setting_class' => DefaultSetting::class,
+                'localized_setting_id' => $eventAction->defaultSetting->localizedSettings->first()->id,
+                'output' => [
+                    'user_id' => $user->id,
+                    'user_status' => 'foo',
+                ],
+            ],
+            Output::firstOrFail()->toArray()
+        );
+    }
+
+    public function test_event_listener_several_matches()
+    {
+        $user = User::factory('name')->create();
+
+        $eventListener = EventListener::factory(['scope' => ['user.id' => $user->id]])
+            ->event(MyComplexEvent::class)
+            ->create();
+        EventAction::factory(2)
+            ->action(ComplexEventAction::class, $eventListener)
+            ->withDefaultSettings()
+            ->create();
+
+        EventAction::factory()
+            ->action(ComplexEventAction::class)
+            ->withDefaultSettings()
+            ->create();
+
+        MyComplexEvent::dispatch($user);
+
+        $this->assertEquals(3, Output::count());
     }
 
     public function test_event_listener_queued_actions()
     {
-        $targetUser = User::factory()->create();
-        $otherUsers = User::factory()->count(2)->create();
-        $company = Company::factory()->create();
+        $user = User::factory('name')->create();
 
-        // create event listener for CompanyRegistered event
-        EventListener::factory()->genericRegistrationCompany($otherUsers->pluck('id')->all(), null, true)->create();
-
-        Queue::fake();
-        CompanyRegistered::dispatch($company, $targetUser);
-
-        Queue::assertPushed(QueueAutomaticEmail::class, 2);
-    }
-
-    public function test_event_listener_with_cc_bcc_success()
-    {
-        $targetUser = User::factory()->create();
-        $otherUser = User::factory()->create();
-        $company = Company::factory()->create();
-
-        // create event listener for CompanyRegistered event
-        EventListener::factory()->genericRegistrationCompany()->create();
-        $defaultSetting = DefaultSetting::firstOrFail();
-        $settings = $defaultSetting->settings;
-        $settings['recipients']['cc'] = [
-            'static' => [
-                'mailables' => [['recipient_type' => 'user', 'recipient_id' => $otherUser->id]],
-                'emails' => ['foo@cc.com'],
-            ],
-            'context' => [
-                'mailables' => ['user'],
-                'emails' => ['responsibles.*.email'],
-            ],
-        ];
-        $settings['recipients']['bcc'] = [
-            'static' => [
-                'mailables' => [['recipient_type' => 'user', 'recipient_id' => $otherUser->id]],
-                'emails' => ['foo@bcc.com'],
-            ],
-            'context' => [
-                'mailables' => ['user'],
-                'emails' => ['responsibles.*.email'],
-            ],
-        ];
-        $defaultSetting->settings = $settings;
-        $defaultSetting->save();
-
-        Queue::fake();
-        Mail::fake();
-
-        CompanyRegistered::dispatch($company, $targetUser);
-
-        Queue::assertNothingPushed();
-
-        $mails = [];
-        Mail::assertSent(Custom::class, 1);
-        Mail::assertSent(Custom::class, function (Custom $mail) use (&$mails) {
-            $mails[] = $mail;
-
-            return true;
-        });
-
-        $mails[0]->assertHasTo($targetUser->email);
-        $mails[0]->assertHasCc($otherUser->email);
-        $mails[0]->assertHasCc($targetUser->email);
-        $mails[0]->assertHasCc('responsible_one@gmail.com');
-        $mails[0]->assertHasCc('responsible_two@gmail.com');
-        $mails[0]->assertHasCc('foo@cc.com');
-
-        $mails[0]->assertHasBcc($otherUser->email);
-        $mails[0]->assertHasBcc($targetUser->email);
-        $mails[0]->assertHasBcc('responsible_one@gmail.com');
-        $mails[0]->assertHasBcc('responsible_two@gmail.com');
-        $mails[0]->assertHasBcc('foo@bcc.com');
-    }
-
-    public function test_event_listener_with_static_from_mailable_success()
-    {
-        $targetUser = User::factory()->create();
-        $otherUser = User::factory()->create();
-        $company = Company::factory()->create();
-
-        // create event listener for CompanyRegistered event
-        EventListener::factory()->genericRegistrationCompany()->create();
-        $defaultSetting = DefaultSetting::firstOrFail();
-        $settings = $defaultSetting->settings;
-        $settings['from'] = [
-            'static' => [
-                'mailable' => ['from_type' => 'user', 'from_id' => $otherUser->id],
-            ],
-        ];
-        $defaultSetting->settings = $settings;
-        $defaultSetting->save();
-
-        Queue::fake();
-        Mail::fake();
-
-        CompanyRegistered::dispatch($company, $targetUser);
-
-        Queue::assertNothingPushed();
-
-        $mails = [];
-        Mail::assertSent(Custom::class, 1);
-        Mail::assertSent(Custom::class, function (Custom $mail) use (&$mails) {
-            $mails[] = $mail;
-
-            return true;
-        });
-
-        $mails[0]->assertHasTo($targetUser->email);
-        $mails[0]->assertFrom($otherUser->email);
-    }
-
-    public function test_event_listener_with_static_from_email_success()
-    {
-        $targetUser = User::factory()->create();
-        $company = Company::factory()->create();
-
-        // create event listener for CompanyRegistered event
-        EventListener::factory()->genericRegistrationCompany()->create();
-        $defaultSetting = DefaultSetting::firstOrFail();
-        $settings = $defaultSetting->settings;
-        $settings['from'] = [
-            'static' => [
-                'email' => 'foo@cc.com',
-            ],
-        ];
-        $defaultSetting->settings = $settings;
-        $defaultSetting->save();
-
-        Queue::fake();
-        Mail::fake();
-
-        CompanyRegistered::dispatch($company, $targetUser);
-
-        Queue::assertNothingPushed();
-
-        $mails = [];
-        Mail::assertSent(Custom::class, 1);
-        Mail::assertSent(Custom::class, function (Custom $mail) use (&$mails) {
-            $mails[] = $mail;
-
-            return true;
-        });
-
-        $mails[0]->assertHasTo($targetUser->email);
-        $mails[0]->assertFrom('foo@cc.com');
-    }
-
-    public function test_event_listener_with_context_from_mailable_success()
-    {
-        $targetUser = User::factory()->create();
-        $company = Company::factory()->create();
-
-        // create event listener for CompanyRegistered event
-        EventListener::factory()->genericRegistrationCompany()->create();
-        $defaultSetting = DefaultSetting::firstOrFail();
-        $settings = $defaultSetting->settings;
-        $settings['from'] = [
-            'context' => [
-                'mailable' => 'user',
-            ],
-        ];
-        $defaultSetting->settings = $settings;
-        $defaultSetting->save();
-
-        Queue::fake();
-        Mail::fake();
-
-        CompanyRegistered::dispatch($company, $targetUser);
-
-        Queue::assertNothingPushed();
-
-        $mails = [];
-        Mail::assertSent(Custom::class, 1);
-        Mail::assertSent(Custom::class, function (Custom $mail) use (&$mails) {
-            $mails[] = $mail;
-
-            return true;
-        });
-
-        $mails[0]->assertHasTo($targetUser->email);
-        $mails[0]->assertFrom($targetUser->email);
-    }
-
-    public function test_event_listener_with_context_translations()
-    {
-        Lang::addLines(['status.draft' => 'Draft!'], 'en');
-        Lang::addLines(['status.draft' => 'Brouillon!'], 'fr');
-        Lang::addLines(['languages.fr' => 'French!'], 'en');
-        Lang::addLines(['languages.fr' => 'Francais!'], 'fr');
-
-        $targetUserEn = User::factory(['preferred_locale' => 'en'])->create();
-        $otherUserFr = User::factory(['preferred_locale' => 'fr'])->create();
-        $otherUserEn = User::factory(['preferred_locale' => 'en'])->create();
-        $company = Company::factory()->create();
-
-        // create event listener for CompanyRegistered event
-        EventListener::factory()->genericRegistrationCompany([$otherUserFr->id, $otherUserEn->id])
-            ->withContextTranslations()
+        EventAction::factory(2)
+            ->action(QueuedEventAction::class)
+            ->withDefaultSettings()
             ->create();
 
-        foreach (LocalizedSetting::all() as $localizedSetting) {
-            $settings = $localizedSetting->settings;
-            $settings['subject'] = '{{ company.status }} {{ company.status.translate() }} {{ company.languages.0.locale.translate() }}';
-            $localizedSetting->settings = $settings;
-            $localizedSetting->save();
-        }
+        Queue::fake();
 
-        Mail::fake();
+        MySimpleEvent::dispatch($user);
 
-        CompanyRegisteredWithContextTranslations::dispatch($company, $targetUserEn);
+        Queue::assertPushed(QueuedEventAction::class, 2);
+    }
 
-        $mails = [];
-        Mail::assertSent(Custom::class, 3);
-        Mail::assertSent(Custom::class, function (Custom $mail) use (&$mails) {
-            $mails[] = $mail;
+    #[DataProvider('providerBadActionTypes')]
+    public function test_handle_event_with_not_existing_action($actionType)
+    {
+        $eventAction = EventAction::factory()
+            ->action(SimpleEventAction::class)
+            ->create();
+
+        $eventAction->type = $actionType;
+        $eventAction->save();
+
+        Event::fake();
+
+        // event are faked to catch EventActionError
+        // so we can't dispatch MySimpleEvent
+        // instead we call directly the handle method of action event dispatcher
+        $event = new MySimpleEvent(User::factory()->create());
+        $this->dispatcher()->handle($event);
+
+        Event::assertDispatched(EventActionError::class, 1);
+
+        Event::assertDispatched(function (EventActionError $eventActionError) use ($actionType) {
+            $this->assertStringContainsString(
+                "Invalid action type $actionType on model Comhon\CustomAction\Models\EventAction",
+                $eventActionError->th->getMessage(),
+            );
 
             return true;
         });
-        $mails[0]->assertHasTo($targetUserEn->email);
-        $mails[0]->assertHasSubject('draft Draft! French!');
-
-        $mails[1]->assertHasTo($otherUserFr->email);
-        $mails[1]->assertHasSubject('draft Brouillon! Francais!');
-
-        $mails[2]->assertHasTo($otherUserEn->email);
-        $mails[2]->assertHasSubject('draft Draft! French!');
     }
 
-    public function test_event_listener_with_context_from_email_failure()
+    public static function providerBadActionTypes()
     {
-        $targetUser = User::factory()->create();
-        $company = Company::factory()->create();
-
-        // create event listener for CompanyRegistered event
-        EventListener::factory()->genericRegistrationCompany()->create();
-        $defaultSetting = DefaultSetting::firstOrFail();
-        $settings = $defaultSetting->settings;
-        $settings['from'] = [
-            'context' => [
-                'email' => 'responsibles.*.email',
-            ],
+        return [
+            ['foo'], // doesn't exists
+            ['user'], // doesn't implements of CustomActionInterface
+            ['simple-manual-action'], // doesn't implements of CallableFromEventInterface
         ];
-        $defaultSetting->settings = $settings;
-        $defaultSetting->save();
+    }
+
+    public function test_should_not_queue_dispatcher()
+    {
+        Queue::fake();
+
+        MySimpleEvent::dispatch();
+
+        Queue::assertNothingPushed();
+    }
+
+    public function test_should_queue_dispatcher()
+    {
+        // there is a specific case in defineEnvironment() for this test function
+        // to set the config "custom-action.event_action_dispatcher.should_queue" to true
 
         Queue::fake();
-        Mail::fake();
 
-        /** @var EventActionError $event */
-        $event = null;
-        Event::listen(function (EventActionError $eventActionError) use (&$event) {
-            $event = $eventActionError;
+        MySimpleEvent::dispatch();
+
+        Queue::assertPushed(CallQueuedListener::class, 1);
+        Queue::assertPushed(function (CallQueuedListener $dispatcher) {
+            return $dispatcher->class === QueuedEventActionDispatcher::class;
         });
-
-        CompanyRegistered::dispatch($company, $targetUser);
-
-        $this->assertNotNull($event, 'event EventActionError not dispatched');
-        $this->assertStringContainsString(
-            "several 'from' defined",
-            $event->th->getMessage(),
-        );
     }
 }

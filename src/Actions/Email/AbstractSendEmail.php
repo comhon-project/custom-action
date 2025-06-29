@@ -4,6 +4,11 @@ declare(strict_types=1);
 
 namespace Comhon\CustomAction\Actions\Email;
 
+use Comhon\CustomAction\Actions\Email\DTOs\CustomMailable;
+use Comhon\CustomAction\Actions\Email\DTOs\EmailData;
+use Comhon\CustomAction\Actions\Email\Exceptions\SendEmailActionException;
+use Comhon\CustomAction\Actions\Email\Mailable\Custom;
+use Comhon\CustomAction\Actions\Email\Support\EmailHelper;
 use Comhon\CustomAction\Actions\InteractWithContextTrait;
 use Comhon\CustomAction\Actions\InteractWithSettingsTrait;
 use Comhon\CustomAction\Contracts\CustomActionInterface;
@@ -12,13 +17,8 @@ use Comhon\CustomAction\Contracts\HasContextKeysIgnoredForScopedSettingInterface
 use Comhon\CustomAction\Contracts\HasTimezonePreferenceInterface;
 use Comhon\CustomAction\Contracts\MailableEntityInterface;
 use Comhon\CustomAction\Contracts\SimulatableInterface;
-use Comhon\CustomAction\DTOs\CustomMailable;
-use Comhon\CustomAction\DTOs\EmailData;
-use Comhon\CustomAction\Exceptions\SendEmailActionException;
-use Comhon\CustomAction\Mail\Custom;
 use Comhon\CustomAction\Models\LocalizedSetting;
 use Comhon\CustomAction\Rules\RuleHelper;
-use Comhon\CustomAction\Support\EmailHelper;
 use Illuminate\Bus\Queueable;
 use Illuminate\Contracts\Translation\HasLocalePreference;
 use Illuminate\Foundation\Bus\Dispatchable;
@@ -234,23 +234,6 @@ abstract class AbstractSendEmail implements CustomActionInterface, ExposeContext
         );
     }
 
-    public function handle()
-    {
-        $emailData = $this->buildEmailDataConainer();
-        $cc = EmailHelper::normalizeAddresses($emailData->cc);
-        $bcc = EmailHelper::normalizeAddresses($emailData->bcc);
-
-        foreach ($this->getTos($emailData) as $to) {
-            $customMailable = $this->buildCustomMailable($emailData, $to);
-            $sendMethod = $this->sendAsynchronously ? 'queue' : 'send';
-
-            Mail::to($customMailable->to)
-                ->cc($cc)
-                ->bcc($bcc)
-                ->$sendMethod($customMailable->mailable);
-        }
-    }
-
     final protected function getLocalizedMailInfos(LocalizedSetting $localizedSetting, ?Address $from)
     {
         return [
@@ -269,6 +252,23 @@ abstract class AbstractSendEmail implements CustomActionInterface, ExposeContext
     final protected function normalizeAddress($value): Address
     {
         return EmailHelper::normalizeAddress($value);
+    }
+
+    public function handle()
+    {
+        $emailData = $this->buildEmailDataConainer();
+        $cc = EmailHelper::normalizeAddresses($emailData->cc);
+        $bcc = EmailHelper::normalizeAddresses($emailData->bcc);
+
+        foreach ($this->getTos($emailData) as $to) {
+            $customMailable = $this->buildCustomMailable($emailData, $to);
+            $sendMethod = $this->sendAsynchronously ? 'queue' : 'send';
+
+            Mail::to($customMailable->to)
+                ->cc($cc)
+                ->bcc($bcc)
+                ->$sendMethod($customMailable->mailable);
+        }
     }
 
     public function simulate()

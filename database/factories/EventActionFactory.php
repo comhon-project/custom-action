@@ -2,7 +2,13 @@
 
 namespace Database\Factories;
 
-use Comhon\CustomAction\Models\DefaultSetting;
+use App\Actions\ComplexEventAction;
+use App\Actions\QueuedEventAction;
+use App\Actions\SimpleEventAction;
+use App\Events\MyComplexEvent;
+use App\Events\MySimpleEvent;
+use Comhon\CustomAction\Contracts\CallableFromEventInterface;
+use Comhon\CustomAction\Facades\CustomActionModelResolver;
 use Comhon\CustomAction\Models\EventAction;
 use Comhon\CustomAction\Models\EventListener;
 use Illuminate\Database\Eloquent\Factories\Factory;
@@ -30,26 +36,39 @@ class EventActionFactory extends Factory
     {
         return [
             'name' => 'My Custom Event Action',
-            'type' => 'send-automatic-email',
+            'type' => 'simple-event-action',
             'event_listener_id' => EventListener::factory(),
         ];
     }
 
-    /**
-     * registration company mail.
-     */
-    public function sendMailRegistrationCompany(?array $toOtherUserIds = null, $withScopedSettings = false, $shoudQueue = false, $withAttachement = false): Factory
+    public function action(string $actionClass, null|string|object $eventClassOrEventListener = null): Factory
     {
-        return $this->aftermaking(function (EventAction $eventAction) use ($shoudQueue) {
-            $eventAction->type = $shoudQueue ? 'queue-automatic-email' : 'send-automatic-email';
-        })->afterCreating(function (EventAction $eventAction) use ($toOtherUserIds, $withScopedSettings, $withAttachement) {
-            DefaultSetting::factory()->for($eventAction, 'action')
-                ->sendMailRegistrationCompany($toOtherUserIds, $withAttachement)
-                ->create();
+        if (! is_subclass_of($actionClass, CallableFromEventInterface::class)) {
+            throw new \Exception('given action is an event action, must be a manual action');
+        }
 
-            if ($withScopedSettings) {
-                $this->sendMailRegistrationCompanyScoped($eventAction, $toOtherUserIds);
+        return $this->state(function (array $attributes) use ($actionClass, $eventClassOrEventListener) {
+            if (! $eventClassOrEventListener) {
+                $eventClassOrEventListener = match ($actionClass) {
+                    SimpleEventAction::class => MySimpleEvent::class,
+                    QueuedEventAction::class => MySimpleEvent::class,
+                    ComplexEventAction::class => MyComplexEvent::class,
+                    SimpleEventAction::class => MySimpleEvent::class,
+                };
             }
+
+            $eventListenerValue = is_string($eventClassOrEventListener)
+                ? EventListener::factory([
+                    'event' => CustomActionModelResolver::getUniqueName($eventClassOrEventListener)
+                        ?? throw new \Exception("event $eventClassOrEventListener not registered"),
+                ])
+                : $eventClassOrEventListener->id;
+
+            return [
+                'type' => CustomActionModelResolver::getUniqueName($actionClass)
+                    ?? throw new \Exception("action $actionClass not registered"),
+                'event_listener_id' => $eventListenerValue,
+            ];
         });
     }
 }

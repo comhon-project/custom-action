@@ -3,11 +3,18 @@
 namespace Tests;
 
 use App\Providers\WorkbenchServiceProvider;
+use Comhon\CustomAction\Contracts\CallableFromEventInterface;
 use Comhon\CustomAction\CustomActionServiceProvider;
+use Comhon\CustomAction\Facades\CustomActionModelResolver;
+use Comhon\CustomAction\Models\DefaultSetting;
+use Comhon\CustomAction\Models\EventAction;
+use Comhon\CustomAction\Models\ManualAction;
+use Comhon\CustomAction\Models\ScopedSetting;
 use Comhon\TemplateRenderer\TemplateRendererServiceProvider;
 use Illuminate\Contracts\Config\Repository;
 use Illuminate\Database\Eloquent\Factories\Factory;
 use Illuminate\Support\Facades\Schema;
+use Illuminate\Testing\Assert;
 use Orchestra\Testbench\TestCase as Orchestra;
 use Tests\Support\Utils;
 
@@ -85,11 +92,60 @@ class TestCase extends Orchestra
         }
     }
 
+    /**
+     * Asserts that an array has a specified subset.
+     *
+     * @param  \ArrayAccess|array  $subset
+     * @param  \ArrayAccess|array  $array
+     */
+    public static function assertArraySubset($subset, $array, bool $checkForIdentity = false, string $msg = ''): void
+    {
+        Assert::assertArraySubset($subset, $array, $checkForIdentity, $msg);
+    }
+
     public static function providerBoolean()
     {
         return [
             [true],
             [false],
         ];
+    }
+
+    public function getUniqueName($actionClass)
+    {
+        return CustomActionModelResolver::getUniqueName($actionClass)
+            ?? throw new \Exception("action $actionClass not registered");
+    }
+
+    protected function getActionDefaultSetting(
+        string $actionClass,
+        ?array $defaultSettings = null,
+        ?array $localizedSettingsByLocales = null
+    ): DefaultSetting {
+        $factory = is_subclass_of($actionClass, CallableFromEventInterface::class)
+            ? EventAction::factory()
+            : ManualAction::factory();
+
+        return $factory->action($actionClass)
+            ->withDefaultSettings($defaultSettings, $localizedSettingsByLocales)
+            ->create()
+            ->defaultSetting;
+    }
+
+    protected function getActionScopedSetting(
+        string $actionClass,
+        ?array $scope = null,
+        ?array $defaultSettings = null,
+        ?array $localizedSettingsByLocales = null
+    ): ScopedSetting {
+        $factory = is_subclass_of($actionClass, CallableFromEventInterface::class)
+            ? EventAction::factory()
+            : ManualAction::factory();
+
+        return $factory->action($actionClass)
+            ->withScopedSettings($scope, $defaultSettings, $localizedSettingsByLocales)
+            ->create()
+            ->scopedSettings
+            ->first();
     }
 }

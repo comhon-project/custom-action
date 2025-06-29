@@ -10,8 +10,6 @@ use Illuminate\Database\Eloquent\Factories\Factory;
  */
 class DefaultSettingFactory extends Factory
 {
-    use SettingFactoryTrait;
-
     /**
      * The name of the factory's corresponding model.
      *

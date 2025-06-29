@@ -3,7 +3,6 @@
 namespace Tests\Feature;
 
 use App\Actions\BadAction;
-use App\Actions\MyCallableFromEvent;
 use Comhon\CustomAction\Facades\CustomActionModelResolver;
 use PHPUnit\Framework\Attributes\DataProvider;
 use Tests\Support\Utils;
@@ -46,7 +45,6 @@ class GenerateActionCommandTest extends TestCase
         $expectContent
     ) {
         CustomActionModelResolver::bind('bad-action', BadAction::class);
-        CustomActionModelResolver::bind('my-callable-from-event', MyCallableFromEvent::class);
 
         $dir = Utils::joinPaths(Utils::getAppPath('Actions'), 'CustomActions');
         if (file_exists($dir)) {
@@ -57,7 +55,7 @@ class GenerateActionCommandTest extends TestCase
         }
         app()->useAppPath(Utils::getAppPath());
         $this->artisan('custom-action:generate', [
-            'name' => 'TestGenericSendEmail',
+            'name' => 'TestCustomAction',
             ...($extends ?
                 [
                     '--extends' => $extends,
@@ -74,7 +72,7 @@ class GenerateActionCommandTest extends TestCase
                 ]),
         ]);
 
-        $path = Utils::joinPaths(Utils::getAppPath('Actions'), 'CustomActions', 'TestGenericSendEmail.php');
+        $path = Utils::joinPaths(Utils::getAppPath('Actions'), 'CustomActions', 'TestCustomAction.php');
         $fileContent = file_exists($path) ? file_get_contents($path) : null;
         if ($fileContent !== null) {
             unlink($path);
@@ -109,7 +107,7 @@ use Illuminate\Foundation\Bus\Dispatchable;
 use Illuminate\Queue\InteractsWithQueue;
 use Illuminate\Queue\SerializesModels;
 
-class TestGenericSendEmail implements CustomActionInterface
+class TestCustomAction implements CustomActionInterface
 {
     use Dispatchable,
         Queueable,
@@ -163,7 +161,7 @@ use Illuminate\Foundation\Bus\Dispatchable;
 use Illuminate\Queue\InteractsWithQueue;
 use Illuminate\Queue\SerializesModels;
 
-class TestGenericSendEmail implements CustomActionInterface, CallableFromEventInterface, ExposeContextInterface, FormatContextInterface
+class TestCustomAction implements CustomActionInterface, CallableFromEventInterface, ExposeContextInterface, FormatContextInterface
 {
     use Dispatchable,
         Queueable,
@@ -203,7 +201,7 @@ EOT
             ],
             [
                 false,
-                'SendAutomaticEmail',
+                'ComplexEventAction',
                 'from-event',
                 false,
                 true,
@@ -214,11 +212,11 @@ declare(strict_types=1);
 
 namespace App\Actions\CustomActions;
 
-use Comhon\CustomAction\Actions\Email\SendAutomaticEmail;
+use App\Actions\ComplexEventAction;
 use Comhon\CustomAction\Contracts\HasTranslatableContextInterface;
 use Illuminate\Contracts\Queue\ShouldQueue;
 
-class TestGenericSendEmail extends SendAutomaticEmail implements HasTranslatableContextInterface
+class TestCustomAction extends ComplexEventAction implements HasTranslatableContextInterface
 {
     public static function getSettingsSchema(?string \$eventClassContext = null): array
     {
@@ -262,7 +260,7 @@ use Illuminate\Foundation\Bus\Dispatchable;
 use Illuminate\Queue\InteractsWithQueue;
 use Illuminate\Queue\SerializesModels;
 
-class TestGenericSendEmail extends BadAction implements CustomActionInterface
+class TestCustomAction extends BadAction implements CustomActionInterface
 {
     use Dispatchable,
         Queueable,
@@ -299,7 +297,7 @@ EOT
 
         $this->expectExceptionMessage("invalid extends parameter 'failure'");
         artisan($this, 'custom-action:generate', [
-            'name' => 'TestGenericSendEmail',
+            'name' => 'TestCustomAction',
             '--callable' => 'manually',
             '--extends' => 'failure',
         ]);

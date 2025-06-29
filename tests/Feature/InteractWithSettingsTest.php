@@ -2,12 +2,10 @@
 
 namespace Tests\Feature;
 
-use App\Actions\MyManualActionWithoutContext;
-use App\Actions\SendManualCompanyRegistrationMail;
-use App\Models\Company;
+use App\Actions\ComplexManualAction;
+use App\Actions\SimpleManualAction;
 use App\Models\User;
 use Comhon\CustomAction\Exceptions\LocalizedSettingNotFoundException;
-use Comhon\CustomAction\Files\SystemFile;
 use Comhon\CustomAction\Models\DefaultSetting;
 use Comhon\CustomAction\Models\LocalizedSetting;
 use Comhon\CustomAction\Models\ManualAction;
@@ -35,16 +33,12 @@ class InteractWithSettingsTest extends TestCase
         App::setFallbackLocale($appFallback);
 
         DefaultSetting::factory()
-            ->for(ManualAction::factory(), 'action')
+            ->for(ManualAction::factory()->action(ComplexManualAction::class), 'action')
             ->has(LocalizedSetting::factory(['locale' => 'en']))
             ->has(LocalizedSetting::factory(['locale' => 'fr']))
             ->create();
 
-        $action = new SendManualCompanyRegistrationMail(
-            Company::factory()->create(),
-            new SystemFile($this->getAssetPath()),
-            User::factory()->create(),
-        );
+        $action = new ComplexManualAction(User::factory()->create());
 
         $localizedSetting = $action->getLocalizedSetting($paramLocale, $paramFallback);
         if ($expected) {
@@ -79,13 +73,9 @@ class InteractWithSettingsTest extends TestCase
     #[DataProvider('provider_get_locale_string')]
     public function test_get_locale_string($param, $expected)
     {
-        ManualAction::factory()->create();
+        ManualAction::factory()->action(ComplexManualAction::class)->create();
 
-        $action = new SendManualCompanyRegistrationMail(
-            Company::factory()->create(),
-            new SystemFile($this->getAssetPath()),
-            User::factory()->create(),
-        );
+        $action = new SimpleManualAction(User::factory()->create());
 
         $this->assertEquals($expected, $action->getLocaleString($param));
     }
@@ -104,22 +94,27 @@ class InteractWithSettingsTest extends TestCase
 
     public function test_get_setting_no_context()
     {
-        DefaultSetting::factory()
-            ->for(ManualAction::factory(['type' => 'my-manual-action-without-context']), 'action')
+        ManualAction::factory()
+            ->action(SimpleManualAction::class)
+            ->withDefaultSettings()
             ->create();
 
-        $action = new MyManualActionWithoutContext;
+        $action = new SimpleManualAction;
         $setting = $action->getSetting();
         $this->assertInstanceOf(DefaultSetting::class, $setting);
+
+        // same instance must be returned
         $this->assertSame($setting, $action->getSetting());
     }
 
     public function test_missing_settings()
     {
-        $action = ManualAction::factory(['type' => 'my-manual-action-without-context'])->create();
+        $actionModel = ManualAction::factory()
+            ->action(SimpleManualAction::class)
+            ->create();
 
-        $this->expectExceptionMessage("missing default setting on action Comhon\CustomAction\Models\ManualAction with id '{$action->id}'");
-        $action = new MyManualActionWithoutContext;
+        $this->expectExceptionMessage("missing default setting on action Comhon\CustomAction\Models\ManualAction with id '{$actionModel->id}'");
+        $action = new SimpleManualAction;
         $action->getSetting();
     }
 }

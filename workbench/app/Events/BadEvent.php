@@ -36,7 +36,7 @@ class BadEvent implements CustomEventInterface, ExposeContextInterface, FormatCo
     public function formatContext(): array
     {
         return [
-            'company' => 'bad',
+            'foo' => 'bar',
         ];
     }
 }

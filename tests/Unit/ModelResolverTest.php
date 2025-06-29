@@ -2,11 +2,10 @@
 
 namespace Tests\Unit;
 
-use App\Actions\SendAutomaticCompanyRegistrationMail;
-use App\Events\CompanyRegistered;
-use App\Models\Company;
+use App\Actions\ComplexEventAction;
+use App\Actions\SimpleEventAction;
+use App\Events\MySimpleEvent;
 use App\Models\User;
-use Comhon\CustomAction\Actions\Email\SendAutomaticEmail;
 use Comhon\CustomAction\Resolver\CustomActionModelResolver;
 use Comhon\ModelResolverContract\ModelResolverInterface;
 use Tests\TestCase;
@@ -19,26 +18,26 @@ class ModelResolverTest extends TestCase
         $resolver = app(CustomActionModelResolver::class);
         $resolver->register(
             [
-                'company' => Company::class,
-                'send-automatic-email' => SendAutomaticEmail::class,
-                'send-automatic-company-email' => SendAutomaticCompanyRegistrationMail::class,
-                'company-registered' => CompanyRegistered::class,
+                'user' => User::class,
+                'simple-event-action' => SimpleEventAction::class,
+                'complex-event-action' => ComplexEventAction::class,
+                'my-simple-event' => MySimpleEvent::class,
             ]
         );
         $resolver->bind('user', User::class);
 
         $this->assertInstanceOf(ModelResolverInterface::class, $resolver->getResolver());
-        $this->assertEquals(Company::class, $resolver->getClass('company'));
         $this->assertEquals(User::class, $resolver->getClass('user'));
-        $this->assertEquals('send-automatic-email', $resolver->getUniqueName(SendAutomaticEmail::class));
+        $this->assertEquals(User::class, $resolver->getClass('user'));
+        $this->assertEquals('simple-event-action', $resolver->getUniqueName(SimpleEventAction::class));
         $this->assertNull($resolver->getClass('foo'));
         $this->assertNull($resolver->getUniqueName('bar'));
 
-        $this->assertTrue($resolver->isAllowedAction('send-automatic-company-email'));
-        $this->assertTrue($resolver->isAllowedAction('send-automatic-email'));
-        $this->assertFalse($resolver->isAllowedAction('company-registered'));
+        $this->assertTrue($resolver->isAllowedAction('complex-event-action'));
+        $this->assertTrue($resolver->isAllowedAction('simple-event-action'));
+        $this->assertFalse($resolver->isAllowedAction('my-simple-event'));
 
-        $this->assertTrue($resolver->isAllowedEvent('company-registered'));
-        $this->assertFalse($resolver->isAllowedEvent('send-automatic-email'));
+        $this->assertTrue($resolver->isAllowedEvent('my-simple-event'));
+        $this->assertFalse($resolver->isAllowedEvent('simple-event-action'));
     }
 }

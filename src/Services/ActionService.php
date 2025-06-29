@@ -73,6 +73,11 @@ class ActionService
     public function storeLocalizedSetting(Setting $setting, array $inputs): LocalizedSetting
     {
         $rules = $this->getLocalizedSettingsRules($setting->action);
+        $rules['locale'][] = function (string $attribute, mixed $value, \Closure $fail) use ($setting) {
+            if (is_string($value) && $setting->localizedSettings()->where('locale', $value)->exists()) {
+                $fail("A localized setting is already stored with locale '$value'.");
+            }
+        };
         $validated = Validator::validate($inputs, $rules);
 
         $localizedSetting = new LocalizedSetting;
@@ -96,7 +101,10 @@ class ActionService
 
         $actionClass = $action->getActionClass();
         $rules = RuleHelper::getSettingsRules($actionClass::getLocalizedSettingsSchema($eventContext), $prefix);
-        $rules['locale'] = 'required|string';
+        $rules['locale'] = [
+            'required',
+            'string',
+        ];
 
         return $rules;
     }

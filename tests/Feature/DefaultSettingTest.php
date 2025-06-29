@@ -2,9 +2,13 @@
 
 namespace Tests\Feature;
 
+use App\Actions\ComplexEventAction;
+use App\Actions\ComplexManualAction;
+use App\Actions\SimpleEventAction;
+use App\Actions\SimpleManualAction;
 use App\Models\User;
+use Comhon\CustomAction\Contracts\CallableFromEventInterface;
 use Comhon\CustomAction\Models\Action;
-use Comhon\CustomAction\Models\DefaultSetting;
 use Comhon\CustomAction\Models\EventAction;
 use Comhon\CustomAction\Models\ManualAction;
 use Illuminate\Foundation\Testing\RefreshDatabase;
@@ -19,11 +23,7 @@ class DefaultSettingTest extends TestCase
 
     public function test_get_action_settings_success()
     {
-        $defaultSetting = DefaultSetting::factory([
-            'settings' => [
-                'subject' => 'the subject',
-            ],
-        ])->withManualAction()->create();
+        $defaultSetting = $this->getActionDefaultSetting(SimpleManualAction::class);
 
         /** @var User $consumer */
         $consumer = User::factory()->hasConsumerAbility()->create();
@@ -33,7 +33,7 @@ class DefaultSettingTest extends TestCase
                 'data' => [
                     'id' => $defaultSetting->id,
                     'settings' => [
-                        'subject' => 'the subject',
+                        'text' => 'simple text',
                     ],
                 ],
             ]);
@@ -41,132 +41,11 @@ class DefaultSettingTest extends TestCase
 
     public function test_get_action_settings_forbidden()
     {
-        $defaultSetting = DefaultSetting::factory()->withManualAction()->create();
+        $defaultSetting = $this->getActionDefaultSetting(SimpleManualAction::class);
+
         /** @var User $consumer */
         $consumer = User::factory()->create();
         $this->actingAs($consumer)->getJson("custom/default-settings/{$defaultSetting->id}")
-            ->assertForbidden();
-    }
-
-    public function test_update_generic_action_settings()
-    {
-        $defaultSetting = DefaultSetting::factory([
-            'settings' => [],
-        ])->withEventAction('send-automatic-email')->create();
-        $newSettings = [
-            'recipients' => ['to' => ['static' => ['mailables' => [
-                ['recipient_id' => User::factory()->create()->id, 'recipient_type' => 'user'],
-            ]]]],
-        ];
-
-        /** @var User $user */
-        $user = User::factory()->hasConsumerAbility()->create();
-        $this->actingAs($user)->putJson("custom/default-settings/$defaultSetting->id", [
-            'settings' => $newSettings,
-        ])->assertOk()
-            ->assertJson([
-                'data' => [
-                    'id' => $defaultSetting->id,
-                    'settings' => $newSettings,
-                ],
-            ]);
-
-        $this->assertEquals($newSettings, DefaultSetting::findOrFail($defaultSetting->id)->settings);
-    }
-
-    public function test_update_manual_action_settings()
-    {
-        $defaultSetting = ManualAction::factory([
-            'type' => 'send-manual-company-email',
-        ])->sendMailRegistrationCompany()
-            ->create()
-            ->defaultSetting;
-
-        $newSettings = [
-            'recipients' => ['to' => ['static' => ['mailables' => [
-                ['recipient_id' => User::factory()->create()->id, 'recipient_type' => 'user'],
-            ]]]],
-            'test' => 'foo',
-        ];
-
-        /** @var User $user */
-        $user = User::factory()->hasConsumerAbility()->create();
-        $this->actingAs($user)->putJson("custom/default-settings/$defaultSetting->id", [
-            'settings' => $newSettings,
-        ])->assertOk()
-            ->assertJson([
-                'data' => [
-                    'id' => $defaultSetting->id,
-                    'settings' => $newSettings,
-                ],
-            ]);
-
-        $this->assertEquals($newSettings, DefaultSetting::findOrFail($defaultSetting->id)->settings);
-    }
-
-    public function test_update_manual_action_settings_missing_required()
-    {
-        $defaultSetting = ManualAction::factory([
-            'type' => 'send-manual-company-email',
-        ])->sendMailRegistrationCompany()
-            ->create()
-            ->defaultSetting;
-
-        $newSettings = [
-            'recipients' => ['to' => ['static' => ['mailables' => [
-                ['recipient_id' => User::factory()->create()->id, 'recipient_type' => 'user'],
-            ]]]],
-        ];
-
-        /** @var User $user */
-        $user = User::factory()->hasConsumerAbility()->create();
-        $this->actingAs($user)->putJson("custom/default-settings/$defaultSetting->id", [
-            'settings' => $newSettings,
-        ])->assertUnprocessable()
-            ->assertJson([
-                'message' => 'The settings.test field is required.',
-                'errors' => [
-                    'settings.test' => [
-                        'The settings.test field is required.',
-                    ],
-                ],
-            ]);
-
-    }
-
-    public function test_update_action_with_event_context_settings()
-    {
-        $defaultSetting = DefaultSetting::factory([
-            'settings' => [],
-        ])->withEventAction('send-automatic-email')->create();
-        $newSettings = [
-            'recipients' => ['to' => ['context' => ['mailables' => ['user']]]],
-        ];
-
-        /** @var User $user */
-        $user = User::factory()->hasConsumerAbility()->create();
-        $this->actingAs($user)->putJson("custom/default-settings/$defaultSetting->id", [
-            'settings' => $newSettings,
-        ])->assertOk()
-            ->assertJson([
-                'data' => [
-                    'id' => $defaultSetting->id,
-                    'settings' => $newSettings,
-                ],
-            ]);
-
-        $this->assertEquals($newSettings, DefaultSetting::findOrFail($defaultSetting->id)->settings);
-    }
-
-    public function test_update_action_settings_forbidden()
-    {
-        $defaultSetting = DefaultSetting::factory([
-            'settings' => [],
-        ])->withEventAction('send-automatic-email')->create();
-
-        /** @var User $user */
-        $user = User::factory()->create();
-        $this->actingAs($user)->putJson("custom/default-settings/$defaultSetting->id")
             ->assertForbidden();
     }
 
@@ -174,36 +53,45 @@ class DefaultSettingTest extends TestCase
     public function test_store_action_settings_success($fromEventAction)
     {
         $prefixAction = $fromEventAction ? 'event-actions' : 'manual-actions';
-        $actionClass = $fromEventAction ? EventAction::class : ManualAction::class;
+        $actionClass = $fromEventAction ? ComplexEventAction::class : ComplexManualAction::class;
         $uniqueProperty = $fromEventAction ? 'id' : 'type';
 
+        $factory = is_subclass_of($actionClass, CallableFromEventInterface::class)
+            ? EventAction::factory()
+            : ManualAction::factory();
+
         /** @var Action $action */
-        $action = $actionClass::factory()->create();
-        $input = [
-            'recipients' => ['to' => ['static' => ['mailables' => [
-                ['recipient_id' => User::factory()->create()->id, 'recipient_type' => 'user'],
-            ]]]],
-            ...($fromEventAction ? [] : ['test' => 'foo']),
+        $action = $factory->action($actionClass)->create();
+
+        $inputs = [
+            'settings' => [
+                'text' => 'stored text',
+                ...($fromEventAction ? ['emails' => ['user.email', 'actionEmail']] : []),
+            ],
         ];
+
+        /** @var User $user */
+        $user = User::factory()->hasConsumerAbility()->create();
+        $this->actingAs($user)->postJson("custom/$prefixAction/{$action->$uniqueProperty}/default-settings", $inputs)
+            ->assertCreated()
+            ->assertJson([
+                'data' => $inputs,
+            ]);
+
+        $this->assertEquals(1, $action->defaultSetting()->count());
+        $defaultSetting = $action->defaultSetting()->first();
+        $this->assertArraySubset($inputs, $defaultSetting->toArray());
+    }
+
+    public function test_store_action_settings_forbbiden_already_exists()
+    {
+        $defaultSetting = $this->getActionDefaultSetting(SimpleManualAction::class);
+
         /** @var User $user */
         $user = User::factory()->hasConsumerAbility()->create();
 
-        $response = $this->actingAs($user)->postJson("custom/$prefixAction/{$action->$uniqueProperty}/default-settings", [
-            'settings' => $input,
-        ]);
-        $response->assertCreated();
-        $this->assertEquals(1, $action->defaultSetting()->count());
-        $defaultSetting = $action->defaultSetting()->first();
-        $response->assertJson([
-            'data' => [
-                'id' => $defaultSetting->id,
-                'settings' => $input,
-            ],
-        ]);
-        $this->assertEquals($input, $defaultSetting->settings);
-
-        $this->actingAs($user)->postJson("custom/$prefixAction/{$action->$uniqueProperty}/default-settings", [
-            'settings' => $input,
+        $this->actingAs($user)->postJson("custom/manual-actions/{$defaultSetting->action->type}/default-settings", [
+            'settings' => ['text' => 'stored text'],
         ])->assertForbidden()
             ->assertJson([
                 'message' => 'default settings already exist',
@@ -212,38 +100,118 @@ class DefaultSettingTest extends TestCase
 
     public function test_store_action_settings_empty()
     {
-        $prefixAction = 'event-actions';
-        $actionClass = EventAction::class;
-        $uniqueProperty = 'id';
+        $action = ManualAction::factory()->action(SimpleManualAction::class)->create();
+        $inputs = ['settings' => []];
 
-        /** @var Action $action */
-        $action = $actionClass::factory()->create();
-        $input = [];
         /** @var User $user */
         $user = User::factory()->hasConsumerAbility()->create();
+        $this->actingAs($user)->postJson("custom/manual-actions/{$action->type}/default-settings", $inputs)
+            ->assertCreated()
+            ->assertJson([
+                'data' => $inputs,
+            ]);
 
-        $response = $this->actingAs($user)->postJson("custom/$prefixAction/{$action->$uniqueProperty}/default-settings", [
-            'settings' => $input,
-        ]);
-        $response->assertCreated();
         $this->assertEquals(1, $action->defaultSetting()->count());
         $defaultSetting = $action->defaultSetting()->first();
-        $response->assertJson([
-            'data' => [
-                'id' => $defaultSetting->id,
-                'settings' => $input,
-            ],
-        ]);
-        $this->assertEquals($input, $defaultSetting->settings);
+        $this->assertArraySubset($inputs, $defaultSetting->toArray());
     }
 
-    public function test_store_action_scoped_settings_forbidden()
+    public function test_store_action_settings_forbidden_ability()
     {
-        $action = ManualAction::factory()->create();
+        $action = ManualAction::factory()->action(SimpleManualAction::class)->create();
 
         /** @var User $user */
         $user = User::factory()->create();
-        $this->actingAs($user)->postJson("custom/manual-actions/{$action->type}/scoped-settings")
+        $this->actingAs($user)->postJson("custom/manual-actions/{$action->type}/default-settings")
+            ->assertForbidden();
+    }
+
+    public function test_update_manual_action_settings()
+    {
+        $defaultSetting = $this->getActionDefaultSetting(SimpleManualAction::class);
+        $inputs = [
+            'settings' => ['text' => 'text updated'],
+        ];
+
+        /** @var User $user */
+        $user = User::factory()->hasConsumerAbility()->create();
+        $this->actingAs($user)->putJson("custom/default-settings/$defaultSetting->id", $inputs)
+            ->assertOk()
+            ->assertJson([
+                'data' => $inputs,
+            ]);
+
+        $this->assertArraySubset($inputs, $defaultSetting->refresh()->toArray());
+    }
+
+    public function test_update_event_action_settings()
+    {
+        $defaultSetting = $this->getActionDefaultSetting(SimpleEventAction::class);
+        $inputs = [
+            'settings' => ['text' => 'text updated'],
+        ];
+
+        /** @var User $user */
+        $user = User::factory()->hasConsumerAbility()->create();
+        $this->actingAs($user)->putJson("custom/default-settings/$defaultSetting->id", $inputs)
+            ->assertOk()
+            ->assertJson([
+                'data' => $inputs,
+            ]);
+
+        $this->assertArraySubset($inputs, $defaultSetting->refresh()->toArray());
+    }
+
+    public function test_update_event_action_settings_with_context_values()
+    {
+        $defaultSetting = $this->getActionDefaultSetting(ComplexEventAction::class);
+        $inputs = [
+            'settings' => [
+                'text' => 'text updated',
+                'emails' => ['user.email', 'actionEmail'],
+            ],
+        ];
+
+        /** @var User $user */
+        $user = User::factory()->hasConsumerAbility()->create();
+        $this->actingAs($user)->putJson("custom/default-settings/$defaultSetting->id", $inputs)
+            ->assertOk()
+            ->assertJson([
+                'data' => $inputs,
+            ]);
+
+        $this->assertArraySubset($inputs, $defaultSetting->refresh()->toArray());
+    }
+
+    public function test_update_action_settings_unprocessable()
+    {
+
+        $defaultSetting = $this->getActionDefaultSetting(SimpleManualAction::class);
+        $newSettings = ['text' => ['bar']];
+
+        /** @var User $user */
+        $user = User::factory()->hasConsumerAbility()->create();
+        $this->actingAs($user)->putJson("custom/default-settings/$defaultSetting->id", [
+            'settings' => $newSettings,
+        ])->assertUnprocessable()
+            ->assertJson([
+                'message' => 'The settings.text field must be a string.',
+                'errors' => [
+                    'settings.text' => [
+                        'The settings.text field must be a string.',
+                    ],
+                ],
+            ]);
+
+    }
+
+    public function test_update_action_settings_forbidden()
+    {
+        $defaultSetting = $this->getActionDefaultSetting(SimpleManualAction::class);
+
+        /** @var User $user */
+        $user = User::factory()->create();
+        $this->actingAs($user)->putJson("custom/default-settings/$defaultSetting->id")
             ->assertForbidden();
     }
 }

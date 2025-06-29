@@ -2,8 +2,8 @@
 
 namespace Comhon\CustomAction\Actions\Email;
 
+use Comhon\CustomAction\Actions\Email\Exceptions\SendEmailActionException;
 use Comhon\CustomAction\Context\ContextHelper;
-use Comhon\CustomAction\Exceptions\SendEmailActionException;
 use Comhon\CustomAction\Facades\CustomActionModelResolver;
 use Comhon\CustomAction\Models\LocalizedSetting;
 use Comhon\CustomAction\Rules\RuleHelper;
@@ -125,12 +125,14 @@ abstract class AbstractSendGenericEmail extends AbstractSendEmail
                     foreach ($contextKeys as $contextKey) {
                         $contextRecipents = data_get($this->getExposedContext(), $contextKey);
                         $contextRecipents = str_contains($contextKey, '*') ? $contextRecipents : [$contextRecipents];
-                        foreach ($contextRecipents as $recipient) {
-                            if ($recipient) {
-                                $recipients[$recipientType] ??= [];
-                                $recipients[$recipientType][] = is_string($recipient)
-                                    ? ['email' => $recipient]
-                                    : $recipient;
+                        if ($contextRecipents) {
+                            foreach ($contextRecipents as $recipient) {
+                                if ($recipient) {
+                                    $recipients[$recipientType] ??= [];
+                                    $recipients[$recipientType][] = is_string($recipient)
+                                        ? ['email' => $recipient]
+                                        : $recipient;
+                                }
                             }
                         }
                     }
@@ -163,9 +165,10 @@ abstract class AbstractSendGenericEmail extends AbstractSendEmail
         if (! isset($this->getSetting()->settings['attachments'])) {
             return [];
         }
+        $context = $this->getExposedContext();
 
         return collect($this->getSetting()->settings['attachments'])
-            ->map(fn ($property) => Arr::get($this->getExposedContext(), $property))
+            ->map(fn ($property) => Arr::get($context, $property))
             ->filter(fn ($path) => $path != null);
     }
 

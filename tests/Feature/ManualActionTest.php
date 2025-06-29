@@ -2,6 +2,8 @@
 
 namespace Tests\Feature;
 
+use App\Actions\ComplexManualAction;
+use App\Actions\SimpleManualAction;
 use App\Models\User;
 use Comhon\CustomAction\Facades\CustomActionModelResolver;
 use Comhon\CustomAction\Models\ManualAction;
@@ -19,49 +21,32 @@ class ManualActionTest extends TestCase
     {
         /** @var User $user */
         $user = User::factory()->hasConsumerAbility()->create();
-        $response = $this->actingAs($user)->getJson('custom/manual-actions/send-manual-company-email');
-        $response->assertJson([
-            'data' => [
-                'type' => 'send-manual-company-email',
-                'default_setting' => null,
-            ],
-        ]);
+        $this->actingAs($user)->getJson('custom/manual-actions/simple-manual-action')
+            ->assertJson([
+                'data' => [
+                    'type' => 'simple-manual-action',
+                    'default_setting' => null,
+                ],
+            ]);
     }
 
     public function test_get_manual_action_created()
     {
-        $defaultSetting = ManualAction::factory([
-            'type' => 'send-manual-company-email',
-        ])->sendMailRegistrationCompany()
-            ->create()
-            ->defaultSetting;
-        /** @var User $user */
+        $defaultSetting = $this->getActionDefaultSetting(SimpleManualAction::class);
         $user = User::factory()->hasConsumerAbility()->create();
 
-        $response = $this->actingAs($user)->getJson('custom/manual-actions/send-manual-company-email');
-        $response->assertJson([
-            'data' => [
-                'type' => 'send-manual-company-email',
-                'default_setting' => [
-                    'id' => $defaultSetting->id,
-                    'settings' => [
-                        'recipients' => ['to' => ['context' => ['mailables' => ['user']]]],
-                        'attachments' => null,
+        $this->actingAs($user)->getJson('custom/manual-actions/simple-manual-action')
+            ->assertJson([
+                'data' => [
+                    'type' => 'simple-manual-action',
+                    'default_setting' => [
+                        'id' => $defaultSetting->id,
+                        'settings' => [
+                            'text' => 'simple text',
+                        ],
                     ],
                 ],
-            ],
-        ]);
-
-        $response = $this->actingAs($user)->getJson('custom/default-settings/'.$defaultSetting->id);
-        $response->assertJson([
-            'data' => [
-                'id' => $defaultSetting->id,
-                'settings' => [
-                    'recipients' => ['to' => ['context' => ['mailables' => ['user']]]],
-                    'attachments' => null,
-                ],
-            ],
-        ]);
+            ]);
     }
 
     public function test_get_action_not_found()
@@ -69,79 +54,69 @@ class ManualActionTest extends TestCase
         CustomActionModelResolver::register([], true);
         /** @var User $user */
         $user = User::factory()->hasConsumerAbility()->create();
-        $response = $this->actingAs($user)->getJson('custom/manual-actions/send-automatic-email');
-        $response->assertNotFound();
-        $response->assertJson([
-            'message' => 'not found',
-        ]);
+        $this->actingAs($user)->getJson('custom/manual-actions/simple-event-action')
+            ->assertNotFound()
+            ->assertJson([
+                'message' => 'not found',
+            ]);
     }
 
     public function test_get_action_settings_forbidden()
     {
         /** @var User $user */
         $user = User::factory()->create();
-        $this->actingAs($user)->getJson('custom/manual-actions/send-manual-company-email')
+        $this->actingAs($user)->getJson('custom/manual-actions/simple-manual-action')
             ->assertForbidden();
     }
 
-    public function test_simulate_action_success()
+    public function test_simulate_manual_action_success()
     {
-        /** @var User $user */
-        $user = User::factory()->hasConsumerAbility()->create();
-
         $inputs = [
-            'settings' => ['test' => 'value'],
-            'localized_settings' => [
-                'subject' => 'subject company {{ company.status }}',
-                'body' => 'body company {{ company.status }}',
-            ],
+            'settings' => ['text' => 'value'],
+            'localized_settings' => ['localized_text' => 'localized value'],
         ];
 
-        $this->actingAs($user)->postJson('custom/manual-actions/send-manual-company-email-with-context-translations/simulate', $inputs)
+        /** @var User $user */
+        $user = User::factory()->hasConsumerAbility()->create();
+        $this->actingAs($user)->postJson('custom/manual-actions/complex-manual-action/simulate', $inputs)
             ->assertOk()
             ->assertJson([
                 'data' => [
                     'success' => true,
                     'result' => [
-                        [
-                            'to' => [],
-                            'cc' => [],
-                            'bcc' => [],
-                            'subject' => 'subject company draft',
-                            'body' => 'body company draft',
+                        'output' => [
+                            'text' => 'value',
+                            'localized_text' => 'localized value',
+                            'user_translation' => 'english status : foo',
                         ],
                     ],
                 ],
             ]);
     }
 
-    public function test_simulate_action_with_state_success()
+    public function test_simulate_manual_action_with_state_success()
     {
-        /** @var User $user */
-        $user = User::factory()->hasConsumerAbility()->create();
-
         $inputs = [
-            'settings' => ['test' => 'value'],
-            'localized_settings' => [
-                'subject' => 'subject company {{ company.status }}',
-                'body' => 'body company {{ company.status }}',
-            ],
+            'settings' => ['text' => 'value'],
+            'localized_settings' => ['localized_text' => 'localized value'],
             'states' => [
                 ['status_1', 'status_2'],
             ],
         ];
 
-        $this->actingAs($user)->postJson('custom/manual-actions/send-manual-company-email-with-context-translations/simulate', $inputs)
+        /** @var User $user */
+        $user = User::factory()->hasConsumerAbility()->create();
+        $this->actingAs($user)->postJson('custom/manual-actions/complex-manual-action/simulate', $inputs)
             ->assertOk()
             ->assertJson([
                 'data' => [
                     [
                         'success' => true,
                         'result' => [
-                            [
-                                'to' => [],
-                                'subject' => 'subject company -status_1-status_2',
-                                'body' => 'body company -status_1-status_2',
+                            'output' => [
+                                'text' => 'value',
+                                'localized_text' => 'localized value',
+                                'user_translation' => 'english status : foo',
                             ],
                         ],
                     ],
@@ -150,21 +125,20 @@ class ManualActionTest extends TestCase
     }
 
     #[DataProvider('provider_simulate_action_with_state_invalid_states')]
-    public function test_simulate_action_with_state_invalid_states($state, $error)
+    public function test_simulate_manual_action_with_state_invalid_states($state, $error)
     {
         /** @var User $user */
         $user = User::factory()->hasConsumerAbility()->create();
 
         $inputs = [
-            'settings' => ['test' => 'value'],
+            'settings' => ['text' => 'value'],
             'localized_settings' => [
-                'subject' => 'subject company {{ company.status }}',
-                'body' => 'body company {{ company.status }}',
+                'localized_text' => 'localized value',
             ],
             'states' => $state,
         ];
 
-        $this->actingAs($user)->postJson('custom/manual-actions/send-manual-company-email-with-context-translations/simulate', $inputs)
+        $this->actingAs($user)->postJson('custom/manual-actions/complex-manual-action/simulate', $inputs)
             ->assertUnprocessable()
             ->assertJson([
                 'message' => $error,
@@ -194,57 +168,46 @@ class ManualActionTest extends TestCase
         ];
     }
 
-    public function test_simulate_action_without_query_params()
+    public function test_simulate_manual_action_without_query_params()
     {
-        $action = ManualAction::factory([
-            'type' => 'send-manual-company-email-with-context-translations',
-        ])->sendMailRegistrationCompany()
-            ->create();
+        ManualAction::factory()->action(ComplexManualAction::class)->create();
 
         /** @var User $user */
         $user = User::factory()->hasConsumerAbility()->create();
 
-        $this->actingAs($user)->postJson('custom/manual-actions/send-manual-company-email-with-context-translations/simulate')
+        $this->actingAs($user)->postJson('custom/manual-actions/complex-manual-action/simulate')
             ->assertOk();
     }
 
-    public function test_simulate_action_not_simulatable()
+    public function test_simulate_manual_action_not_simulatable()
     {
         /** @var User $user */
         $user = User::factory()->hasConsumerAbility()->create();
 
-        $this->actingAs($user)->postJson('custom/manual-actions/my-manual-action-without-context/simulate')
+        $this->actingAs($user)->postJson('custom/manual-actions/fakable-not-simulatable-action/simulate')
             ->assertUnprocessable()
             ->assertJson([
-                'message' => 'cannot simulate action my-manual-action-without-context',
+                'message' => 'cannot simulate action fakable-not-simulatable-action',
             ]);
     }
 
-    public function test_simulate_action_not_fakable()
+    public function test_simulate_manual_action_not_fakable()
     {
         /** @var User $user */
         $user = User::factory()->hasConsumerAbility()->create();
 
-        $inputs = [
-            'settings' => ['test' => 'value'],
-            'localized_settings' => [
-                'subject' => 'subject company {{ company.status }}',
-                'body' => 'body company {{ company.status }}',
-            ],
-        ];
-
-        $this->actingAs($user)->postJson('custom/manual-actions/send-manual-company-email/simulate', $inputs)
+        $this->actingAs($user)->postJson('custom/manual-actions/simulatable-not-fakable-action/simulate')
             ->assertUnprocessable()
             ->assertJson([
-                'message' => 'cannot simulate action, action send-manual-company-email is not fakable',
+                'message' => 'cannot simulate action, action simulatable-not-fakable-action is not fakable',
             ]);
     }
 
-    public function test_simulate_action_forbidden()
+    public function test_simulate_manual_action_forbidden()
     {
         /** @var User $user */
         $user = User::factory()->create();
-        $this->actingAs($user)->postJson('custom/manual-actions/send-manual-company-email-with-context-translations/simulate')
+        $this->actingAs($user)->postJson('custom/manual-actions/complex-manual-action/simulate')
             ->assertForbidden();
     }
 }

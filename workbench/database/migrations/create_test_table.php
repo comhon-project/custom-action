@@ -18,6 +18,8 @@ return new class extends Migration
             $table->string('name', 255);
             $table->string('first_name', 255);
             $table->string('email', 255);
+            $table->string('status', 63);
+            $table->string('translation', 63);
             $table->boolean('has_consumer_ability')->default(false);
             $table->string('preferred_locale', 255)->nullable();
             $table->string('preferred_timezone', 255)->nullable();
@@ -25,11 +27,13 @@ return new class extends Migration
             $table->timestamp('verified_at')->nullable();
             $table->timestamps();
         });
-        Schema::create('companies', function (Blueprint $table) {
+        Schema::create('outputs', function (Blueprint $table) {
             $table->id();
-            $table->string('name', 255);
-            $table->string('status', 64);
-            $table->json('languages');
+            $table->string('action', 63);
+            $table->string('setting_id', 63);
+            $table->string('setting_class', 63);
+            $table->string('localized_setting_id', 63)->nullable();
+            $table->json('output');
             $table->timestamps();
         });
     }

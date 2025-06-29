@@ -30,6 +30,8 @@ class UserWithoutPreferenceFactory extends Factory
             'email' => $this->faker->unique()->safeEmail,
             'last_login_at' => '2022-12-12 00:00:00',
             'verified_at' => '2022-11-11',
+            'status' => 'foo',
+            'translation' => 'foo',
         ];
     }
 }

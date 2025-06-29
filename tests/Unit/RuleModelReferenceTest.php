@@ -2,8 +2,8 @@
 
 namespace Tests\Unit;
 
-use App\Models\Company;
 use App\Models\User;
+use App\Models\UserWithoutPreference;
 use Comhon\CustomAction\Facades\CustomActionModelResolver;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Support\Facades\Validator;
@@ -90,12 +90,12 @@ class RuleModelReferenceTest extends TestCase
     {
         CustomActionModelResolver::register([
             'user' => User::class,
-            'company' => Company::class,
+            'user-without-preference' => UserWithoutPreference::class,
         ]);
         $data = [
             'foo' => [
-                'model_type' => 'company',
-                'model_id' => Company::factory()->create()->id,
+                'model_type' => 'user-without-preference',
+                'model_id' => UserWithoutPreference::factory()->create()->id,
             ],
         ];
         $this->assertEquals(

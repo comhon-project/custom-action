@@ -2,12 +2,15 @@
 
 namespace Tests\Feature;
 
-use App\Models\Company;
+use App\Actions\ComplexEventAction;
+use App\Actions\SimpleEventAction;
+use App\Events\MySimpleEvent;
 use App\Models\User;
 use Comhon\CustomAction\Models\DefaultSetting;
 use Comhon\CustomAction\Models\EventAction;
 use Comhon\CustomAction\Models\EventListener;
 use Illuminate\Foundation\Testing\RefreshDatabase;
+use Illuminate\Support\Facades\Event;
 use PHPUnit\Framework\Attributes\DataProvider;
 use Tests\SetUpWithModelRegistrationTrait;
 use Tests\TestCase;
@@ -17,70 +20,45 @@ class EventActionTest extends TestCase
     use RefreshDatabase;
     use SetUpWithModelRegistrationTrait;
 
-    public function test_list_event_listener_actions()
+    #[DataProvider('providerBoolean')]
+    public function test_list_event_listener_actions($withFilter)
     {
-        $toUser = User::factory()->create();
+        $eventAction1 = EventAction::factory(['name' => 'my event action one'])
+            ->action(SimpleEventAction::class)
+            ->create();
+        $eventAction2 = EventAction::factory(['name' => 'my event action two'])
+            ->action(ComplexEventAction::class, $eventAction1->eventListener)
+            ->create();
 
-        // create event listener for CompanyRegistered event
-        $eventListener = EventListener::factory()->genericRegistrationCompany([$toUser->id])->create();
-
-        /** @var User $user */
-        $user = User::factory()->hasConsumerAbility()->create();
-        $response = $this->actingAs($user)->getJson(
-            "custom/event-listeners/$eventListener->id/actions"
-        );
-
-        $actions = EventAction::all(['id']);
-        $response->assertJson([
-            'data' => [
-                [
-                    'id' => $actions[0]->id,
-                    'type' => 'send-automatic-email',
-                    'name' => 'My Custom Event Action',
-                ],
-                [
-                    'id' => $actions[1]->id,
-                    'type' => 'send-automatic-email',
-                    'name' => 'My Custom Event Action',
-                ],
+        $data = [
+            [
+                'id' => $eventAction1->id,
+                'type' => 'simple-event-action',
+                'name' => 'my event action one',
             ],
-        ])->assertJsonMissingPath('data.0.default_setting');
-    }
-
-    public function test_list_event_listener_actions_with_filter()
-    {
-        // create event listener for CompanyRegistered event
-        $eventListener = EventListener::factory([
-            'event' => 'company-registered',
-        ])->create();
-        $eventAction = EventAction::factory(['name' => 'my one'])
-            ->sendMailRegistrationCompany()
-            ->for($eventListener, 'eventListener')->create();
-        EventAction::factory(['name' => 'my two'])
-            ->sendMailRegistrationCompany()
-            ->for($eventListener, 'eventListener')->create();
+            [
+                'id' => $eventAction2->id,
+                'type' => 'complex-event-action',
+                'name' => 'my event action two',
+            ],
+        ];
+        if ($withFilter) {
+            array_shift($data);
+        }
 
         /** @var User $user */
         $user = User::factory()->hasConsumerAbility()->create();
-        $params = http_build_query(['name' => 'one']);
-        $this->actingAs($user)->getJson("custom/event-listeners/$eventListener->id/actions?$params")
-            ->assertJsonCount(1, 'data')->assertJson([
-                'data' => [
-                    [
-                        'id' => $eventAction->id,
-                        'type' => 'send-automatic-email',
-                        'name' => 'my one',
-                    ],
-                ],
-            ]);
+        $params = $withFilter ? http_build_query(['name' => 'two']) : '';
+        $this->actingAs($user)
+            ->getJson("custom/event-listeners/{$eventAction1->eventListener->id}/actions?$params")
+            ->assertJsonCount(count($data), 'data')
+            ->assertJson(['data' => $data])
+            ->assertJsonMissingPath('data.0.default_setting');
     }
 
     public function test_list_event_listener_actions_forbidden()
     {
-        $toUser = User::factory()->create();
-
-        // create event listener for CompanyRegistered event
-        $eventListener = EventListener::factory()->genericRegistrationCompany([$toUser->id])->create();
+        $eventListener = EventListener::factory()->create();
 
         /** @var User $user */
         $user = User::factory()->create();
@@ -90,54 +68,45 @@ class EventActionTest extends TestCase
 
     public function test_store_event_listener_action_success()
     {
-        // create event listener for CompanyRegistered event
-        $eventListener = EventListener::factory()->create();
+        $event = $this->getUniqueName(MySimpleEvent::class);
+        $eventListener = EventListener::factory(['event' => $event])->create();
         $this->assertEquals(0, $eventListener->eventActions()->count());
 
         /** @var User $user */
         $user = User::factory()->hasConsumerAbility()->create();
-        $actionValues = [
-            'name' => 'my custom event listener',
-            'type' => 'send-automatic-email',
-            'settings' => [
-                'recipients' => ['to' => [
-                    'static' => ['mailables' => [
-                        ['recipient_type' => 'user', 'recipient_id' => User::factory()->create()->id],
-                    ]],
-                    'context' => ['mailables' => ['user']],
-                ]],
-                'attachments' => ['logo'],
-            ],
+        $inputs = [
+            'name' => 'my event action',
+            'type' => $this->getUniqueName(SimpleEventAction::class),
+            'settings' => ['text' => 'foo'],
         ];
-        $response = $this->actingAs($user)->postJson("custom/event-listeners/$eventListener->id/actions", $actionValues);
-        $response->assertCreated();
-        $this->assertEquals(1, EventAction::count());
-        $this->assertEquals(1, DefaultSetting::count());
-        $this->assertEquals(1, $eventListener->eventActions()->count());
-        $eventAction = EventAction::findOrFail($response->json('data.id'));
+        $response = $this->actingAs($user)
+            ->postJson("custom/event-listeners/$eventListener->id/actions", $inputs)
+            ->assertCreated()
+            ->assertJsonStructure(['data' => ['id']]);
 
+        $eventAction = EventAction::findOrFail($response->json('data.id'));
         $response->assertJson([
             'data' => [
                 'id' => $eventAction->id,
-                'name' => $actionValues['name'],
-                'type' => $actionValues['type'],
+                'name' => $inputs['name'],
+                'type' => $inputs['type'],
                 'default_setting' => [
                     'id' => $eventAction->defaultSetting->id,
-                    'settings' => $actionValues['settings'],
+                    'settings' => $inputs['settings'],
                 ],
             ],
         ]);
-        $this->assertEquals('send-automatic-email', $eventAction->type);
-        $this->assertEquals($actionValues['settings'], $eventAction->defaultSetting->settings);
+
+        $this->assertEquals(1, EventAction::count());
+        $this->assertEquals(1, DefaultSetting::count());
+        $this->assertEquals(1, $eventListener->eventActions()->count());
+        $this->assertEquals($inputs['type'], $eventAction->type);
+        $this->assertEquals($inputs['settings'], $eventAction->defaultSetting->settings);
     }
 
-    public function test_store_event_listener_bad_action_success()
+    public function test_store_event_listener_action_invalid_action()
     {
-        // create event listener for CompanyRegistered event
-        $eventListener = EventListener::factory([
-            'event' => 'bad-event',
-        ])->create();
-        $this->assertEquals(0, $eventListener->eventActions()->count());
+        $eventListener = EventListener::factory(['event' => 'bad-event'])->create();
 
         /** @var User $user */
         $user = User::factory()->hasConsumerAbility()->create();
@@ -162,9 +131,7 @@ class EventActionTest extends TestCase
 
     public function test_store_event_listener_action_forbidden()
     {
-        // create event listener for CompanyRegistered event
         $eventListener = EventListener::factory()->create();
-        $this->assertEquals(0, $eventListener->eventActions()->count());
 
         /** @var User $user */
         $user = User::factory()->create();
@@ -174,9 +141,7 @@ class EventActionTest extends TestCase
 
     public function test_get_event_listener_action()
     {
-        // create event listener for CompanyRegistered event
-        $eventListener = EventListener::factory()->genericRegistrationCompany()->create();
-        $action = $eventListener->eventActions[0];
+        $action = EventAction::factory()->action(SimpleEventAction::class)->withDefaultSettings()->create();
 
         /** @var User $user */
         $user = User::factory()->hasConsumerAbility()->create();
@@ -196,9 +161,7 @@ class EventActionTest extends TestCase
 
     public function test_get_event_listener_action_forbidden()
     {
-        // create event listener for CompanyRegistered event
-        $eventListener = EventListener::factory()->genericRegistrationCompany()->create();
-        $action = $eventListener->eventActions[0];
+        $action = EventAction::factory()->action(SimpleEventAction::class)->create();
 
         /** @var User $user */
         $user = User::factory()->create();
@@ -208,18 +171,13 @@ class EventActionTest extends TestCase
 
     public function test_update_event_listener_action()
     {
-        // create event listener for CompanyRegistered event
-        $eventListener = EventListener::factory()->genericRegistrationCompany()->create();
-
-        $this->assertCount(1, $eventListener->eventActions);
-        $action = $eventListener->eventActions[0];
+        $action = EventAction::factory()->action(SimpleEventAction::class)->create();
         $updateName = 'updated event action';
 
         /** @var User $user */
         $user = User::factory()->hasConsumerAbility()->create();
-        $this->actingAs($user)->putJson("custom/event-actions/$action->id", [
-            'name' => $updateName,
-        ])->assertOk()
+        $this->actingAs($user)->putJson("custom/event-actions/$action->id", ['name' => $updateName])
+            ->assertOk()
             ->assertJson([
                 'data' => [
                     'name' => $updateName,
@@ -230,9 +188,7 @@ class EventActionTest extends TestCase
 
     public function test_update_event_listener_action_forbidden()
     {
-        // create event listener for CompanyRegistered event
-        $eventListener = EventListener::factory()->genericRegistrationCompany()->create();
-        $action = $eventListener->eventActions[0];
+        $action = EventAction::factory()->action(SimpleEventAction::class)->create();
 
         /** @var User $user */
         $user = User::factory()->create();
@@ -241,101 +197,85 @@ class EventActionTest extends TestCase
 
     public function test_delete_event_action()
     {
-        // create event listener for CompanyRegistered event
-        $eventListener = EventListener::factory()->genericRegistrationCompany()->create();
+        $action = EventAction::factory()->action(SimpleEventAction::class)->withDefaultSettings()->create();
+        $eventListener = $action->eventListener;
 
-        $this->assertCount(1, $eventListener->eventActions);
-        $action = $eventListener->eventActions[0];
+        $this->assertEquals(1, $eventListener->eventActions()->count());
 
         /** @var User $user */
         $user = User::factory()->hasConsumerAbility()->create();
-        $response = $this->actingAs($user)->deleteJson(
-            "custom/event-actions/$action->id"
-        );
-        $response->assertNoContent();
+        $this->actingAs($user)->deleteJson("custom/event-actions/$action->id")
+            ->assertNoContent();
+
         $this->assertEquals(0, $eventListener->eventActions()->count());
         $this->assertEquals(0, EventAction::count());
     }
 
     public function test_delete_event_action_forbidden()
     {
-        // create event listener for CompanyRegistered event
-        $eventListener = EventListener::factory()->genericRegistrationCompany()->create();
-
-        $action = $eventListener->eventActions[0];
+        $action = EventAction::factory()->action(SimpleEventAction::class)->create();
 
         /** @var User $user */
         $user = User::factory()->create();
-        $this->actingAs($user)->deleteJson(
-            "custom/event-actions/$action->id"
-        )->assertForbidden();
+        $this->actingAs($user)->deleteJson("custom/event-actions/$action->id")
+            ->assertForbidden();
 
-        $this->assertEquals(1, $eventListener->eventActions()->count());
+        $this->assertEquals(1, $action->eventListener->eventActions()->count());
     }
 
     public function test_simulate_event_action_success()
     {
-        // create event listener for CompanyRegistered event
-        $eventListener = EventListener::factory()->genericRegistrationCompany()->create();
-        $eventListener->event = 'company-registered-with-context-translations';
-        $eventListener->save();
-        $action = $eventListener->eventActions[0];
+        $action = EventAction::factory()->action(ComplexEventAction::class)->create();
 
         /** @var User $user */
         $user = User::factory()->hasConsumerAbility()->create();
 
         $inputs = [
             'settings' => [
-                'recipients' => ['to' => [
-                    'static' => ['emails' => ['john.doe@gmail.com']],
-                ]],
+                'text' => 'simple text',
             ],
             'localized_settings' => [
-                'subject' => 'subject company {{ company.status }}',
-                'body' => 'body company {{ company.status }}',
+                'localized_text' => 'localized text',
             ],
         ];
 
-        $this->assertEquals(0, Company::count());
+        $userCount = User::count();
 
+        Event::fake();
         $this->actingAs($user)->postJson("custom/event-actions/$action->id/simulate", $inputs)
             ->assertOk()
             ->assertJson([
                 'data' => [
                     'success' => true,
                     'result' => [
-                        [
-                            'to' => ['address' => 'john.doe@gmail.com'],
-                            'subject' => 'subject company draft',
-                            'body' => 'body company draft',
+                        'action' => 'complex-event-action',
+                        'output' => [
+                            'text' => 'simple text',
+                            'user_status' => 'foo',
                         ],
                     ],
                 ],
             ])->assertJsonMissingPath('data.state');
 
-        $this->assertEquals(0, Company::count());
+        // a User is created during context faking
+        // But no data must be permenently saved (any database changes must be rollbacked)
+        Event::assertDispatched('eloquent.created: '.User::class);
+        $this->assertEquals($userCount, User::count());
     }
 
     public function test_simulate_event_action_with_state_success()
     {
-        // create event listener for CompanyRegistered event
-        $eventListener = EventListener::factory()->genericRegistrationCompany()->create();
-        $eventListener->event = 'company-registered-with-context-translations';
-        $eventListener->save();
-        $action = $eventListener->eventActions[0];
+        $action = EventAction::factory()->action(ComplexEventAction::class)->create();
 
         /** @var User $user */
         $user = User::factory()->hasConsumerAbility()->create();
 
         $inputs = [
             'settings' => [
-                'recipients' => ['to' => [
-                    'static' => ['emails' => ['john.doe@gmail.com']],
-                ]],
+                'text' => 'simple text',
             ],
             'localized_settings' => [
-                'subject' => 'subject company {{ company.status }}',
-                'body' => 'body company {{ company.status }}',
+                'localized_text' => 'localized text',
             ],
             'states' => [
                 'status_1',
@@ -355,10 +295,10 @@ class EventActionTest extends TestCase
                     [
                         'success' => true,
                         'result' => [
-                            [
-                                'to' => ['address' => 'john.doe@gmail.com'],
-                                'subject' => 'subject company -status_1',
-                                'body' => 'body company -status_1',
+                            'action' => 'complex-event-action',
+                            'output' => [
+                                'text' => 'simple text',
+                                'user_status' => '-status_1',
                             ],
                         ],
                         'state' => ['status_1'],
@@ -366,10 +306,10 @@ class EventActionTest extends TestCase
                     [
                         'success' => true,
                         'result' => [
-                            [
-                                'to' => ['address' => 'john.doe@gmail.com'],
-                                'subject' => 'subject company -status_10',
-                                'body' => 'body company -status_10',
+                            'action' => 'complex-event-action',
+                            'output' => [
+                                'text' => 'simple text',
+                                'user_status' => '-status_10',
                             ],
                         ],
                         'state' => [['status' => 10]],
@@ -377,10 +317,10 @@ class EventActionTest extends TestCase
                     [
                         'success' => true,
                         'result' => [
-                            [
-                                'to' => ['address' => 'john.doe@gmail.com'],
-                                'subject' => 'subject company -status_2-status_20-status_3',
-                                'body' => 'body company -status_2-status_20-status_3',
+                            'action' => 'complex-event-action',
+                            'output' => [
+                                'text' => 'simple text',
+                                'user_status' => '-status_2-status_20-status_3',
                             ],
                         ],
                         'state' => ['status_2', ['status' => 20], 'status_3'],
@@ -388,10 +328,10 @@ class EventActionTest extends TestCase
                     [
                         'success' => true,
                         'result' => [
-                            [
-                                'to' => ['address' => 'john.doe@gmail.com'],
-                                'subject' => 'subject company -status_2-status_20-status_30',
-                                'body' => 'body company -status_2-status_20-status_30',
+                            'action' => 'complex-event-action',
+                            'output' => [
+                                'text' => 'simple text',
+                                'user_status' => '-status_2-status_20-status_30',
                             ],
                         ],
                         'state' => ['status_2', ['status' => 20], ['status' => 30]],
@@ -404,20 +344,17 @@ class EventActionTest extends TestCase
     public function test_simulate_event_action_with_state_error($debug)
     {
         config(['app.debug' => $debug]);
-        // create event listener for CompanyRegistered event
-        $eventListener = EventListener::factory()->genericRegistrationCompany()->create();
-        $eventListener->event = 'company-registered-with-context-translations';
-        $eventListener->save();
-        $action = $eventListener->eventActions[0];
+        $action = EventAction::factory()->action(ComplexEventAction::class)->create();
 
         /** @var User $user */
         $user = User::factory()->hasConsumerAbility()->create();
 
         $inputs = [
-            'settings' => [],
+            'settings' => [
+                'text' => 'simple text',
+            ],
             'localized_settings' => [
-                'subject' => 'subject company {{ company.status }}',
-                'body' => 'body company {{ company.status }}',
+                'localized_text' => 'localized text',
             ],
             'states' => [
                 ['status' => 1000],
@@ -446,34 +383,26 @@ class EventActionTest extends TestCase
 
     public function test_simulate_event_action_not_simulatable()
     {
-        // create event listener for CompanyRegistered event
-        $eventListener = EventListener::factory()->genericRegistrationCompany()->create();
-        $action = $eventListener->eventActions[0];
+        $action = EventAction::factory()->action(ComplexEventAction::class)->create();
+        $action->eventListener
+            ->forceFill(['event' => $this->getUniqueName(MySimpleEvent::class)])
+            ->save();
 
         /** @var User $user */
         $user = User::factory()->hasConsumerAbility()->create();
 
-        $inputs = [
-            'localized_settings' => [
-                'subject' => 'subject company {{ company.status }}',
-                'body' => 'body company {{ company.status }}',
-            ],
-        ];
+        $inputs = [];
 
         $this->actingAs($user)->postJson("custom/event-actions/$action->id/simulate", $inputs)
             ->assertUnprocessable()
             ->assertJson([
-                'message' => 'cannot simulate action, event company-registered is not fakable',
+                'message' => 'cannot simulate action, event my-simple-event is not fakable',
             ]);
     }
 
     public function test_simulate_event_action_forbidden()
     {
-        // create event listener for CompanyRegistered event
-        $eventListener = EventListener::factory()->genericRegistrationCompany()->create();
-        $eventListener->event = 'company-registered-with-context-translations';
-        $eventListener->save();
-        $action = $eventListener->eventActions[0];
+        $action = EventAction::factory()->action(ComplexEventAction::class)->create();
 
         /** @var User $user */
         $user = User::factory()->create();

@@ -2,9 +2,11 @@
 
 namespace Tests\Feature;
 
+use App\Actions\ComplexEventAction;
+use App\Actions\ComplexManualAction;
 use App\Models\User;
+use Comhon\CustomAction\Contracts\CallableFromEventInterface;
 use Comhon\CustomAction\Models\Action;
-use Comhon\CustomAction\Models\DefaultSetting;
 use Comhon\CustomAction\Models\EventAction;
 use Comhon\CustomAction\Models\ManualAction;
 use Comhon\CustomAction\Models\ScopedSetting;
@@ -19,158 +21,102 @@ class ScopedSettingTest extends TestCase
     use SetUpWithModelRegistrationTrait;
 
     #[DataProvider('providerBoolean')]
-    public function test_store_action_scoped_settings_success($fromEventAction)
+    public function test_list_scoped_settings_with_filter($fromEventAction)
     {
         $prefixAction = $fromEventAction ? 'event-actions' : 'manual-actions';
-        $actionClass = $fromEventAction ? EventAction::class : ManualAction::class;
+        $actionClass = $fromEventAction ? ComplexEventAction::class : ComplexManualAction::class;
         $uniqueProperty = $fromEventAction ? 'id' : 'type';
 
-        /** @var Action $action */
-        $action = $actionClass::factory()->create();
-        $settingsScope1 = [
-            'recipients' => ['to' => ['static' => ['mailables' => [
-                ['recipient_id' => User::factory()->create()->id, 'recipient_type' => 'user'],
-            ]]]],
-            ...($fromEventAction ? [] : ['test' => 'foo']),
-        ];
-        $scope1 = ['company.name' => 'my company scope 1'];
-        $settingsScope2 = [
-            'recipients' => ['to' => ['static' => ['mailables' => [
-                ['recipient_id' => User::factory()->create()->id, 'recipient_type' => 'user'],
-            ]]]],
-            ...($fromEventAction ? [] : ['test' => 'bar']),
-        ];
-        $scope2 = ['company.name' => 'my company scope 2'];
-        /** @var User $user */
-        $user = User::factory()->hasConsumerAbility()->create();
+        $scopedSetting = $this->getActionScopedSetting($actionClass);
+        $scopedSetting->name = 'the one';
+        $scopedSetting->save();
+        $action = $scopedSetting->action;
 
-        // add scope 1
-        $response = $this->actingAs($user)->postJson("custom/$prefixAction/{$action->$uniqueProperty}/scoped-settings", [
-            'scope' => $scope1,
-            'settings' => $settingsScope1,
-            'name' => 'Scoped Settings 1',
-        ]);
-        $response->assertCreated();
-        $this->assertEquals(1, $action->scopedSettings()->count());
-        $scopedSettings1 = $action->scopedSettings()->where('name', 'Scoped Settings 1')->first();
-        $response->assertJson([
-            'data' => [
-                'id' => $scopedSettings1->id,
-                'scope' => $scope1,
-                'settings' => $settingsScope1,
-                'name' => 'Scoped Settings 1',
-            ],
-        ]);
-        $this->assertEquals($settingsScope1, $scopedSettings1->settings);
-
-        // add scope 2
-        $response = $this->actingAs($user)->postJson("custom/$prefixAction/{$action->$uniqueProperty}/scoped-settings", [
-            'scope' => $scope2,
-            'settings' => $settingsScope2,
-            'name' => 'Scoped Settings 2',
-        ]);
-        $response->assertCreated();
-        $this->assertEquals(2, $action->scopedSettings()->count());
-        $scopedSettings2 = $action->scopedSettings()->where('name', 'Scoped Settings 2')->first();
-        $response->assertJson([
-            'data' => [
-                'id' => $scopedSettings2->id,
-                'scope' => $scope2,
-                'settings' => $settingsScope2,
-                'name' => 'Scoped Settings 2',
-            ],
-        ]);
-        $this->assertEquals($settingsScope2, $scopedSettings2->settings);
-
-        // get all
-        $response = $this->actingAs($user)->getJson("custom/$prefixAction/{$action->$uniqueProperty}/scoped-settings");
-        $response->assertJson([
-            'data' => [
-                [
-                    'id' => $scopedSettings1->id,
-                    'name' => 'Scoped Settings 1',
-                ],
-                [
-                    'id' => $scopedSettings2->id,
-                    'name' => 'Scoped Settings 2',
-                ],
-            ],
-        ])->assertJsonMissingPath('data.0.settings');
-
-        // get scope 1
-        $response = $this->actingAs($user)->getJson("custom/scoped-settings/{$scopedSettings1->id}");
-        $response->assertOk();
-        $response->assertJson([
-            'data' => [
-                'id' => $scopedSettings1->id,
-                'scope' => $scope1,
-                'settings' => $settingsScope1,
-                'name' => 'Scoped Settings 1',
-            ],
-        ]);
-    }
-
-    public function test_list_scoped_actions_with_filter()
-    {
-        /** @var ManualAction $action */
-        $action = ManualAction::factory()->create();
-        $scopedSettings = ScopedSetting::factory([
-            'name' => 'my one',
-        ])->for($action, 'action')->create();
-        ScopedSetting::factory([
-            'name' => 'my two',
-        ])->for($action, 'action')->create();
+        // doesn't match with filter
+        $scopedSetting->replicate()->forceFill(['name' => 'foo'])->save();
 
         /** @var User $user */
         $user = User::factory()->hasConsumerAbility()->create();
         $params = http_build_query(['name' => 'one']);
-        $this->actingAs($user)->getJson("custom/manual-actions/{$action->type}/scoped-settings?$params")
+        $this->actingAs($user)->getJson("custom/{$prefixAction}/{$action->$uniqueProperty}/scoped-settings?$params")
             ->assertOk()
             ->assertJsonCount(1, 'data')
             ->assertJson([
                 'data' => [
                     [
-                        'id' => $scopedSettings->id,
-                        'name' => 'my one',
+                        'id' => $scopedSetting->id,
+                        'name' => 'the one',
                     ],
                 ],
             ])->assertJsonMissingPath('data.0.default_setting');
     }
 
-    public function test_store_action_scoped_with_event_context_settings()
+    public function test_get_action_scoped_settings_success()
     {
-        /** @var EventAction $action */
-        $action = EventAction::factory()->create();
-        $settingsScope1 = [
-            'recipients' => ['to' => ['context' => ['mailables' => ['user']]]],
+        $scopedSetting = $this->getActionScopedSetting(ComplexManualAction::class);
+
+        /** @var User $consumer */
+        $consumer = User::factory()->hasConsumerAbility()->create();
+        $this->actingAs($consumer)->getJson("custom/scoped-settings/{$scopedSetting->id}")
+            ->assertOk()
+            ->assertJson([
+                'data' => [
+                    'id' => $scopedSetting->id,
+                    'settings' => [
+                        'text' => 'text to user {{ user.id }} {{ user.translation.translate() }}',
+                    ],
+                ],
+            ]);
+    }
+
+    public function test_get_action_scoped_settings_forbidden()
+    {
+        $scopedSetting = $this->getActionScopedSetting(ComplexManualAction::class);
+
+        /** @var User $consumer */
+        $consumer = User::factory()->create();
+        $this->actingAs($consumer)->getJson("custom/scoped-settings/{$scopedSetting->id}")
+            ->assertForbidden();
+    }
+
+    #[DataProvider('providerBoolean')]
+    public function test_store_action_scoped_settings_success($fromEventAction)
+    {
+        $prefixAction = $fromEventAction ? 'event-actions' : 'manual-actions';
+        $actionClass = $fromEventAction ? ComplexEventAction::class : ComplexManualAction::class;
+        $uniqueProperty = $fromEventAction ? 'id' : 'type';
+
+        $factory = is_subclass_of($actionClass, CallableFromEventInterface::class)
+            ? EventAction::factory()
+            : ManualAction::factory();
+
+        /** @var Action $action */
+        $action = $factory->action($actionClass)->create();
+        $inputs = [
+            'name' => 'scoped name',
+            'scope' => ['user.status' => 'foo'],
+            'settings' => [
+                'text' => 'stored text',
+                ...($fromEventAction ? ['emails' => ['user.email', 'actionEmail']] : []),
+            ],
         ];
-        $scope1 = ['company.name' => 'my company scope 1'];
         /** @var User $user */
         $user = User::factory()->hasConsumerAbility()->create();
 
-        // add scope
-        $response = $this->actingAs($user)->postJson("custom/event-actions/{$action->id}/scoped-settings", [
-            'scope' => $scope1,
-            'settings' => $settingsScope1,
-            'name' => 'my scoped stettings name',
-        ]);
-        $response->assertCreated();
+        $this->actingAs($user)->postJson("custom/$prefixAction/{$action->$uniqueProperty}/scoped-settings", $inputs)
+            ->assertCreated()
+            ->assertJsonStructure(['data' => ['id']])
+            ->assertJson([
+                'data' => $inputs,
+            ]);
+
         $this->assertEquals(1, $action->scopedSettings()->count());
-        $scopedSettings1 = $action->scopedSettings()->where('scope', 'like', '%my company scope 1%')->first();
-        $response->assertJson([
-            'data' => [
-                'id' => $scopedSettings1->id,
-                'scope' => $scope1,
-                'settings' => $settingsScope1,
-                'name' => 'my scoped stettings name',
-            ],
-        ]);
-        $this->assertEquals($settingsScope1, $scopedSettings1->settings);
+        $this->assertArraySubset($inputs, $action->scopedSettings()->first()->toArray());
     }
 
-    public function test_store_action_scoped_settings_forbidden()
+    public function test_store_action_scoped_settings_forbidden_ability()
     {
-        $action = ManualAction::factory()->create();
+        $action = ManualAction::factory()->action(ComplexManualAction::class)->create();
 
         /** @var User $user */
         $user = User::factory()->create();
@@ -178,188 +124,138 @@ class ScopedSettingTest extends TestCase
             ->assertForbidden();
     }
 
-    public function test_update_action_scoped_settings_success()
+    public function test_update_manual_action_scoped_settings()
     {
-        /** @var EventAction $action */
-        $action = EventAction::factory()->create();
-        $scopedSettings = ScopedSetting::factory([
-            'settings' => [
-                'recipients' => ['to' => ['static' => ['mailables' => [
-                    ['recipient_id' => 789, 'recipient_type' => 'user'],
-                ]]]],
-            ],
-            'scope' => ['company.name' => 'my company scope 1'],
-        ])->for($action, 'action')
-            ->create();
+        $scopedSetting = $this->getActionScopedSetting(ComplexManualAction::class);
 
-        $updatedSettings = [
-            'recipients' => ['to' => ['static' => ['mailables' => [
-                ['recipient_id' => User::factory()->create()->id, 'recipient_type' => 'user'],
-            ]]]],
+        $inputs = [
+            'name' => 'scoped name',
+            'scope' => ['user.status' => 'foo'],
+            'settings' => [
+                'text' => 'updated text',
+            ],
         ];
-        $updatedScope = ['company.name' => 'my company scope 2'];
+
         /** @var User $user */
         $user = User::factory()->hasConsumerAbility()->create();
-        $this->actingAs($user)->putJson("custom/scoped-settings/{$scopedSettings->id}", [
-            'settings' => $updatedSettings,
-            'scope' => $updatedScope,
-            'name' => 'updated name',
-        ])->assertOk()
+        $this->actingAs($user)->putJson("custom/scoped-settings/$scopedSetting->id", $inputs)
+            ->assertOk()
             ->assertJson([
-                'data' => [
-                    'id' => $scopedSettings->id,
-                    'scope' => $updatedScope,
-                    'settings' => $updatedSettings,
-                    'name' => 'updated name',
+                'data' => $inputs,
+            ]);
+
+        $this->assertArraySubset($inputs, $scopedSetting->refresh()->toArray());
+    }
+
+    public function test_update_event_action_scoped_settings()
+    {
+        $scopedSetting = $this->getActionScopedSetting(ComplexEventAction::class);
+
+        $inputs = [
+            'name' => 'scoped name',
+            'scope' => ['user.status' => 'foo'],
+            'settings' => [
+                'text' => 'updated text',
+            ],
+        ];
+
+        /** @var User $user */
+        $user = User::factory()->hasConsumerAbility()->create();
+        $this->actingAs($user)->putJson("custom/scoped-settings/$scopedSetting->id", $inputs)
+            ->assertOk()
+            ->assertJson([
+                'data' => $inputs,
+            ]);
+
+        $this->assertArraySubset($inputs, $scopedSetting->refresh()->toArray());
+    }
+
+    public function test_update_event_action_scoped_settings_with_context_values()
+    {
+        $scopedSetting = $this->getActionScopedSetting(ComplexEventAction::class);
+
+        $inputs = [
+            'name' => 'scoped name',
+            'scope' => ['user.status' => 'foo'],
+            'settings' => [
+                'text' => 'updated text',
+                'emails' => ['user.email', 'actionEmail'],
+            ],
+        ];
+
+        /** @var User $user */
+        $user = User::factory()->hasConsumerAbility()->create();
+        $this->actingAs($user)->putJson("custom/scoped-settings/$scopedSetting->id", $inputs)
+            ->assertOk()
+            ->assertJson([
+                'data' => $inputs,
+            ]);
+
+        $this->assertArraySubset($inputs, $scopedSetting->refresh()->toArray());
+    }
+
+    public function test_update_action_scoped_settings_unprocessable()
+    {
+
+        $scopedSetting = $this->getActionScopedSetting(ComplexManualAction::class);
+
+        $inputs = [
+            'name' => 'scoped name',
+            'scope' => ['user.status' => 'foo'],
+            'settings' => [
+                'text' => ['bar'],
+            ],
+        ];
+
+        /** @var User $user */
+        $user = User::factory()->hasConsumerAbility()->create();
+        $this->actingAs($user)->putJson("custom/scoped-settings/$scopedSetting->id", $inputs)
+            ->assertUnprocessable()
+            ->assertJson([
+                'message' => 'The value settings.text must be a string',
+                'errors' => [
+                    'settings.text' => [
+                        'The value settings.text must be a string',
+                    ],
                 ],
             ]);
 
-        $storedScopedSettings = ScopedSetting::findOrFail($scopedSettings->id);
-        $this->assertEquals($updatedSettings, $storedScopedSettings->settings);
-        $this->assertEquals($updatedScope, $storedScopedSettings->scope);
-        $this->assertEquals(1, $action->scopedSettings()->count());
-        $this->assertEquals(1, ScopedSetting::count());
     }
 
-    public function test_update_action_scoped_with_event_context_settings()
+    public function test_update_action_scoped_settings_forbidden()
     {
-        /** @var EventAction $action */
-        $action = EventAction::factory()
-            ->sendMailRegistrationCompany()
-            ->create();
-
-        $scopedSettings = ScopedSetting::factory([
-            'settings' => [
-                'recipients' => ['to' => ['static' => ['mailables' => [
-                    ['recipient_id' => 789, 'recipient_type' => 'user'],
-                ]]]],
-            ],
-            'scope' => ['company.name' => 'my company scope 1'],
-        ])->for($action, 'action')
-            ->create();
-
-        $settingsScope1 = [
-            'recipients' => ['to' => ['context' => [
-                'mailables' => ['user'],
-                'emails' => ['responsibles.*.email'],
-            ]]],
-        ];
-        $scope1 = ['company.name' => 'my company scope 1'];
-        /** @var User $user */
-        $user = User::factory()->hasConsumerAbility()->create();
-
-        // add scope
-        $response = $this->actingAs($user)->putJson("custom/scoped-settings/{$scopedSettings->id}", [
-            'scope' => $scope1,
-            'settings' => $settingsScope1,
-            'name' => 'updated name',
-        ]);
-        $response->assertOk();
-        $this->assertEquals(1, $action->scopedSettings()->count());
-        $scopedSettings1 = $action->scopedSettings()->where('scope', 'like', '%my company scope 1%')->first();
-        $response->assertJson([
-            'data' => [
-                'id' => $scopedSettings1->id,
-                'scope' => $scope1,
-                'settings' => $settingsScope1,
-                'name' => 'updated name',
-            ],
-        ]);
-        $this->assertEquals($settingsScope1, $scopedSettings1->settings);
-    }
-
-    #[DataProvider('providerBoolean')]
-    public function test_update_action_scoped_settings_forbidden($fromEventAction)
-    {
-        $withAction = $fromEventAction ? 'withEventAction' : 'withManualAction';
-
-        $scopedSettings = ScopedSetting::factory()->{$withAction}('send-automatic-email')->create();
+        $scopedSetting = $this->getActionScopedSetting(ComplexManualAction::class);
 
         /** @var User $user */
         $user = User::factory()->create();
-        $this->actingAs($user)->putJson("custom/scoped-settings/{$scopedSettings->id}")
+        $this->actingAs($user)->putJson("custom/scoped-settings/$scopedSetting->id")
             ->assertForbidden();
     }
 
-    #[DataProvider('providerBoolean')]
-    public function test_delete_action_scoped_settings($fromEventAction)
+    public function test_delete_action_scoped_settings()
     {
-        $actionClass = $fromEventAction ? EventAction::class : ManualAction::class;
-
-        /** @var Action $action */
-        $action = $actionClass::factory()->create();
-
-        $scopedSettings = ScopedSetting::factory([
-            'settings' => [],
-            'scope' => [],
-        ])->for($action, 'action')
-            ->create();
+        $scopedSetting = $this->getActionScopedSetting(ComplexManualAction::class);
+        $action = $scopedSetting->action;
 
         $this->assertEquals(1, $action->scopedSettings()->count());
         $this->assertEquals(1, ScopedSetting::count());
 
         /** @var User $user */
         $user = User::factory()->hasConsumerAbility()->create();
-        $response = $this->actingAs($user)->delete("custom/scoped-settings/$scopedSettings->id");
-        $response->assertNoContent();
+        $this->actingAs($user)->delete("custom/scoped-settings/$scopedSetting->id")
+            ->assertNoContent();
+
         $this->assertEquals(0, $action->scopedSettings()->count());
         $this->assertEquals(0, ScopedSetting::count());
     }
 
-    #[DataProvider('providerBoolean')]
-    public function test_delete_action_scoped_settings_forbidden($fromEventAction)
+    public function test_delete_action_scoped_settings_forbidden()
     {
-        $withAction = $fromEventAction ? 'withEventAction' : 'withManualAction';
-
-        /** @var DefaultSetting $defaultSetting */
-        $scopedSettings = ScopedSetting::factory()->{$withAction}('send-automatic-email')->create();
+        $scopedSetting = $this->getActionScopedSetting(ComplexManualAction::class);
 
         /** @var User $user */
         $user = User::factory()->create();
-        $this->actingAs($user)->delete("custom/scoped-settings/$scopedSettings->id")
+        $this->actingAs($user)->delete("custom/scoped-settings/$scopedSetting->id")
             ->assertForbidden();
-    }
-
-    #[DataProvider('providerLocalizedSettingValidationSendEmail')]
-    public function test_action_localized_settings_validation_send_email($settings, $success)
-    {
-        $defaultSetting = DefaultSetting::factory([
-            'settings' => [],
-        ])->withEventAction('send-automatic-email')->create();
-
-        /** @var User $user */
-        $user = User::factory()->hasConsumerAbility()->create();
-        $response = $this->actingAs($user)->postJson("custom/default-settings/{$defaultSetting->id}/localized-settings", [
-            'locale' => 'en',
-            'settings' => $settings,
-        ]);
-        $response->assertStatus($success ? 201 : 422);
-    }
-
-    public static function providerLocalizedSettingValidationSendEmail()
-    {
-        return [
-            [
-                [
-                    'subject' => 'original {{ to.name ? "true" : "false" }} subject',
-                    'body' => 'original {{ to.name ? "true" : "false" }} body {{ to.name ? "true" : "false" }}',
-                ],
-                true,
-            ],
-            [
-                [
-                    'subject' => 'original {{ "true }} subject',
-                    'body' => 'original subject',
-                ],
-                false,
-            ],
-            [
-                [
-                    'subject' => 'original subject',
-                    'body' => 'original {{ "true }} subject',
-                ],
-                false,
-            ],
-        ];
     }
 }

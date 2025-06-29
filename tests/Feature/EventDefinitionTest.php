@@ -20,7 +20,7 @@ class EventDefinitionTest extends TestCase
         $response = $this->actingAs($user)->getJson('custom/events');
         $response->assertJson([
             'data' => [
-                'company-registered',
+                'my-simple-event',
             ],
         ]);
     }
@@ -33,68 +33,63 @@ class EventDefinitionTest extends TestCase
             ->assertForbidden();
     }
 
-    public function test_event_shema_success()
+    public function test_get_event_schema_with_context_success()
     {
         /** @var User $user */
         $user = User::factory()->hasConsumerAbility()->create();
-        $this->actingAs($user)->getJson('custom/events/company-registered-with-context-translations/schema')
+        $this->actingAs($user)->getJson('custom/events/my-complex-event/schema')
             ->assertOk()
             ->assertJson([
                 'data' => [
                     'context_schema' => [
-                        'company.name' => 'string',
-                        'company.status' => 'string',
-                        'company.languages.*.locale' => 'string',
-                        'logo' => 'is:stored-file',
-                        'user' => 'is:mailable-entity',
-                        'user.name' => 'string',
+                        'user.id' => 'integer',
+                        'user.status' => 'string',
+                        'user.translation' => 'string',
                         'user.email' => 'email',
                     ],
                     'translatable_context' => [
-                        'company.status',
-                        'company.languages.*.locale',
+                        'user.translation',
                     ],
                     'allowed_actions' => [
-                        'send-automatic-email',
-                        'send-automatic-company-email',
+                        'complex-event-action',
                     ],
                     'fakable' => true,
                 ],
             ]);
     }
 
-    public function test_get_event_shema_without_context_success()
+    public function test_get_event_schema_without_context_success()
     {
         /** @var User $user */
         $user = User::factory()->hasConsumerAbility()->create();
-        $this->actingAs($user)->getJson('custom/events/my-event-without-context/schema')
+        $this->actingAs($user)->getJson('custom/events/my-simple-event/schema')
             ->assertOk()
             ->assertJson([
                 'data' => [
                     'context_schema' => [],
                     'translatable_context' => [],
                     'allowed_actions' => [
-                        'my-action-without-context',
+                        'simple-event-action',
                     ],
                     'fakable' => false,
                 ],
             ]);
     }
 
-    public function test_get_event_shema_not_found()
+    public function test_get_event_schema_not_found()
     {
         CustomActionModelResolver::register([], true);
         /** @var User $user */
         $user = User::factory()->hasConsumerAbility()->create();
-        $response = $this->actingAs($user)->getJson('custom/events/company-registered/schema');
+        $response = $this->actingAs($user)->getJson('custom/events/my-simple-event/schema');
         $response->assertNotFound();
     }
 
-    public function test_get_event_shema_forbidden()
+    public function test_get_event_schema_forbidden()
     {
         /** @var User $user */
         $user = User::factory()->create();
-        $this->actingAs($user)->getJson('custom/events/company-registered/schema')
+        $this->actingAs($user)->getJson('custom/events/my-simple-event/schema')
             ->assertForbidden();
     }
 }

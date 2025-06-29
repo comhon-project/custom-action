@@ -2,7 +2,8 @@
 
 namespace Database\Factories;
 
-use Comhon\CustomAction\Models\DefaultSetting;
+use Comhon\CustomAction\Contracts\CallableFromEventInterface;
+use Comhon\CustomAction\Facades\CustomActionModelResolver;
 use Comhon\CustomAction\Models\ManualAction;
 use Illuminate\Database\Eloquent\Factories\Factory;
 
@@ -28,37 +29,21 @@ class ManualActionFactory extends Factory
     public function definition()
     {
         return [
-            'type' => 'send-manual-company-email',
+            'type' => 'simple-manual-action',
         ];
     }
 
-    /**
-     * registration company mail.
-     */
-    public function sendMailRegistrationCompany(?array $toOtherUserIds = null, $withScopedSettings = false, $withAttachement = false): Factory
+    public function action(string $actionClass): Factory
     {
-        return $this->afterCreating(function (ManualAction $manualAction) use ($toOtherUserIds, $withScopedSettings, $withAttachement) {
-            DefaultSetting::factory()->for($manualAction, 'action')
-                ->sendMailRegistrationCompany($toOtherUserIds, $withAttachement)
-                ->create();
+        if (is_subclass_of($actionClass, CallableFromEventInterface::class)) {
+            throw new \Exception('given action is an event action, must be a manual action');
+        }
 
-            if ($withScopedSettings) {
-                $this->sendMailRegistrationCompanyScoped($manualAction, $toOtherUserIds);
-            }
-        });
-    }
-
-    public function withContextTranslations(): Factory
-    {
-        return $this->afterMaking(function (ManualAction $manualAction) {
-            $manualAction->type = 'send-manual-company-email-with-context-translations';
-        });
-    }
-
-    public function withGroupedRecipients(): Factory
-    {
-        return $this->afterMaking(function (ManualAction $manualAction) {
-            $manualAction->type = 'send-manual-company-grouped-email';
+        return $this->state(function (array $attributes) use ($actionClass) {
+            return [
+                'type' => CustomActionModelResolver::getUniqueName($actionClass)
+                    ?? throw new \Exception("action $actionClass not registered"),
+            ];
         });
     }
 }

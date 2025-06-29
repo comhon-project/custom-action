@@ -22,7 +22,7 @@ class ActionDefinitionTest extends TestCase
         $response = $this->actingAs($user)->getJson('custom/manual-actions');
         $response->assertJson([
             'data' => [
-                'send-manual-company-email',
+                'simple-manual-action',
             ],
         ]);
     }
@@ -35,153 +35,80 @@ class ActionDefinitionTest extends TestCase
             ->assertForbidden();
     }
 
-    public function test_get_action_shema_success()
+    #[DataProvider('providerBoolean')]
+    public function test_get_event_action_shema_success($withContextEvent)
     {
         /** @var User $user */
         $user = User::factory()->hasConsumerAbility()->create();
 
-        $response = $this->actingAs($user)->getJson('custom/actions/send-automatic-email/schema');
-        $response->assertJson([
-            'data' => [
-                'context_schema' => [
-                    'to' => ['nullable', 'is:mailable-entity'],
-                    'default_timezone' => 'string',
-                    'preferred_timezone' => 'string',
-                ],
-                'translatable_context' => [],
-                'settings_schema' => [
-                    'from.static.mailable' => 'model_reference:mailable-entity,from',
-                    'from.static.email' => 'email',
-                    'recipients.to.static.mailables' => 'array',
-                    'recipients.to.static.mailables.*' => 'model_reference:mailable-entity,recipient',
-                    'recipients.to.static.emails' => 'array',
-                    'recipients.to.static.emails.*' => 'email',
-                    'recipients.cc.static.mailables' => 'array',
-                    'recipients.cc.static.mailables.*' => 'model_reference:mailable-entity,recipient',
-                    'recipients.cc.static.emails' => 'array',
-                    'recipients.cc.static.emails.*' => 'email',
-                    'recipients.bcc.static.mailables' => 'array',
-                    'recipients.bcc.static.mailables.*' => 'model_reference:mailable-entity,recipient',
-                    'recipients.bcc.static.emails' => 'array',
-                    'recipients.bcc.static.emails.*' => 'email',
-                ],
-                'localized_settings_schema' => [
-                    'subject' => 'required|'.RuleHelper::getRuleName('text_template'),
-                    'body' => 'required|'.RuleHelper::getRuleName('html_template'),
-                ],
-                'context_keys_ignored_for_scoped_setting' => [
-                    'to', 'default_timezone', 'preferred_timezone',
-                ],
-                'simulatable' => false,
-                'fake_state_schema' => null,
-            ],
-        ]);
-
-        $response = $this->actingAs($user)->getJson('custom/actions/send-manual-company-email-with-context-translations/schema');
-        $response->assertJson([
-            'data' => [
-                'context_schema' => [
-                    'to' => ['nullable', 'is:mailable-entity'],
-                    'default_timezone' => 'string',
-                    'preferred_timezone' => 'string',
-                    'company.name' => 'string',
-                    'company.status' => 'string',
-                    'company.languages.*.locale' => 'string',
-                    'logo' => 'is:stored-file',
-                ],
-                'translatable_context' => [
-                    'company.status',
-                    'company.languages.*.locale',
-                ],
-                'settings_schema' => [
-                    'recipients.to.static.mailables' => 'array',
-                    'recipients.to.static.mailables.*' => 'model_reference:mailable-entity,recipient',
-                    'test' => 'required|string',
-                ],
-                'localized_settings_schema' => [
-                    'subject' => 'required|'.RuleHelper::getRuleName('text_template'),
-                    'body' => 'required|'.RuleHelper::getRuleName('html_template'),
-                    'test_localized' => 'string',
-                ],
-                'context_keys_ignored_for_scoped_setting' => [
-                    'to', 'default_timezone', 'preferred_timezone',
-                ],
-                'simulatable' => true,
-                'fake_state_schema' => [
-                    'status_1',
-                    'status_2',
-                    'status_3',
-                    'status' => 'integer|min:10',
-                ],
-            ],
-        ]);
-    }
-
-    public function test_get_action_shema_with_context_success()
-    {
-        /** @var User $user */
-        $user = User::factory()->hasConsumerAbility()->create();
-
-        $params = http_build_query(['event_context' => 'company-registered']);
-        $this->actingAs($user)->getJson("custom/actions/send-automatic-email/schema?$params")
-            ->assertOk()
+        $params = $withContextEvent
+            ? http_build_query(['event_context' => 'my-complex-event'])
+            : '';
+        $this->actingAs($user)->getJson("custom/actions/complex-event-action/schema?$params")
             ->assertJson([
                 'data' => [
-                    'context_schema' => [
-                        'to' => ['nullable', 'is:mailable-entity'],
-                        'default_timezone' => 'string',
-                        'preferred_timezone' => 'string',
-                    ],
+                    'context_schema' => [],
                     'translatable_context' => [],
                     'settings_schema' => [
-                        'from.static.mailable' => 'model_reference:mailable-entity,from',
-                        'from.static.email' => 'email',
-                        'recipients.to.static.mailables' => 'array',
-                        'recipients.to.static.mailables.*' => 'model_reference:mailable-entity,recipient',
-                        'recipients.to.static.emails' => 'array',
-                        'recipients.to.static.emails.*' => 'email',
-                        'recipients.cc.static.mailables' => 'array',
-                        'recipients.cc.static.mailables.*' => 'model_reference:mailable-entity,recipient',
-                        'recipients.cc.static.emails' => 'array',
-                        'recipients.cc.static.emails.*' => 'email',
-                        'recipients.bcc.static.mailables' => 'array',
-                        'recipients.bcc.static.mailables.*' => 'model_reference:mailable-entity,recipient',
-                        'recipients.bcc.static.emails' => 'array',
-                        'recipients.bcc.static.emails.*' => 'email',
-                        'attachments' => 'array',
-                        'attachments.*' => 'string|in:logo',
-                        'from.context.mailable' => 'string|in:user',
-                        'from.context.email' => 'string|in:user.email,responsibles.*.email',
-                        'recipients.to.context.mailables' => 'array',
-                        'recipients.to.context.mailables.*' => 'string|in:user',
-                        'recipients.to.context.emails' => 'array',
-                        'recipients.to.context.emails.*' => 'string|in:user.email,responsibles.*.email',
-                        'recipients.cc.context.mailables' => 'array',
-                        'recipients.cc.context.mailables.*' => 'string|in:user',
-                        'recipients.cc.context.emails' => 'array',
-                        'recipients.cc.context.emails.*' => 'string|in:user.email,responsibles.*.email',
-                        'recipients.bcc.context.mailables' => 'array',
-                        'recipients.bcc.context.mailables.*' => 'string|in:user',
-                        'recipients.bcc.context.emails' => 'array',
-                        'recipients.bcc.context.emails.*' => 'string|in:user.email,responsibles.*.email',
+                        'text' => ['required', RuleHelper::getRuleName('text_template')],
+                        'emails' => 'array',
+                        'emails.*' => $withContextEvent
+                            ? 'string|in:user.email,actionEmail'
+                            : 'string|in:actionEmail',
                     ],
                     'localized_settings_schema' => [
-                        'subject' => 'required|'.RuleHelper::getRuleName('text_template'),
-                        'body' => 'required|'.RuleHelper::getRuleName('html_template'),
+                        'localized_text' => ['required', RuleHelper::getRuleName('html_template')],
                     ],
                     'context_keys_ignored_for_scoped_setting' => [
-                        'to', 'default_timezone', 'preferred_timezone',
+                        'ignoredEmail',
+                    ],
+                    'simulatable' => $withContextEvent,
+                    'fake_state_schema' => $withContextEvent
+                        ? [
+                            'status_1',
+                            'status_2',
+                            'status_3',
+                            'status' => 'integer|min:10',
+                        ]
+                        : null,
+                ],
+            ]);
+    }
+
+    public function test_get_manual_action_shema_success()
+    {
+        /** @var User $user */
+        $user = User::factory()->hasConsumerAbility()->create();
+
+        $this->actingAs($user)->getJson('custom/actions/complex-manual-action/schema')
+            ->assertJson([
+                'data' => [
+                    'context_schema' => [],
+                    'translatable_context' => [],
+                    'settings_schema' => [
+                        'text' => ['required', RuleHelper::getRuleName('text_template')],
+                    ],
+                    'localized_settings_schema' => [
+                        'localized_text' => ['required', RuleHelper::getRuleName('html_template')],
+                    ],
+                    'context_keys_ignored_for_scoped_setting' => [],
+                    'simulatable' => true,
+                    'fake_state_schema' => [
+                        'status_1',
+                        'status_2',
+                        'status_3',
+                        'status' => 'integer|min:10',
                     ],
                 ],
             ]);
     }
 
-    public function test_get_action_shema_without_context_success()
+    public function test_get_action_empty_shema_success()
     {
         /** @var User $user */
         $user = User::factory()->hasConsumerAbility()->create();
 
-        $this->actingAs($user)->getJson('custom/actions/my-action-without-context/schema')
+        $this->actingAs($user)->getJson('custom/actions/simple-manual-action/schema')
             ->assertOk()
             ->assertJson([
                 'data' => [
@@ -190,6 +117,8 @@ class ActionDefinitionTest extends TestCase
                     'settings_schema' => [],
                     'localized_settings_schema' => [],
                     'context_keys_ignored_for_scoped_setting' => [],
+                    'simulatable' => false,
+                    'fake_state_schema' => null,
                 ],
             ]);
     }
@@ -201,7 +130,7 @@ class ActionDefinitionTest extends TestCase
         $user = User::factory()->hasConsumerAbility()->create();
 
         $params = http_build_query(['event_context' => $eventContext]);
-        $this->actingAs($user)->getJson("custom/actions/send-automatic-email/schema?$params")
+        $this->actingAs($user)->getJson("custom/actions/simple-event-action/schema?$params")
             ->assertUnprocessable()
             ->assertJson([
                 'message' => 'The event_context is not subclass of custom-event.',
@@ -222,7 +151,7 @@ class ActionDefinitionTest extends TestCase
         /** @var User $user */
         $user = User::factory()->hasConsumerAbility()->create();
 
-        $response = $this->actingAs($user)->getJson('custom/actions/send-automatic-email/schema');
+        $response = $this->actingAs($user)->getJson('custom/actions/simple-event-action/schema');
         $response->assertNotFound();
     }
 
@@ -230,7 +159,7 @@ class ActionDefinitionTest extends TestCase
     {
         /** @var User $user */
         $user = User::factory()->create();
-        $this->actingAs($user)->getJson('custom/actions/send-automatic-email/schema')
+        $this->actingAs($user)->getJson('custom/actions/simple-event-action/schema')
             ->assertForbidden();
     }
 }
