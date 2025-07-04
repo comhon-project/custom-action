@@ -48,7 +48,9 @@ class ScopedSettingTest extends TestCase
                         'name' => 'the one',
                     ],
                 ],
-            ])->assertJsonMissingPath('data.0.default_setting');
+            ])->assertJsonMissingPath('data.0.settings')
+            ->assertJsonMissingPath('data.0.scope')
+            ->assertJsonMissingPath('data.0.priority');
     }
 
     public function test_get_action_scoped_settings_success()
@@ -62,6 +64,9 @@ class ScopedSettingTest extends TestCase
             ->assertJson([
                 'data' => [
                     'id' => $scopedSetting->id,
+                    'name' => $scopedSetting->name,
+                    'scope' => $scopedSetting->scope,
+                    'priority' => $scopedSetting->priority,
                     'settings' => [
                         'text' => 'text to user {{ user.id }} {{ user.translation.translate() }}',
                     ],
@@ -99,7 +104,9 @@ class ScopedSettingTest extends TestCase
                 'text' => 'stored text',
                 ...($fromEventAction ? ['emails' => ['user.email', 'actionEmail']] : []),
             ],
+            ...($fromEventAction ? ['priority' => 10] : []),
         ];
+
         /** @var User $user */
         $user = User::factory()->hasConsumerAbility()->create();
 
@@ -124,7 +131,8 @@ class ScopedSettingTest extends TestCase
             ->assertForbidden();
     }
 
-    public function test_update_manual_action_scoped_settings()
+    #[DataProvider('providerBoolean')]
+    public function test_update_manual_action_scoped_settings($withPriority)
     {
         $scopedSetting = $this->getActionScopedSetting(ComplexManualAction::class);
 
@@ -134,6 +142,7 @@ class ScopedSettingTest extends TestCase
             'settings' => [
                 'text' => 'updated text',
             ],
+            ...($withPriority ? ['priority' => 10] : []),
         ];
 
         /** @var User $user */

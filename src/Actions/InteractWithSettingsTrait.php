@@ -36,6 +36,15 @@ trait InteractWithSettingsTrait
                 $this->setting = $action->defaultSetting ?? throw new MissingSettingException($action, true);
             } else {
                 $possibleSettings = ContextScoper::getScopedSettings($action, $context);
+
+                if (count($possibleSettings) > 1) {
+                    if ($highestPriority = collect($possibleSettings)->max('priority')) {
+                        $possibleSettings = array_filter(
+                            $possibleSettings,
+                            fn ($setting) => $setting->priority == $highestPriority
+                        );
+                    }
+                }
                 $count = count($possibleSettings);
 
                 $this->setting = match (true) {
@@ -126,7 +135,7 @@ trait InteractWithSettingsTrait
 
     /**
      * force the action to use given Setting.
-     * 
+     *
      * the function getSetting() will return the given Setting.
      */
     public function forceSetting(Setting $setting): void

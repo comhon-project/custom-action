@@ -62,6 +62,7 @@ class ActionService
         if ($scoped) {
             $rules['scope'] = 'required|array';
             $rules['name'] = 'required|string|max:63';
+            $rules['priority'] = 'nullable|integer|max:255';
         }
 
         return $rules;

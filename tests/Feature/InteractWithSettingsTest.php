@@ -132,4 +132,34 @@ class InteractWithSettingsTest extends TestCase
 
         $this->assertSame($forcedSetting, $setting);
     }
+
+    public function test_get_highest_priority_settings_success()
+    {
+        $scopedSetting = $this->getActionScopedSetting(ComplexManualAction::class, []);
+
+        $scopedSetting->replicate()->forceFill(['priority' => null, 'name' => '1'])->save();
+        $scopedSetting->replicate()->forceFill(['priority' => 0, 'name' => '2'])->save();
+        $scopedSetting->replicate()->forceFill(['priority' => 2, 'name' => '3'])->save();
+
+        $highestPriority = $scopedSetting->replicate()->forceFill(['priority' => 10, 'name' => '4']);
+        $highestPriority->save();
+
+        $action = new ComplexManualAction(User::factory()->make());
+        $setting = $action->getSetting();
+
+        $this->assertEquals($highestPriority->id, $setting->id);
+    }
+
+    public function test_get_highest_priority_settings_failure()
+    {
+        $scopedSetting = $this->getActionScopedSetting(ComplexManualAction::class, []);
+
+        $scopedSetting->replicate()->forceFill(['priority' => 10, 'name' => '1'])->save();
+        $scopedSetting->replicate()->forceFill(['priority' => 10, 'name' => '2'])->save();
+
+        $action = new ComplexManualAction(User::factory()->make());
+
+        $this->expectExceptionMessage('cannot resolve conflict between several scoped settings');
+        $action->getSetting();
+    }
 }

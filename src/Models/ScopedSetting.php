@@ -36,5 +36,6 @@ class ScopedSetting extends Setting
         'name',
         'settings',
         'scope',
+        'priority',
     ];
 }

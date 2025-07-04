@@ -39,6 +39,7 @@ return new class extends Migration
             $table->unsignedBigInteger('action_id');
             $table->string('name', 63);
             $table->json('scope');
+            $table->unsignedTinyInteger('priority')->nullable();
             $table->json('settings');
 
             $table->timestamps();
