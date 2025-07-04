@@ -45,8 +45,8 @@ trait CallableFromEventTrait
         $event = $eventClass::fake($state);
         $customAction = new static($eventAction, $event);
 
-        $customAction->fakedSetting = $setting;
-        $customAction->fakedLocalizedSetting = $localizedSetting;
+        $customAction->forcedSetting = $setting;
+        $customAction->forcedLocalizedSetting = $localizedSetting;
 
         return $customAction;
     }

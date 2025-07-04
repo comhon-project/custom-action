@@ -9,6 +9,7 @@ use Comhon\CustomAction\Exceptions\LocalizedSettingNotFoundException;
 use Comhon\CustomAction\Models\DefaultSetting;
 use Comhon\CustomAction\Models\LocalizedSetting;
 use Comhon\CustomAction\Models\ManualAction;
+use Comhon\CustomAction\Models\ScopedSetting;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Support\Facades\App;
 use PHPUnit\Framework\Attributes\DataProvider;
@@ -116,5 +117,19 @@ class InteractWithSettingsTest extends TestCase
         $this->expectExceptionMessage("missing default setting on action Comhon\CustomAction\Models\ManualAction with id '{$actionModel->id}'");
         $action = new SimpleManualAction;
         $action->getSetting();
+    }
+
+    public function test_force_settings()
+    {
+        ManualAction::factory()
+            ->action(SimpleManualAction::class)
+            ->create();
+
+        $forcedSetting = ScopedSetting::factory()->make();
+        $action = new SimpleManualAction;
+        $action->forceSetting($forcedSetting);
+        $setting = $action->getSetting();
+
+        $this->assertSame($forcedSetting, $setting);
     }
 }

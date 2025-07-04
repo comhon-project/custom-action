@@ -17,16 +17,16 @@ trait InteractWithSettingsTrait
 {
     protected Setting $setting;
 
-    protected ?Setting $fakedSetting = null;
+    protected ?Setting $forcedSetting = null;
 
-    protected ?LocalizedSetting $fakedLocalizedSetting = null;
+    protected ?LocalizedSetting $forcedLocalizedSetting = null;
 
     private array $localizedSettingCache = [];
 
     public function getSetting(): Setting
     {
-        if (isset($this->fakedSetting)) {
-            return $this->fakedSetting;
+        if (isset($this->forcedSetting)) {
+            return $this->forcedSetting;
         }
 
         if (! isset($this->setting)) {
@@ -76,8 +76,8 @@ trait InteractWithSettingsTrait
         HasLocalePreference|array|string|null $fallbackLocale = null,
         bool $useCache = true
     ): ?LocalizedSetting {
-        if (isset($this->fakedLocalizedSetting)) {
-            return $this->fakedLocalizedSetting;
+        if (isset($this->forcedLocalizedSetting)) {
+            return $this->forcedLocalizedSetting;
         }
 
         $locale = $this->getLocaleString($locale);
@@ -122,5 +122,15 @@ trait InteractWithSettingsTrait
                 $this->getLocaleString($locale),
                 $this->getLocaleString($fallbackLocale)
             );
+    }
+
+    /**
+     * force the action to use given Setting.
+     * 
+     * the function getSetting() will return the given Setting.
+     */
+    public function forceSetting(Setting $setting): void
+    {
+        $this->forcedSetting = $setting;
     }
 }

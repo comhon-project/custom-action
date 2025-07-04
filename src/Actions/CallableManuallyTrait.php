@@ -39,8 +39,8 @@ trait CallableManuallyTrait
         }
 
         $customAction = static::fake($state);
-        $customAction->fakedSetting = $setting;
-        $customAction->fakedLocalizedSetting = $localizedSetting;
+        $customAction->forcedSetting = $setting;
+        $customAction->forcedLocalizedSetting = $localizedSetting;
 
         return $customAction;
     }
