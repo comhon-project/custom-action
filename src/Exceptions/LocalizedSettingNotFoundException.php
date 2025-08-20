@@ -10,7 +10,10 @@ class LocalizedSettingNotFoundException extends RenderableException
     {
         $setingClass = get_class($setting);
         $locale = $locale !== null ? "for locale '{$locale}' " : '';
-        $fallbackLocale = $fallbackLocale !== null ? "and for fallback '{$locale}' " : '';
+        $fallbackLocale = ($fallbackLocale !== null && $fallbackLocale !== $locale)
+            ? "and for fallback '{$fallbackLocale}' "
+            : '';
+
         $this->message = "Localized setting {$locale}{$fallbackLocale}not found on $setingClass with id {$setting->id}";
     }
 }

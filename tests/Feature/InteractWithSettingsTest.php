@@ -51,6 +51,13 @@ class InteractWithSettingsTest extends TestCase
 
         if (! $expected) {
             $this->expectException(LocalizedSettingNotFoundException::class);
+            if ($paramFallback) {
+                $this->expectExceptionMessage("Localized setting for locale '{$paramLocale}' and for fallback '{$paramFallback}' not found");
+            } elseif ($paramLocale) {
+                $this->expectExceptionMessage("Localized setting for locale '{$paramLocale}' not found");
+            } else {
+                $this->expectExceptionMessage('Localized setting not found');
+            }
         }
         $localizedSetting = $action->getLocalizedSettingOrFail($paramLocale, $paramFallback);
         $this->assertNotNull($localizedSetting);
