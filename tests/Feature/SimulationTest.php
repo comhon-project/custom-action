@@ -2,6 +2,8 @@
 
 namespace Tests\Feature;
 
+use App\Actions\ComplexManualAction;
+use Comhon\CustomAction\Exceptions\NotInSafeFakeException;
 use Comhon\CustomAction\Models\ManualAction;
 use Comhon\CustomAction\Services\ActionService;
 use Illuminate\Foundation\Testing\RefreshDatabase;
@@ -42,5 +44,12 @@ class SimulationTest extends TestCase
         $this->expectException(UnprocessableEntityHttpException::class);
         $this->expectExceptionMessage('bad-action has no state to simulate action');
         app(ActionService::class)->simulate($action, ['states' => ['foo']]);
+    }
+
+    public function test_ensure_faking_safe_throws_exception()
+    {
+        $this->expectException(NotInSafeFakeException::class);
+        $this->expectExceptionMessage('Not in safe fake context');
+        ComplexManualAction::fake();
     }
 }

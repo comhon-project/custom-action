@@ -4,6 +4,7 @@ namespace Comhon\CustomAction\Services;
 
 use Comhon\CustomAction\Contracts\HasFakeStateInterface;
 use Comhon\CustomAction\Contracts\SimulatableInterface;
+use Comhon\CustomAction\Exceptions\NotInSafeFakeException;
 use Comhon\CustomAction\Exceptions\SimulateActionException;
 use Comhon\CustomAction\Exceptions\SimulateMethodDoestExistException;
 use Comhon\CustomAction\Facades\CustomActionModelResolver;
@@ -29,6 +30,13 @@ class ActionService
     public static function isFakingSafe(): bool
     {
         return app(self::class)->fakingSafe;
+    }
+
+    public static function ensureFakingSafe(): void
+    {
+        if (! self::isFakingSafe()) {
+            throw new NotInSafeFakeException;
+        }
     }
 
     public function storeDefaultSetting(Action $action, array $input): DefaultSetting

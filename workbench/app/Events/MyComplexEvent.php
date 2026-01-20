@@ -23,9 +23,7 @@ class MyComplexEvent implements CustomEventInterface, ExposeContextInterface, Fa
 
     public static function fake(?array $state = null): static
     {
-        if (! ActionService::isFakingSafe()) {
-            throw new \RuntimeException('Not in safe fake');
-        }
+        ActionService::ensureFakingSafe();
 
         $userState = [];
         if (! empty($state)) {
