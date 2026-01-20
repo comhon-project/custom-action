@@ -13,6 +13,7 @@ use App\Actions\SendManualSimpleEmail;
 use App\Actions\SimpleEventAction;
 use App\Actions\SimpleManualAction;
 use App\Actions\SimulatabeNotFakableAction;
+use App\Actions\SimulatingContextTestAction;
 use App\Events\BadEvent;
 use App\Events\MyComplexEvent;
 use App\Events\MyEmailEvent;
@@ -46,6 +47,7 @@ trait SetUpWithModelRegistrationTrait
 
             'fakable-not-simulatable-action' => FakableNotSimulatabeAction::class,
             'simulatable-not-fakable-action' => SimulatabeNotFakableAction::class,
+            'simulating-context-test-action' => SimulatingContextTestAction::class,
             'bad-event' => BadEvent::class,
             'bad-action' => BadAction::class,
 

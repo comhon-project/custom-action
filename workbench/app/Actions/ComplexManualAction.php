@@ -18,6 +18,7 @@ use Comhon\CustomAction\Contracts\HasFakeStateInterface;
 use Comhon\CustomAction\Contracts\HasTranslatableContextInterface;
 use Comhon\CustomAction\Contracts\SimulatableInterface;
 use Comhon\CustomAction\Resolver\CustomActionModelResolver;
+use Comhon\CustomAction\Services\ActionService;
 use Illuminate\Bus\Queueable;
 use Illuminate\Foundation\Bus\Dispatchable;
 use Illuminate\Queue\InteractsWithQueue;
@@ -38,6 +39,10 @@ class ComplexManualAction implements CustomActionInterface, ExposeContextInterfa
 
     public static function fake(?array $state = null): static
     {
+        if (! ActionService::isFakingSafe()) {
+            throw new \RuntimeException('Not in safe fake');
+        }
+
         $userState = [];
         if (! empty($state)) {
             $userState['status'] = '';

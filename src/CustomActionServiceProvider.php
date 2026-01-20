@@ -25,6 +25,7 @@ use Comhon\CustomAction\Rules\IsInstanceOf;
 use Comhon\CustomAction\Rules\ModelReference;
 use Comhon\CustomAction\Rules\RuleHelper;
 use Comhon\CustomAction\Rules\TextTemplate;
+use Comhon\CustomAction\Services\ActionService;
 use Comhon\ModelResolverContract\ModelResolverInterface;
 use Illuminate\Database\Eloquent\Relations\Relation;
 use Illuminate\Support\Facades\Event;
@@ -55,6 +56,7 @@ class CustomActionServiceProvider extends PackageServiceProvider
         $this->app->singleton(CustomActionModelResolver::class);
         $this->app->singletonIf(ModelResolverInterface::class, ModelResolver::class);
         $this->app->singletonIf(ContextScoperInterface::class, ContextScoper::class);
+        $this->app->scoped(ActionService::class);
     }
 
     public function packageBooted()

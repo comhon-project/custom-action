@@ -14,6 +14,19 @@ class SimulationTest extends TestCase
     use RefreshDatabase;
     use SetUpWithModelRegistrationTrait;
 
+    public function test_is_faking_safe()
+    {
+        $this->assertFalse(ActionService::isFakingSafe());
+
+        $action = ManualAction::factory(['type' => 'simulating-context-test-action'])->create();
+
+        $result = app(ActionService::class)->simulate($action, []);
+
+        $this->assertTrue($result['success']);
+        $this->assertTrue($result['result']['was_faking_safe']);
+        $this->assertFalse(ActionService::isFakingSafe());
+    }
+
     public function test_simulate_function_doesnt_exists()
     {
         $action = ManualAction::factory(['type' => 'bad-action'])->create();

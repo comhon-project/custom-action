@@ -10,6 +10,7 @@ use Comhon\CustomAction\Contracts\ExposeContextInterface;
 use Comhon\CustomAction\Contracts\FakableInterface;
 use Comhon\CustomAction\Contracts\HasFakeStateInterface;
 use Comhon\CustomAction\Contracts\HasTranslatableContextInterface;
+use Comhon\CustomAction\Services\ActionService;
 use Illuminate\Broadcasting\InteractsWithSockets;
 use Illuminate\Foundation\Events\Dispatchable;
 use Illuminate\Queue\SerializesModels;
@@ -22,6 +23,10 @@ class MyComplexEvent implements CustomEventInterface, ExposeContextInterface, Fa
 
     public static function fake(?array $state = null): static
     {
+        if (! ActionService::isFakingSafe()) {
+            throw new \RuntimeException('Not in safe fake');
+        }
+
         $userState = [];
         if (! empty($state)) {
             $userState['status'] = '';

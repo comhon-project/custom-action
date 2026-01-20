@@ -24,6 +24,13 @@ use Symfony\Component\HttpKernel\Exception\UnprocessableEntityHttpException;
 
 class ActionService
 {
+    private bool $fakingSafe = false;
+
+    public static function isFakingSafe(): bool
+    {
+        return app(self::class)->fakingSafe;
+    }
+
     public function storeDefaultSetting(Action $action, array $input): DefaultSetting
     {
         if ($action->defaultSetting()->exists()) {
@@ -137,6 +144,7 @@ class ActionService
             // to prevent any changes from being applied to the database.
             try {
                 DB::beginTransaction();
+                $this->fakingSafe = true;
 
                 $customAction = $customActionClass::buildFakeInstance($action, $setting, $localizedSetting, $state);
 
@@ -157,6 +165,7 @@ class ActionService
             } catch (\Throwable $th) {
                 $results[] = $this->reportError($th, $state);
             } finally {
+                $this->fakingSafe = false;
                 DB::rollBack();
             }
         }
