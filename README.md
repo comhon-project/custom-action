@@ -34,7 +34,7 @@ php artisan vendor:publish --tag="custom-action-config"
 ```
 ## Documentation
 
-To learn more about Custom Action, please the [wiki](https://github.com/comhon-project/custom-action/wiki).
+To learn more about Custom Action, please see the [documentation](https://comhon-project.github.io/custom-action/).
 
 ## Changelog
 
