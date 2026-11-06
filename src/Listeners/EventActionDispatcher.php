@@ -11,6 +11,7 @@ use Comhon\CustomAction\Events\EventActionError;
 use Comhon\CustomAction\Exceptions\InvalidActionTypeException;
 use Comhon\CustomAction\Facades\ContextScoper;
 use Comhon\CustomAction\Facades\CustomActionModelResolver;
+use Comhon\CustomAction\Models\EventAction;
 use Comhon\CustomAction\Models\EventListener;
 
 class EventActionDispatcher
@@ -31,7 +32,7 @@ class EventActionDispatcher
             : $query->lazy();
 
         foreach ($listeners as $listener) {
-            /** @var \Comhon\CustomAction\Models\EventAction $eventAction */
+            /** @var EventAction $eventAction */
             foreach ($listener->eventActions as $eventAction) {
                 try {
                     $actionClass = $eventAction->getActionClass();

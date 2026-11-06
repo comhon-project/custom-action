@@ -24,16 +24,8 @@ trait InteractWithContextTrait
             return $this->contextCache[$withTranslations][$validated];
         }
 
-        $contextObjects = [];
-        if ($this instanceof CallableFromEventInterface && $this->getEvent() instanceof ExposeContextInterface) {
-            $contextObjects[] = $this->getEvent();
-        }
-        if ($this instanceof ExposeContextInterface) {
-            $contextObjects[] = $this;
-        }
-
         $context = [];
-        foreach ($contextObjects as $contextObject) {
+        foreach ($this->getContextObjects() as $contextObject) {
             $currentContext = ContextHelper::extractContext($contextObject);
             if ($validated) {
                 $currentContext = Validator::validate($currentContext, $contextObject->getContextSchema($this));
@@ -50,6 +42,24 @@ trait InteractWithContextTrait
         }
 
         return $context;
+    }
+
+    /**
+     * Get the objects that expose the context: the event (if action is triggered from event), then the action.
+     *
+     * @return ExposeContextInterface[]
+     */
+    protected function getContextObjects(): array
+    {
+        $contextObjects = [];
+        if ($this instanceof CallableFromEventInterface && $this->getEvent() instanceof ExposeContextInterface) {
+            $contextObjects[] = $this->getEvent();
+        }
+        if ($this instanceof ExposeContextInterface) {
+            $contextObjects[] = $this;
+        }
+
+        return $contextObjects;
     }
 
     /**

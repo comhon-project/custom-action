@@ -203,6 +203,63 @@ $first = $context['user']['nationalities'][0]['name']->translate() ?? null;
 $second = $context['user']['nationalities'][1]['name']->translate() ?? null;
 ```
 
+In email templates (actions extending `AbstractSendEmail`), translations are applied at render time, in the locale of the email:
+
+```twig
+{{ user.civility }} {# raw value, e.g. in conditions: {% if user.civility == 'mr' %} #}
+{{ user.civility.translate() }} {# translated value #}
+```
+
+When the action is triggered from an event, the translatable context of the event and the one of the action are both applied to the merged context (the context the template receives).
+
+## Renderable Context
+
+Some values depend on how the email is rendered: its locale, its timezone, or the timezone of the recipient (e.g. a meeting at 14:00, a birthday, an amount formatted for the locale).
+To build them, an action that sends emails, or an event that triggers such actions (and exposes its context), can implement `HasRenderableContextInterface`.
+Its static method `getRenderableContext` is called at render time with the validated context and the render context
+(`Comhon\TemplateRenderer\RenderContext`, which gives the `locale()`, `timezone()` and `preferredTimezone()` of the email), and returns the context to render.
+
+```php
+use Comhon\CustomAction\Contracts\HasRenderableContextInterface;
+use Comhon\TemplateRenderer\RenderContext;
+
+class SendMeetingReminder extends AbstractSendManualEmail implements HasRenderableContextInterface
+{
+    protected static function getCommonContextSchema(): array
+    {
+        return [
+            'meeting.starts_at' => 'required|date_format:Y-m-d H:i:s',
+            'user.birthday' => 'nullable|date_format:Y-m-d',
+        ];
+    }
+
+    public static function getRenderableContext(array $context, RenderContext $renderContext): array
+    {
+        // dates without timezone: a meeting at 14:00, a birthday that never shifts to another day
+        $context['meeting']['starts_at'] = $renderContext->dateTime($context['meeting']['starts_at']);
+        $context['user']['birthday'] = $renderContext->date($context['user']['birthday'] ?? null);
+
+        return $context;
+    }
+}
+```
+
+```twig
+{{ meeting.starts_at|date('d/m/Y H:i') }} {# in the timezone of the email #}
+{{ meeting.starts_at|date('H:i', preferred_timezone) }} {# in the timezone of the recipient #}
+{% if user.birthday %}{{ user.birthday|date('d/m') }}{% endif %}
+```
+
+Dates built with `date()` and `dateTime()` must be displayed with a filter (e.g. `|date`), they can't be printed as is.
+They are `null` for a `null` value: check them before using `|date`, which displays the current date for `null`.
+See [template-renderer](https://github.com/comhon-project/template-renderer) for more details on these dates.
+
+When the action is triggered from an event, the method of the event is called first, then the one of the action. Translations are applied afterwards, on the returned context.
+
+Be aware that:
+* It is called once per email (and once per recipient), with the locale of the email applied. Keep it free of side effects.
+* Don't replace a translatable value by an object, and keep arrays for the branches that contain translatable values, otherwise translations can't be applied.
+
 ## Formating Context
 
 For any reason you may want to format the context to expose values differently than the public attributes of the instantiated object. To do, you just have to implement the interface `FormatContextInterface`. You will have to implement the function `formatContext` that returns the transformed context. 

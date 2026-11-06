@@ -4,6 +4,7 @@ namespace Comhon\CustomAction\Http\Controllers;
 
 use Comhon\CustomAction\Models\EventAction;
 use Comhon\CustomAction\Models\LocalizedSetting;
+use Comhon\CustomAction\Models\Setting;
 use Comhon\CustomAction\Rules\RuleHelper;
 use Illuminate\Http\Request;
 use Illuminate\Http\Resources\Json\JsonResource;
@@ -27,7 +28,7 @@ class LocalizedSettingController extends Controller
     {
         $this->authorize('update', $localizedSetting);
 
-        /** @var \Comhon\CustomAction\Models\Setting $setting */
+        /** @var Setting $setting */
         $setting = $localizedSetting->localizable;
 
         $eventContext = $setting->action instanceof EventAction

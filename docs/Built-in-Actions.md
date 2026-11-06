@@ -7,12 +7,14 @@ The custom action library come with some built-in actions.
 Actually, `AbstractSendEmail` is not directly usable (since it’s abstract), but it serves as a useful skeleton for building actions that send emails. When extending from this class, you just need to implement functions to define the sender, recipients, subject, body, and attachments. You don’t need to implement the rest : 
 -   settings selection (default setting or scoped setting)
 -   localized settings selection (according recipient preferred locale)
--   variable substitution according context in the subject and in the body (using [twig](https://twig.symfony.com/) by default)
+-   variable substitution according context in the subject and in the body (using [twig](https://twig.symfony.com/) by default), values depending on the locale or the timezone of the email can be built with a [renderable context](Context.md#renderable-context)
 -   and the actual email sending.
 
 **Note:** When extending `AbstractSendEmail`, to expose the [context](Context.md), instead of implementing `getContextSchema`, You must implements `getCommonContextSchema`.
 
 **Note:** This action is [simulatable](Action-Simulation.md). It implement the `SimulatableInterface` and implements the `simulate` method. Thus, all actions that extend this class benefit from its simulation mechanism. You just need to implement context faking in order to execute a simulation. The simulation doesn't send an email but returns a JSON response through the API, containing the email subject and body with variable substitution applied. This allows the API consumer to preview the email content before saving changes.
+
+!> **Warning:** Queued emails contain a closure signed with your application key: if you change `APP_KEY`, emails queued before the change can't be sent. Let your queues be processed before changing it.
 
 ## AbstractSendManualEmail
 (extends AbstractSendEmail)

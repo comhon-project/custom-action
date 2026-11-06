@@ -6,12 +6,13 @@ use Comhon\CustomAction\Exceptions\LocalizedSettingNotFoundException;
 use Comhon\CustomAction\Exceptions\MissingSettingException;
 use Comhon\CustomAction\Exceptions\UnresolvableScopedSettingException;
 use Comhon\CustomAction\Facades\ContextScoper;
+use Comhon\CustomAction\Models\Action;
 use Comhon\CustomAction\Models\LocalizedSetting;
 use Comhon\CustomAction\Models\Setting;
 use Illuminate\Contracts\Translation\HasLocalePreference;
 
 /**
- * @property \Comhon\CustomAction\Models\Action $action
+ * @property Action $action
  */
 trait InteractWithSettingsTrait
 {
@@ -116,7 +117,7 @@ trait InteractWithSettingsTrait
     }
 
     /**
-     * @see \Comhon\CustomAction\Actions\InteractWithSettingsTrait::getLocalizedSetting()
+     * @see InteractWithSettingsTrait::getLocalizedSetting()
      *
      * throw an exception if there is no localized settings found
      */

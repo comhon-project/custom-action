@@ -4,16 +4,17 @@ namespace Database\Factories;
 
 use Comhon\CustomAction\Models\DefaultSetting;
 use Illuminate\Database\Eloquent\Factories\Factory;
+use Illuminate\Database\Eloquent\Model;
 
 /**
- * @extends \Illuminate\Database\Eloquent\Factories\Factory<\Comhon\CustomAction\Models\DefaultSetting>
+ * @extends Factory<DefaultSetting>
  */
 class DefaultSettingFactory extends Factory
 {
     /**
      * The name of the factory's corresponding model.
      *
-     * @var class-string<\Illuminate\Database\Eloquent\Model>
+     * @var class-string<Model>
      */
     protected $model = DefaultSetting::class;
 

@@ -45,6 +45,17 @@ jobs:
           echo "::add-matcher::${{ runner.tool_cache }}/php.json"
           echo "::add-matcher::${{ runner.tool_cache }}/phpunit.json"
 
+      - name: Allow end-of-life Laravel versions
+        # Laravel 11 is end-of-life: every release carries unpatched security advisories,
+        # so Composer >= 2.9 refuses to resolve it by default. We test against it on purpose,
+        # so exempt laravel/framework only, and only on these matrix rows. Every other dependency
+        # still blocks the install when a known vulnerability has no patched release.
+        # This only affects the CI install, never package consumers.
+        if: startsWith(matrix.laravel, '11.')
+        shell: bash
+        run: |
+          composer config policy.advisories.ignore --json '{"laravel/framework": "End-of-life release line, tested on purpose"}'
+
       - name: Install dependencies
         run: |
           composer require "laravel/framework:${{ matrix.laravel }}" "orchestra/testbench:${{ matrix.testbench }}" "nesbot/carbon:${{ matrix.carbon }}" --no-interaction --no-update

@@ -36,6 +36,10 @@ php artisan vendor:publish --tag="custom-action-config"
 
 To learn more about Custom Action, please see the [documentation](https://comhon-project.github.io/custom-action/).
 
+## Upgrading
+
+Please see [UPGRADING](UPGRADING.md) for upgrade instructions between major versions.
+
 ## Changelog
 
 Please see [CHANGELOG](CHANGELOG.md) for more information on what has changed recently.

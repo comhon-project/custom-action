@@ -2,6 +2,7 @@
 
 namespace Comhon\CustomAction\Facades;
 
+use Comhon\CustomAction\Contracts\ContextScoperInterface;
 use Illuminate\Support\Facades\Facade;
 
 /**
@@ -14,6 +15,6 @@ class ContextScoper extends Facade
 {
     protected static function getFacadeAccessor()
     {
-        return \Comhon\CustomAction\Contracts\ContextScoperInterface::class;
+        return ContextScoperInterface::class;
     }
 }

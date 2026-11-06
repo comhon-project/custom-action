@@ -11,14 +11,19 @@ use Comhon\CustomAction\Actions\Email\Mailable\Custom;
 use Comhon\CustomAction\Actions\Email\Support\EmailHelper;
 use Comhon\CustomAction\Actions\InteractWithContextTrait;
 use Comhon\CustomAction\Actions\InteractWithSettingsTrait;
+use Comhon\CustomAction\Context\ContextHelper;
 use Comhon\CustomAction\Contracts\CustomActionInterface;
 use Comhon\CustomAction\Contracts\ExposeContextInterface;
 use Comhon\CustomAction\Contracts\HasContextKeysIgnoredForScopedSettingInterface;
+use Comhon\CustomAction\Contracts\HasRenderableContextInterface;
 use Comhon\CustomAction\Contracts\HasTimezonePreferenceInterface;
+use Comhon\CustomAction\Contracts\HasTranslatableContextInterface;
 use Comhon\CustomAction\Contracts\MailableEntityInterface;
 use Comhon\CustomAction\Contracts\SimulatableInterface;
 use Comhon\CustomAction\Models\LocalizedSetting;
 use Comhon\CustomAction\Rules\RuleHelper;
+use Comhon\TemplateRenderer\RenderContext;
+use Comhon\TemplateRenderer\RenderOptions;
 use Illuminate\Bus\Queueable;
 use Illuminate\Contracts\Translation\HasLocalePreference;
 use Illuminate\Foundation\Bus\Dispatchable;
@@ -173,10 +178,41 @@ abstract class AbstractSendEmail implements CustomActionInterface, ExposeContext
     private function buildEmailDataConainer(): EmailData
     {
         return new EmailData(
-            $this->getExposedValidatedContext(true),
+            $this->getExposedValidatedContext(false),
             $this->getRecipients(),
             $this->getFrom(),
         );
+    }
+
+    /**
+     * Make the replacements closure, called at render time once the locale and timezones are resolved.
+     *
+     * The closure is static and only captures the context and class names,
+     * so it can be serialized with the mail when it is queued.
+     *
+     * @param  class-string[]  $contextClasses
+     */
+    private static function makeReplacements(array $context, array $contextClasses): \Closure
+    {
+        $renderableClasses = array_values(array_filter(
+            $contextClasses,
+            fn ($class) => is_subclass_of($class, HasRenderableContextInterface::class),
+        ));
+        $translatableClasses = array_values(array_filter(
+            $contextClasses,
+            fn ($class) => is_subclass_of($class, HasTranslatableContextInterface::class),
+        ));
+
+        return static function (RenderContext $renderContext) use ($context, $renderableClasses, $translatableClasses): array {
+            foreach ($renderableClasses as $class) {
+                $context = $class::getRenderableContext($context, $renderContext);
+            }
+            foreach ($translatableClasses as $class) {
+                ContextHelper::setTranslationValues($context, $class::getTranslatableContext());
+            }
+
+            return $context;
+        };
     }
 
     private function getTos(EmailData $emailData): array
@@ -225,10 +261,12 @@ abstract class AbstractSendEmail implements CustomActionInterface, ExposeContext
         return new CustomMailable(
             new Custom(
                 $emailData->localizedMailInfosCache[$locale],
-                $emailData->context,
-                $locale,
-                $this->getDefaultTimezone($preferredTimezone),
-                $preferredTimezone,
+                self::makeReplacements($emailData->context, array_map(get_class(...), $this->getContextObjects())),
+                new RenderOptions(
+                    locale: $locale,
+                    timezone: $this->getDefaultTimezone($preferredTimezone),
+                    preferredTimezone: $preferredTimezone,
+                ),
             ),
             $normalizedTo,
         );
