@@ -125,7 +125,11 @@ class Custom extends Mailable
 
     private function getRenderedSubject(): string
     {
-        return $this->renderedSubject ??= $this->renderTemplate($this->mail['subject']);
+        return $this->renderedSubject ??= html_entity_decode(
+            $this->renderTemplate($this->mail['subject']),
+            ENT_QUOTES | ENT_HTML5,
+            'UTF-8',
+        );
     }
 
     private function getRenderedBody(): string

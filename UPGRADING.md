@@ -9,6 +9,11 @@ When an event is dispatched inside a database transaction, each synchronous acti
 - if an action fails, the changes it made in the database are now rolled back (before, they were committed with the transaction),
 - if the transaction is lost while an action is executed (deadlock, lost connection), the exception is now thrown back to the code that dispatched the event (before, it was caught and an `EventActionError` event was dispatched).
 
+### Email subjects
+
+The subject of emails (actions extending `AbstractSendEmail`) is now plain text: the HTML escaping applied by the template renderer is removed (before, `O'Brien & Co` was sent as `O&#039;Brien &amp; Co`).
+The subject returned by a simulation is not escaped anymore: escape it if you display it as HTML.
+
 ## To 17.0 (template-renderer 2.x)
 
 custom-action now requires `comhon-project/template-renderer` 2.x.

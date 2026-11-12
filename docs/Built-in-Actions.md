@@ -14,6 +14,8 @@ The custom action library comes with some built-in actions.
 
 **Note:** This action is [simulatable](Action-Simulation.md). It implements the `SimulatableInterface` and its `simulate` method. Thus, all actions that extend this class benefit from its simulation mechanism. You just need to implement context faking in order to execute a simulation. The simulation doesn't send an email but returns a JSON response through the API, containing the email subject and body with variable substitution applied. This allows the API consumer to preview the email content before saving changes.
 
+**Note:** The subject is plain text: the HTML escaping applied by the template renderer is removed from the rendered subject (e.g. `&amp;` becomes `&`), the body stays HTML escaped. If you display a simulated subject as HTML, escape it.
+
 !> **Warning:** Queued emails contain a closure signed with your application key: if you change `APP_KEY`, emails queued before the change can't be sent. Let your queues be processed before changing it.
 
 ### Send emails after the database transaction is committed
