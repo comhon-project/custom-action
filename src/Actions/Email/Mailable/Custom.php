@@ -8,6 +8,7 @@ use Comhon\TemplateRenderer\RenderContext;
 use Comhon\TemplateRenderer\RenderOptions;
 use Illuminate\Bus\Queueable;
 use Illuminate\Contracts\Mail\Attachable;
+use Illuminate\Mail\Attachment as BaseAttachment;
 use Illuminate\Mail\Mailable;
 use Illuminate\Mail\Mailables\Attachment;
 use Illuminate\Mail\Mailables\Content;
@@ -32,6 +33,10 @@ class Custom extends Mailable
      * (subject and body are rendered separately, with the same render options).
      */
     private ?array $resolvedReplacements = null;
+
+    private ?string $renderedSubject = null;
+
+    private ?string $renderedBody = null;
 
     /**
      * Create a new message instance.
@@ -107,13 +112,35 @@ class Custom extends Mailable
     }
 
     /**
+     * Render the subject and the body now instead of when the mail is sent,
+     * so a rendering failure happens now. Rendered values are reused when the mail is sent.
+     */
+    public function prerender(): static
+    {
+        $this->getRenderedSubject();
+        $this->getRenderedBody();
+
+        return $this;
+    }
+
+    private function getRenderedSubject(): string
+    {
+        return $this->renderedSubject ??= $this->renderTemplate($this->mail['subject']);
+    }
+
+    private function getRenderedBody(): string
+    {
+        return $this->renderedBody ??= $this->renderTemplate($this->mail['body']);
+    }
+
+    /**
      * Get the message envelope.
      */
     public function envelope(): Envelope
     {
         return new Envelope(
             from: $this->mail['from'] ?? null,
-            subject: $this->renderTemplate($this->mail['subject'])
+            subject: $this->getRenderedSubject()
         );
     }
 
@@ -122,7 +149,7 @@ class Custom extends Mailable
      */
     public function content(): Content
     {
-        return new Content(htmlString: $this->renderTemplate($this->mail['body']));
+        return new Content(htmlString: $this->getRenderedBody());
     }
 
     /**
@@ -133,7 +160,7 @@ class Custom extends Mailable
         $attachments = [];
         if (isset($this->mail['attachments'])) {
             foreach ($this->mail['attachments'] as $file) {
-                $attachments[] = $file instanceof Attachable
+                $attachments[] = $file instanceof Attachable || $file instanceof BaseAttachment
                     ? $file
                     : Attachment::fromPath($file);
             }

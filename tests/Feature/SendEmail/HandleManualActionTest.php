@@ -7,7 +7,10 @@ use App\Actions\SendManualSimpleEmail;
 use App\Models\User;
 use App\Models\UserWithoutPreference;
 use Comhon\CustomAction\Actions\Email\AbstractSendManualEmail;
+use Comhon\CustomAction\Actions\Email\Exceptions\CustomMailableException;
 use Comhon\CustomAction\Actions\Email\Mailable\Custom;
+use Comhon\CustomAction\Exceptions\LocalizedSettingNotFoundException;
+use Comhon\CustomAction\Files\StorageFile;
 use Comhon\CustomAction\Files\SystemFile;
 use Comhon\CustomAction\Models\DefaultSetting;
 use Comhon\CustomAction\Models\LocalizedSetting;
@@ -15,8 +18,11 @@ use Comhon\CustomAction\Models\ManualAction;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Mail\Mailables\Attachment;
 use Illuminate\Support\Facades\App;
+use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Mail;
+use Illuminate\Support\Facades\Storage;
 use PHPUnit\Framework\Attributes\DataProvider;
+use Symfony\Component\Mime\Exception\RfcComplianceException;
 use Tests\SetUpWithModelRegistrationTrait;
 use Tests\Support\Utils;
 use Tests\TestCase;
@@ -289,5 +295,183 @@ class HandleManualActionTest extends TestCase
         $mail->assertHasAttachment(Attachment::fromPath($this->getAssetPath()));
 
         AbstractSendManualEmail::registerDefaultTimeZone(null);
+    }
+
+    private function storeSendManualSimpleEmailAction(): void
+    {
+        ManualAction::factory(['type' => 'send-manual-simple-email'])
+            ->has(
+                DefaultSetting::factory([
+                    'settings' => [],
+                ])->has(
+                    LocalizedSetting::factory([
+                        'locale' => 'en',
+                        'settings' => ['subject' => 'subject', 'body' => 'body'],
+                    ]),
+                    'localizedSettings',
+                ),
+                'defaultSetting'
+            )->create();
+    }
+
+    public function test_send_after_commit_sends_mail_once_transaction_is_committed()
+    {
+        $this->storeSendManualSimpleEmailAction();
+        Mail::fake();
+
+        DB::transaction(function () {
+            (new SendManualSimpleEmail)->to('to@gmail.com')->sendAfterCommit()->handle();
+
+            Mail::assertNothingSent();
+        });
+
+        Mail::assertSent(Custom::class, 1);
+        Mail::assertSent(Custom::class, fn (Custom $mail) => $mail->hasTo('to@gmail.com'));
+    }
+
+    public function test_send_after_commit_from_dispatch_sends_mail_once_transaction_is_committed()
+    {
+        $this->storeSendManualSimpleEmailAction();
+        Mail::fake();
+
+        DB::transaction(function () {
+            SendManualSimpleEmail::dispatch('to@gmail.com')->sendAfterCommit();
+
+            Mail::assertNothingSent();
+        });
+
+        Mail::assertSent(Custom::class, 1);
+    }
+
+    public function test_send_after_commit_doesnt_send_mail_if_transaction_is_rolled_back()
+    {
+        $this->storeSendManualSimpleEmailAction();
+        Mail::fake();
+
+        DB::beginTransaction();
+        (new SendManualSimpleEmail)->to('to@gmail.com')->sendAfterCommit()->handle();
+        DB::rollBack();
+
+        Mail::assertNothingSent();
+    }
+
+    public function test_send_after_commit_sends_mail_immediately_without_transaction()
+    {
+        $this->storeSendManualSimpleEmailAction();
+        Mail::fake();
+
+        (new SendManualSimpleEmail)->to('to@gmail.com')->sendAfterCommit()->handle();
+
+        Mail::assertSent(Custom::class, 1);
+    }
+
+    public function test_send_after_commit_disabled_sends_mail_inside_transaction()
+    {
+        $this->storeSendManualSimpleEmailAction();
+        Mail::fake();
+
+        DB::transaction(function () {
+            (new SendManualSimpleEmail)->to('to@gmail.com')->sendAfterCommit()->sendAfterCommit(false)->handle();
+
+            Mail::assertSent(Custom::class, 1);
+        });
+    }
+
+    #[DataProvider('providerBoolean')]
+    public function test_build_failure_with_several_recipients($sendAfterCommit)
+    {
+        App::setLocale('es');
+        App::setFallbackLocale('es');
+        $user = User::factory(['preferred_locale' => 'en'])->create();
+        $otherUser = User::factory(['preferred_locale' => 'es'])->create();
+
+        $this->storeSendManualSimpleEmailAction();
+        Mail::fake();
+
+        $thrown = false;
+        try {
+            DB::transaction(function () use ($user, $otherUser, $sendAfterCommit) {
+                (new SendManualSimpleEmail)->to([$user, $otherUser])->sendAfterCommit($sendAfterCommit)->handle();
+            });
+        } catch (LocalizedSettingNotFoundException) {
+            $thrown = true;
+        }
+
+        $this->assertTrue($thrown);
+        if ($sendAfterCommit) {
+            // the mail of the first recipient is discarded with the rolled back transaction
+            Mail::assertNothingSent();
+        } else {
+            // mails are sent one by one, the mail of the first recipient is already sent
+            Mail::assertSent(Custom::class, 1);
+        }
+    }
+
+    #[DataProvider('providerSendAfterCommitBuildFailure')]
+    public function test_send_after_commit_build_failure_happens_inside_transaction(\Closure $configure, string $exceptionClass)
+    {
+        Storage::fake('local');
+        $this->storeSendManualSimpleEmailAction();
+        Mail::fake();
+        $usersCount = User::count();
+
+        $thrown = null;
+        try {
+            DB::transaction(function () use ($configure) {
+                User::factory()->create();
+                $configure((new SendManualSimpleEmail)->to('to@gmail.com'))->sendAfterCommit()->handle();
+            });
+        } catch (\Throwable $th) {
+            $thrown = $th;
+        }
+
+        $this->assertInstanceOf($exceptionClass, $thrown);
+        $this->assertEquals($usersCount, User::count(), 'transaction should be rolled back');
+        Mail::assertNothingSent();
+    }
+
+    public static function providerSendAfterCommitBuildFailure()
+    {
+        return [
+            'template rendering' => [
+                fn (SendManualSimpleEmail $action) => $action->body('{{ unclosed'),
+                \Throwable::class, // the exception class depends on the template renderer driver
+            ],
+            'missing file attachment' => [
+                fn (SendManualSimpleEmail $action) => $action->attachments(new SystemFile('/not/existing/file.pdf')),
+                CustomMailableException::class,
+            ],
+            'missing storage attachment' => [
+                fn (SendManualSimpleEmail $action) => $action->attachments(new StorageFile('not-existing.pdf', 'local')),
+                CustomMailableException::class,
+            ],
+            'invalid address' => [
+                fn (SendManualSimpleEmail $action) => $action->to('not-an-email'),
+                RfcComplianceException::class,
+            ],
+        ];
+    }
+
+    public function test_send_after_commit_loads_storage_attachment_inside_transaction()
+    {
+        Storage::fake('local');
+        Storage::disk('local')->put('file.txt', 'file content');
+        $this->storeSendManualSimpleEmailAction();
+        Mail::fake();
+
+        DB::transaction(function () {
+            (new SendManualSimpleEmail)->to(['to@gmail.com', 'other@gmail.com'])
+                ->attachments(new StorageFile('file.txt', 'local'))
+                ->sendAfterCommit()
+                ->handle();
+
+            // the content is already loaded, so the file is not needed anymore
+            Storage::disk('local')->delete('file.txt');
+        });
+
+        Mail::assertSent(Custom::class, 2);
+        Mail::assertSent(Custom::class, fn (Custom $mail) => $mail->hasAttachment(
+            Attachment::fromData(fn () => 'file content', 'file.txt')->withMime('text/plain')
+        ));
     }
 }

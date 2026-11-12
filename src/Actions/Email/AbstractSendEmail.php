@@ -30,8 +30,10 @@ use Illuminate\Foundation\Bus\Dispatchable;
 use Illuminate\Mail\Mailables\Address;
 use Illuminate\Queue\InteractsWithQueue;
 use Illuminate\Queue\SerializesModels;
+use Illuminate\Support\Arr;
 use Illuminate\Support\Collection;
 use Illuminate\Support\Facades\App;
+use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Mail;
 
 abstract class AbstractSendEmail implements CustomActionInterface, ExposeContextInterface, HasContextKeysIgnoredForScopedSettingInterface, SimulatableInterface
@@ -55,6 +57,14 @@ abstract class AbstractSendEmail implements CustomActionInterface, ExposeContext
      * @var bool
      */
     protected $sendAsynchronously = false;
+
+    /**
+     * Indicates if mails should be sent only once the current database transaction is committed
+     * (mails are still built immediately, only the sending is deferred).
+     *
+     * @var bool
+     */
+    protected $sendAfterCommit = false;
 
     /**
      * Get email sender.
@@ -89,6 +99,16 @@ abstract class AbstractSendEmail implements CustomActionInterface, ExposeContext
      * Get email attachements
      */
     abstract protected function getAttachments(LocalizedSetting $localizedSetting): ?iterable;
+
+    /**
+     * Send mails only once the current database transaction is committed.
+     */
+    public function sendAfterCommit(bool $sendAfterCommit = true): static
+    {
+        $this->sendAfterCommit = $sendAfterCommit;
+
+        return $this;
+    }
 
     public static function registerDefaultTimeZone(string|\Closure|null $timeZone)
     {
@@ -231,7 +251,10 @@ abstract class AbstractSendEmail implements CustomActionInterface, ExposeContext
         return $tos;
     }
 
-    private function buildCustomMailable(EmailData $emailData, $to): CustomMailable
+    /**
+     * @param  bool  $prepare  if true, the mail is fully built now (templates rendered, attachments resolved)
+     */
+    private function buildCustomMailable(EmailData $emailData, $to, bool $prepare = false): CustomMailable
     {
         // if $to is a collection, that means there are several recipients for one mail.
         if ($to instanceof Collection) {
@@ -253,23 +276,29 @@ abstract class AbstractSendEmail implements CustomActionInterface, ExposeContext
         }
 
         $locale = $localizedSetting->locale;
-        $emailData->localizedMailInfosCache[$locale] ??= $this->getLocalizedMailInfos(
-            $localizedSetting,
-            $emailData->from
-        );
+        if (! isset($emailData->localizedMailInfosCache[$locale])) {
+            $mailInfos = $this->getLocalizedMailInfos($localizedSetting, $emailData->from);
+            if ($prepare) {
+                // resolved once per locale, so attachments are loaded once for all mails
+                $mailInfos['attachments'] = EmailHelper::resolveAttachments($mailInfos['attachments'] ?? []);
+            }
+            $emailData->localizedMailInfosCache[$locale] = $mailInfos;
+        }
 
-        return new CustomMailable(
-            new Custom(
-                $emailData->localizedMailInfosCache[$locale],
-                self::makeReplacements($emailData->context, array_map(get_class(...), $this->getContextObjects())),
-                new RenderOptions(
-                    locale: $locale,
-                    timezone: $this->getDefaultTimezone($preferredTimezone),
-                    preferredTimezone: $preferredTimezone,
-                ),
+        $mailable = new Custom(
+            $emailData->localizedMailInfosCache[$locale],
+            self::makeReplacements($emailData->context, array_map(get_class(...), $this->getContextObjects())),
+            new RenderOptions(
+                locale: $locale,
+                timezone: $this->getDefaultTimezone($preferredTimezone),
+                preferredTimezone: $preferredTimezone,
             ),
-            $normalizedTo,
         );
+        if ($prepare) {
+            $mailable->prerender();
+        }
+
+        return new CustomMailable($mailable, $normalizedTo);
     }
 
     final protected function getLocalizedMailInfos(LocalizedSetting $localizedSetting, ?Address $from)
@@ -294,18 +323,33 @@ abstract class AbstractSendEmail implements CustomActionInterface, ExposeContext
 
     public function handle()
     {
+        $sendMethod = $this->sendAsynchronously ? 'queue' : 'send';
         $emailData = $this->buildEmailDataConainer();
         $cc = EmailHelper::normalizeAddresses($emailData->cc);
         $bcc = EmailHelper::normalizeAddresses($emailData->bcc);
 
-        foreach ($this->getTos($emailData) as $to) {
-            $customMailable = $this->buildCustomMailable($emailData, $to);
-            $sendMethod = $this->sendAsynchronously ? 'queue' : 'send';
+        // asynchronous mails are rendered by the queue worker
+        $prepare = ! $this->sendAsynchronously;
+        if ($prepare) {
+            EmailHelper::validateAddresses([...Arr::wrap($emailData->from), ...$cc, ...$bcc]);
+        }
 
-            Mail::to($customMailable->to)
+        foreach ($this->getTos($emailData) as $to) {
+            $customMailable = $this->buildCustomMailable($emailData, $to, $prepare);
+            if ($prepare) {
+                EmailHelper::validateAddresses(Arr::wrap($customMailable->to));
+            }
+
+            $send = fn () => Mail::to($customMailable->to)
                 ->cc($cc)
                 ->bcc($bcc)
                 ->$sendMethod($customMailable->mailable);
+
+            if ($this->sendAfterCommit) {
+                DB::afterCommit($send);
+            } else {
+                $send();
+            }
         }
     }
 
