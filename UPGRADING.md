@@ -1,6 +1,15 @@
 # Upgrading
 
-## To template-renderer 2.x
+## To 17.1
+
+### Errors of event actions
+
+When an event is dispatched inside a database transaction, each synchronous action it triggers is now executed in a savepoint (see [errors](docs/Actions-Triggered-From-Events.md#errors)):
+
+- if an action fails, the changes it made in the database are now rolled back (before, they were committed with the transaction),
+- if the transaction is lost while an action is executed (deadlock, lost connection), the exception is now thrown back to the code that dispatched the event (before, it was caught and an `EventActionError` event was dispatched).
+
+## To 17.0 (template-renderer 2.x)
 
 custom-action now requires `comhon-project/template-renderer` 2.x.
 If your application uses template-renderer directly (e.g. `Template::render()` with a locale and timezones, `Template::getRenderer()`, custom drivers registered with `Template::extend()`),

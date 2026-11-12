@@ -2,6 +2,7 @@
 
 namespace App\Events;
 
+use App\Actions\SendAutomaticEmailAfterCommit;
 use Comhon\CustomAction\Actions\Email\SendAutomaticEmail;
 use Comhon\CustomAction\Contracts\CustomEventInterface;
 use Comhon\CustomAction\Contracts\ExposeContextInterface;
@@ -18,6 +19,7 @@ class MyEmailEvent implements CustomEventInterface, ExposeContextInterface
     {
         return [
             SendAutomaticEmail::class,
+            SendAutomaticEmailAfterCommit::class,
         ];
     }
 

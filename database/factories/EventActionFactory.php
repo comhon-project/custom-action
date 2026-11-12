@@ -3,6 +3,7 @@
 namespace Database\Factories;
 
 use App\Actions\ComplexEventAction;
+use App\Actions\FailingEventAction;
 use App\Actions\QueuedEventAction;
 use App\Actions\SimpleEventAction;
 use App\Events\MyComplexEvent;
@@ -53,6 +54,7 @@ class EventActionFactory extends Factory
                 $eventClassOrEventListener = match ($actionClass) {
                     SimpleEventAction::class => MySimpleEvent::class,
                     QueuedEventAction::class => MySimpleEvent::class,
+                    FailingEventAction::class => MySimpleEvent::class,
                     ComplexEventAction::class => MyComplexEvent::class,
                     SimpleEventAction::class => MySimpleEvent::class,
                 };

@@ -3,21 +3,29 @@
 namespace Tests\Feature;
 
 use App\Actions\ComplexEventAction;
+use App\Actions\FailingEventAction;
 use App\Actions\QueuedEventAction;
+use App\Actions\SendAutomaticEmailAfterCommit;
 use App\Actions\SimpleEventAction;
 use App\Events\MyComplexEvent;
+use App\Events\MyEmailEvent;
 use App\Events\MySimpleEvent;
 use App\Models\Output;
 use App\Models\User;
 use Comhon\CustomAction\Events\EventActionError;
+use Comhon\CustomAction\Exceptions\LocalizedSettingNotFoundException;
 use Comhon\CustomAction\Listeners\EventActionDispatcher;
 use Comhon\CustomAction\Listeners\QueuedEventActionDispatcher;
 use Comhon\CustomAction\Models\DefaultSetting;
 use Comhon\CustomAction\Models\EventAction;
 use Comhon\CustomAction\Models\EventListener;
+use Illuminate\Database\DeadlockException;
 use Illuminate\Events\CallQueuedListener;
 use Illuminate\Foundation\Testing\RefreshDatabase;
+use Illuminate\Support\Facades\App;
+use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Event;
+use Illuminate\Support\Facades\Mail;
 use Illuminate\Support\Facades\Queue;
 use PHPUnit\Framework\Attributes\DataProvider;
 use Tests\SetUpWithModelRegistrationTrait;
@@ -158,6 +166,115 @@ class EventDispatchTest extends TestCase
         MySimpleEvent::dispatch($user);
 
         Queue::assertPushed(QueuedEventAction::class, 2);
+    }
+
+    public function test_failing_action_is_rolled_back_alone_inside_transaction()
+    {
+        $user = User::factory()->create();
+        EventAction::factory()->action(FailingEventAction::class)->withDefaultSettings()->create();
+        EventAction::factory()->action(SimpleEventAction::class)->withDefaultSettings()->create();
+
+        Event::fake([EventActionError::class]);
+        $usersCount = User::count();
+
+        DB::transaction(function () use ($user) {
+            User::factory()->create();
+            MySimpleEvent::dispatch($user);
+        });
+
+        // the output written by the failing action is rolled back, the other action and the outer changes are kept
+        $this->assertEquals(['simple-event-action'], Output::pluck('action')->all());
+        $this->assertEquals($usersCount + 1, User::count());
+
+        Event::assertDispatched(EventActionError::class, 1);
+        Event::assertDispatched(
+            EventActionError::class,
+            fn (EventActionError $error) => $error->th->getMessage() === 'failing event action',
+        );
+    }
+
+    public function test_deadlock_is_thrown_back()
+    {
+        $user = User::factory()->create();
+        EventAction::factory()->action(SimpleEventAction::class)->withDefaultSettings()->create();
+
+        // the action fails with a deadlock when it writes in database
+        Output::creating(fn () => throw new DeadlockException('Deadlock found when trying to get lock'));
+        Event::fake([EventActionError::class]);
+
+        try {
+            DB::transaction(fn () => MySimpleEvent::dispatch($user));
+            $this->fail('deadlock exception expected');
+        } catch (DeadlockException) {
+            // the deadlock is thrown back so the whole transaction fails (or is retried)
+        }
+
+        Event::assertNotDispatched(EventActionError::class);
+    }
+
+    #[DataProvider('providerLostTransaction')]
+    public function test_lost_transaction_is_thrown_back(\Closure $breakTransaction)
+    {
+        $user = User::factory()->create();
+        EventAction::factory()->action(SimpleEventAction::class)->withDefaultSettings()->create();
+
+        // the transaction is broken when the action writes in database
+        Output::creating(function () use ($breakTransaction) {
+            $breakTransaction();
+            throw new \Exception('transaction lost');
+        });
+        Event::fake([EventActionError::class]);
+
+        try {
+            DB::transaction(fn () => MySimpleEvent::dispatch($user));
+            $this->fail('exception expected');
+        } catch (\Exception $e) {
+            $this->assertEquals('transaction lost', $e->getMessage());
+        }
+
+        Event::assertNotDispatched(EventActionError::class);
+    }
+
+    public static function providerLostTransaction()
+    {
+        return [
+            // e.g. lost connection, the transaction level is reset
+            'transaction level decreased' => [fn () => DB::rollBack(0)],
+            // e.g. savepoint not restored, the transaction level is not updated
+            'transaction level increased' => [fn () => DB::beginTransaction()],
+        ];
+    }
+
+    public function test_failing_email_action_inside_transaction_sends_no_email_after_commit()
+    {
+        App::setLocale('es');
+        App::setFallbackLocale('es');
+        $user = User::factory(['preferred_locale' => 'en'])->create();
+        $otherUser = User::factory(['preferred_locale' => 'es'])->create();
+
+        // the email of the second recipient fails (no localized setting for its locale)
+        EventAction::factory()
+            ->action(SendAutomaticEmailAfterCommit::class, MyEmailEvent::class)
+            ->withDefaultSettings(
+                ['recipients' => ['to' => ['static' => ['mailables' => [
+                    ['recipient_type' => 'user', 'recipient_id' => $user->id],
+                    ['recipient_type' => 'user', 'recipient_id' => $otherUser->id],
+                ]]]]],
+                ['en' => ['subject' => 'subject', 'body' => 'body']],
+            )
+            ->create();
+
+        Mail::fake();
+        Event::fake([EventActionError::class]);
+
+        DB::transaction(fn () => MyEmailEvent::dispatch());
+
+        // the email of the first recipient is discarded with the rolled back savepoint
+        Mail::assertNothingSent();
+        Event::assertDispatched(
+            EventActionError::class,
+            fn (EventActionError $error) => $error->th instanceof LocalizedSettingNotFoundException,
+        );
     }
 
     #[DataProvider('providerBadActionTypes')]

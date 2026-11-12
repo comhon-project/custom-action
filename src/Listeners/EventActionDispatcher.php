@@ -13,6 +13,8 @@ use Comhon\CustomAction\Facades\ContextScoper;
 use Comhon\CustomAction\Facades\CustomActionModelResolver;
 use Comhon\CustomAction\Models\EventAction;
 use Comhon\CustomAction\Models\EventListener;
+use Illuminate\Database\DeadlockException;
+use Illuminate\Support\Facades\DB;
 
 class EventActionDispatcher
 {
@@ -34,20 +36,53 @@ class EventActionDispatcher
         foreach ($listeners as $listener) {
             /** @var EventAction $eventAction */
             foreach ($listener->eventActions as $eventAction) {
+                $transactionLevel = DB::transactionLevel();
                 try {
                     $actionClass = $eventAction->getActionClass();
-                    if (! is_subclass_of($actionClass, CustomActionInterface::class)) {
-                        throw new InvalidActionTypeException($eventAction);
-                    }
-                    if (! is_subclass_of($actionClass, CallableFromEventInterface::class)) {
+                    if (
+                        ! is_subclass_of($actionClass, CustomActionInterface::class)
+                        || ! is_subclass_of($actionClass, CallableFromEventInterface::class)
+                    ) {
                         throw new InvalidActionTypeException($eventAction);
                     }
 
-                    $actionClass::dispatch($eventAction, $event);
+                    $this->dispatchAction($actionClass, $eventAction, $event);
                 } catch (\Throwable $th) {
+                    if ($this->isTransactionLost($th, $transactionLevel)) {
+                        throw $th;
+                    }
                     EventActionError::dispatch($eventAction, $th);
                 }
             }
+        }
+    }
+
+    /**
+     * Whether the transaction started before the action is lost (deadlock, lost connection, savepoint not restored...),
+     * in that case it must fail (or be retried).
+     */
+    private function isTransactionLost(\Throwable $th, int $transactionLevel): bool
+    {
+        return $transactionLevel > 0
+            && ($th instanceof DeadlockException || DB::transactionLevel() !== $transactionLevel);
+    }
+
+    /**
+     * Inside a transaction, the action is executed in a savepoint,
+     * so if it fails, only its changes are rolled back.
+     */
+    private function dispatchAction(string $actionClass, EventAction $eventAction, CustomEventInterface $event): void
+    {
+        $dispatch = function () use ($actionClass, $eventAction, $event) {
+            // not returned, the action is dispatched when the pending dispatch is destructed,
+            // so it must be destructed here (inside the transaction).
+            $actionClass::dispatch($eventAction, $event);
+        };
+
+        if (DB::transactionLevel() > 0) {
+            DB::transaction($dispatch);
+        } else {
+            $dispatch();
         }
     }
 }

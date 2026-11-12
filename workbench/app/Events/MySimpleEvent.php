@@ -2,6 +2,7 @@
 
 namespace App\Events;
 
+use App\Actions\FailingEventAction;
 use App\Actions\QueuedEventAction;
 use App\Actions\SimpleEventAction;
 use Comhon\CustomAction\Contracts\CustomEventInterface;
@@ -18,6 +19,7 @@ class MySimpleEvent implements CustomEventInterface
         return [
             SimpleEventAction::class,
             QueuedEventAction::class,
+            FailingEventAction::class,
         ];
     }
 }

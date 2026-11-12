@@ -145,3 +145,15 @@ company.office.address ✅
 ```
 
 A possible use case could be to have one event listener that triggers actions for all users, and another event listener that triggers some additional actions only for VIP users.
+## Errors
+
+If an action triggered from an event throws an exception, an `EventActionError` event is dispatched with the event action and the exception (listen to it to report the error). The exception isn't thrown back, so the other actions and the code that dispatched the event are not impacted.
+
+If the event is dispatched inside a database transaction, each action is executed in a savepoint. So if an action fails, only the changes it made in the database are rolled back, as well as the emails it would send with `sendAfterCommit` (see [AbstractSendEmail](Built-in-Actions.md#abstractsendemail)). Outside a transaction, no transaction is started: if an action must be atomic, it has to start its own transaction.
+
+-   If the transaction is lost while an action is executed (deadlock, lost connection), the exception is thrown back so the transaction fails (or is retried).
+-   Errors thrown after the commit (e.g. while sending emails with `sendAfterCommit`) are thrown when the transaction is committed, they are not caught.
+-   Models modified in memory by a failing action are not restored by the rollback (as with any database rollback).
+-   Only the default database connection is handled.
+-   With `RefreshDatabase`, each test is executed inside a transaction, so actions are always executed in a savepoint in tests, even if they are not executed inside a transaction in production.
+-   Actions dispatched via queues (implementing `ShouldQueue`) are executed by the queue worker without transaction, the savepoint only covers their queuing.

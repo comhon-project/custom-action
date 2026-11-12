@@ -41,7 +41,7 @@ class SendCompanyCreatedEmail extends SendAutomaticEmail
 -   If the transaction is rolled back, no email is sent, even the ones already built (e.g. if building the email of the third recipient fails).
 -   If there is no transaction, emails are sent immediately, one by one.
 
-!> **Warning:** Actions triggered from events don't roll back the transaction when they fail: the event action dispatcher catches their exceptions (and dispatches an `EventActionError` event). So emails built before the failure are still sent after the commit.
+**Note:** When an event is dispatched inside a database transaction, each synchronous action it triggers is executed in a savepoint (see [errors](Actions-Triggered-From-Events.md#errors)). So with `sendAfterCommit`, if building one of the emails of such an action fails, none of its emails is sent.
 
 ## AbstractSendManualEmail
 (extends AbstractSendEmail)

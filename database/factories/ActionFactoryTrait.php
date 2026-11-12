@@ -4,6 +4,7 @@ namespace Database\Factories;
 
 use App\Actions\ComplexEventAction;
 use App\Actions\ComplexManualAction;
+use App\Actions\FailingEventAction;
 use App\Actions\QueuedEventAction;
 use App\Actions\QueuedManualAction;
 use App\Actions\SimpleEventAction;
@@ -66,6 +67,7 @@ trait ActionFactoryTrait
         return match ($actionClass) {
             SimpleEventAction::class => ['text' => 'simple text'],
             QueuedEventAction::class => ['text' => 'simple text'],
+            FailingEventAction::class => ['text' => 'simple text'],
             ComplexEventAction::class => ['text' => 'text to user {{ user.id }} {{ user.translation.translate() }}'],
             SimpleManualAction::class => ['text' => 'simple text'],
             QueuedManualAction::class => ['text' => 'simple text'],
@@ -80,6 +82,7 @@ trait ActionFactoryTrait
         return match ($actionClass) {
             SimpleEventAction::class => ['en' => ['localized_text' => 'localized simple text']],
             QueuedEventAction::class => ['en' => ['localized_text' => 'localized simple text']],
+            FailingEventAction::class => ['en' => ['localized_text' => 'localized simple text']],
             ComplexEventAction::class => ['en' => ['localized_text' => 'localized text to user {{ user.id }} {{ user.translation.translate() }}']],
             SimpleManualAction::class => ['en' => ['localized_text' => 'localized simple text']],
             QueuedManualAction::class => ['en' => ['localized_text' => 'localized simple text']],

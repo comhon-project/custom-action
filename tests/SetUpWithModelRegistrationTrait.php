@@ -5,10 +5,12 @@ namespace Tests;
 use App\Actions\BadAction;
 use App\Actions\ComplexEventAction;
 use App\Actions\ComplexManualAction;
+use App\Actions\FailingEventAction;
 use App\Actions\FakableNotSimulatabeAction;
 use App\Actions\QueuedEventAction;
 use App\Actions\QueuedManualAction;
 use App\Actions\SendAttachedEmail;
+use App\Actions\SendAutomaticEmailAfterCommit;
 use App\Actions\SendManualSimpleEmail;
 use App\Actions\SimpleEventAction;
 use App\Actions\SimpleManualAction;
@@ -35,6 +37,7 @@ trait SetUpWithModelRegistrationTrait
             'send-automatic-email' => SendAutomaticEmail::class,
             'queue-automatic-email' => QueueAutomaticEmail::class,
             'send-attached-email' => SendAttachedEmail::class,
+            'send-automatic-email-after-commit' => SendAutomaticEmailAfterCommit::class,
             'send-manual-simple-email' => SendManualSimpleEmail::class,
             'my-email-event' => MyEmailEvent::class,
 
@@ -44,6 +47,7 @@ trait SetUpWithModelRegistrationTrait
             'simple-event-action' => SimpleEventAction::class,
             'queued-event-action' => QueuedEventAction::class,
             'complex-event-action' => ComplexEventAction::class,
+            'failing-event-action' => FailingEventAction::class,
 
             'fakable-not-simulatable-action' => FakableNotSimulatabeAction::class,
             'simulatable-not-fakable-action' => SimulatabeNotFakableAction::class,
