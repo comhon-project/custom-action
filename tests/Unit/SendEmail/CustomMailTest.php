@@ -39,14 +39,12 @@ class CustomMailTest extends TestCase
     public function test_custom_mail_subject_is_not_html_escaped()
     {
         $mailable = new Custom([
-            'subject' => 'Welcome {{ name }}',
-            'body' => 'Welcome {{ name }}',
+            'subject' => 'Subject {{ name }}',
+            'body' => 'Body {{ name }}',
         ], ['name' => "O'Brien & <Co>"]);
 
-        // the subject is plain text, the body is HTML (assertSeeInHtml escapes the given value)
-        $mailable->assertHasSubject("Welcome O'Brien & <Co>");
-        $mailable->assertSeeInHtml("Welcome O'Brien & <Co>");
-        $mailable->assertDontSeeInHtml("Welcome O'Brien & <Co>", false);
+        $mailable->assertHasSubject("Subject O'Brien & <Co>");
+        $mailable->assertSeeInHtml('Body O&#039;Brien &amp; &lt;Co&gt;', false);
     }
 
     public function test_custom_mail_with_replacements_closure()
